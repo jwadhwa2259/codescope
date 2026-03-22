@@ -204,110 +204,110 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PLUG-01 | TBD | Pending |
-| PLUG-02 | TBD | Pending |
-| PLUG-03 | TBD | Pending |
-| PLUG-04 | TBD | Pending |
-| ONBD-01 | TBD | Pending |
-| ONBD-02 | TBD | Pending |
-| ONBD-03 | TBD | Pending |
-| ONBD-04 | TBD | Pending |
-| ONBD-05 | TBD | Pending |
-| BOOT-01 | TBD | Pending |
-| BOOT-02 | TBD | Pending |
-| BOOT-03 | TBD | Pending |
-| BOOT-04 | TBD | Pending |
-| BOOT-05 | TBD | Pending |
-| BOOT-06 | TBD | Pending |
-| BOOT-07 | TBD | Pending |
-| BOOT-08 | TBD | Pending |
-| BOOT-09 | TBD | Pending |
-| BOOT-10 | TBD | Pending |
-| BOOT-11 | TBD | Pending |
-| BOOT-12 | TBD | Pending |
-| BOOT-13 | TBD | Pending |
-| BOOT-14 | TBD | Pending |
-| BOOT-15 | TBD | Pending |
-| BOOT-16 | TBD | Pending |
-| PARS-01 | TBD | Pending |
-| PARS-02 | TBD | Pending |
-| PARS-03 | TBD | Pending |
-| PARS-04 | TBD | Pending |
-| GRPH-01 | TBD | Pending |
-| GRPH-02 | TBD | Pending |
-| GRPH-03 | TBD | Pending |
-| GRPH-04 | TBD | Pending |
-| GRPH-05 | TBD | Pending |
-| GRPH-06 | TBD | Pending |
-| MCP-01 | TBD | Pending |
-| MCP-02 | TBD | Pending |
-| MCP-03 | TBD | Pending |
-| MCP-04 | TBD | Pending |
-| MCP-05 | TBD | Pending |
-| MCP-06 | TBD | Pending |
-| MCP-07 | TBD | Pending |
-| MCP-08 | TBD | Pending |
-| MCP-09 | TBD | Pending |
-| MCP-10 | TBD | Pending |
-| MCP-11 | TBD | Pending |
-| MCP-12 | TBD | Pending |
-| ORNT-01 | TBD | Pending |
-| ORNT-02 | TBD | Pending |
-| ORNT-03 | TBD | Pending |
-| ORNT-04 | TBD | Pending |
-| ORNT-05 | TBD | Pending |
-| ORNT-06 | TBD | Pending |
-| ORNT-07 | TBD | Pending |
-| ORNT-08 | TBD | Pending |
-| ORNT-09 | TBD | Pending |
-| ORNT-10 | TBD | Pending |
-| ORNT-11 | TBD | Pending |
-| EXEC-01 | TBD | Pending |
-| EXEC-02 | TBD | Pending |
-| EXEC-03 | TBD | Pending |
-| EXEC-04 | TBD | Pending |
-| EXEC-05 | TBD | Pending |
-| EXEC-06 | TBD | Pending |
-| VRFY-01 | TBD | Pending |
-| VRFY-02 | TBD | Pending |
-| VRFY-03 | TBD | Pending |
-| VRFY-04 | TBD | Pending |
-| VRFY-05 | TBD | Pending |
-| VRFY-06 | TBD | Pending |
-| VRFY-07 | TBD | Pending |
-| VRFY-08 | TBD | Pending |
-| EVAL-01 | TBD | Pending |
-| EVAL-02 | TBD | Pending |
-| EVAL-03 | TBD | Pending |
-| EVAL-04 | TBD | Pending |
-| GATE-01 | TBD | Pending |
-| GATE-02 | TBD | Pending |
-| GATE-03 | TBD | Pending |
-| GATE-04 | TBD | Pending |
-| DBUG-01 | TBD | Pending |
-| DBUG-02 | TBD | Pending |
-| DBUG-03 | TBD | Pending |
-| DBUG-04 | TBD | Pending |
-| DBUG-05 | TBD | Pending |
-| DBUG-06 | TBD | Pending |
-| DBUG-07 | TBD | Pending |
-| LRNG-01 | TBD | Pending |
-| LRNG-02 | TBD | Pending |
-| LRNG-03 | TBD | Pending |
-| LRNG-04 | TBD | Pending |
-| LRNG-05 | TBD | Pending |
-| LRNG-06 | TBD | Pending |
-| LRNG-07 | TBD | Pending |
-| LRNG-08 | TBD | Pending |
-| MGMT-01 | TBD | Pending |
-| MGMT-02 | TBD | Pending |
-| MGMT-03 | TBD | Pending |
+| PLUG-01 | Phase 1 | Pending |
+| PLUG-02 | Phase 1 | Pending |
+| PLUG-03 | Phase 1 | Pending |
+| PLUG-04 | Phase 1 | Pending |
+| ONBD-01 | Phase 1 | Pending |
+| ONBD-02 | Phase 1 | Pending |
+| ONBD-03 | Phase 1 | Pending |
+| ONBD-04 | Phase 1 | Pending |
+| ONBD-05 | Phase 1 | Pending |
+| BOOT-01 | Phase 2 | Pending |
+| BOOT-02 | Phase 2 | Pending |
+| BOOT-03 | Phase 2 | Pending |
+| BOOT-04 | Phase 2 | Pending |
+| BOOT-05 | Phase 2 | Pending |
+| BOOT-06 | Phase 2 | Pending |
+| BOOT-07 | Phase 2 | Pending |
+| BOOT-08 | Phase 2 | Pending |
+| BOOT-09 | Phase 2 | Pending |
+| BOOT-10 | Phase 2 | Pending |
+| BOOT-11 | Phase 3 | Pending |
+| BOOT-12 | Phase 3 | Pending |
+| BOOT-13 | Phase 3 | Pending |
+| BOOT-14 | Phase 3 | Pending |
+| BOOT-15 | Phase 3 | Pending |
+| BOOT-16 | Phase 3 | Pending |
+| PARS-01 | Phase 1 | Pending |
+| PARS-02 | Phase 1 | Pending |
+| PARS-03 | Phase 1 | Pending |
+| PARS-04 | Phase 1 | Pending |
+| GRPH-01 | Phase 1 | Pending |
+| GRPH-02 | Phase 2 | Pending |
+| GRPH-03 | Phase 2 | Pending |
+| GRPH-04 | Phase 2 | Pending |
+| GRPH-05 | Phase 3 | Pending |
+| GRPH-06 | Phase 3 | Pending |
+| MCP-01 | Phase 3 | Pending |
+| MCP-02 | Phase 3 | Pending |
+| MCP-03 | Phase 3 | Pending |
+| MCP-04 | Phase 3 | Pending |
+| MCP-05 | Phase 3 | Pending |
+| MCP-06 | Phase 3 | Pending |
+| MCP-07 | Phase 3 | Pending |
+| MCP-08 | Phase 3 | Pending |
+| MCP-09 | Phase 3 | Pending |
+| MCP-10 | Phase 3 | Pending |
+| MCP-11 | Phase 3 | Pending |
+| MCP-12 | Phase 3 | Pending |
+| ORNT-01 | Phase 4 | Pending |
+| ORNT-02 | Phase 4 | Pending |
+| ORNT-03 | Phase 4 | Pending |
+| ORNT-04 | Phase 4 | Pending |
+| ORNT-05 | Phase 4 | Pending |
+| ORNT-06 | Phase 4 | Pending |
+| ORNT-07 | Phase 4 | Pending |
+| ORNT-08 | Phase 4 | Pending |
+| ORNT-09 | Phase 4 | Pending |
+| ORNT-10 | Phase 4 | Pending |
+| ORNT-11 | Phase 4 | Pending |
+| EXEC-01 | Phase 4 | Pending |
+| EXEC-02 | Phase 4 | Pending |
+| EXEC-03 | Phase 4 | Pending |
+| EXEC-04 | Phase 4 | Pending |
+| EXEC-05 | Phase 4 | Pending |
+| EXEC-06 | Phase 4 | Pending |
+| VRFY-01 | Phase 5 | Pending |
+| VRFY-02 | Phase 5 | Pending |
+| VRFY-03 | Phase 5 | Pending |
+| VRFY-04 | Phase 5 | Pending |
+| VRFY-05 | Phase 5 | Pending |
+| VRFY-06 | Phase 5 | Pending |
+| VRFY-07 | Phase 5 | Pending |
+| VRFY-08 | Phase 5 | Pending |
+| EVAL-01 | Phase 6 | Pending |
+| EVAL-02 | Phase 6 | Pending |
+| EVAL-03 | Phase 6 | Pending |
+| EVAL-04 | Phase 6 | Pending |
+| GATE-01 | Phase 6 | Pending |
+| GATE-02 | Phase 6 | Pending |
+| GATE-03 | Phase 6 | Pending |
+| GATE-04 | Phase 6 | Pending |
+| DBUG-01 | Phase 6 | Pending |
+| DBUG-02 | Phase 6 | Pending |
+| DBUG-03 | Phase 6 | Pending |
+| DBUG-04 | Phase 6 | Pending |
+| DBUG-05 | Phase 6 | Pending |
+| DBUG-06 | Phase 6 | Pending |
+| DBUG-07 | Phase 6 | Pending |
+| LRNG-01 | Phase 7 | Pending |
+| LRNG-02 | Phase 7 | Pending |
+| LRNG-03 | Phase 7 | Pending |
+| LRNG-04 | Phase 7 | Pending |
+| LRNG-05 | Phase 7 | Pending |
+| LRNG-06 | Phase 7 | Pending |
+| LRNG-07 | Phase 7 | Pending |
+| LRNG-08 | Phase 7 | Pending |
+| MGMT-01 | Phase 7 | Pending |
+| MGMT-02 | Phase 7 | Pending |
+| MGMT-03 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 83 total
-- Mapped to phases: 0
-- Unmapped: 83 ⚠️
+- v1 requirements: 98 total
+- Mapped to phases: 98
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-22*
-*Last updated: 2026-03-22 after initial definition*
+*Last updated: 2026-03-22 after roadmap creation*
