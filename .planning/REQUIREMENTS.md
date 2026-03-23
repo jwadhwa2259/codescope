@@ -33,7 +33,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **BOOT-04**: Researcher agent maps structure, frameworks, entry points and writes overview.md (~200 lines)
 - [x] **BOOT-05**: Convention Detector runs ast-grep frequency analysis and produces conventions.md with adoption %, trend direction (Rising/Declining/Stable), golden files, conflict detection (>20% competing patterns), and evidence chains
 - [x] **BOOT-06**: Convention detection false positive rate below 5% for high-confidence patterns (>80% adoption, >10 files)
-- [ ] **BOOT-07**: Risk Analyzer builds SQLite knowledge graph (better-sqlite3) with nodes, edges, communities tables and calculates in-degree centrality for file importance
+- [x] **BOOT-07**: Risk Analyzer builds SQLite knowledge graph (better-sqlite3) with nodes, edges, communities tables and calculates in-degree centrality for file importance
 - [ ] **BOOT-08**: Risk Analyzer produces danger-zones.md with high-centrality nodes, high-churn files, and cross-boundary dependencies
 - [ ] **BOOT-09**: Learning Synthesizer initializes learnings.md (empty or minimal initial observations)
 - [x] **BOOT-10**: Golden files identified and written to golden-files.md ranked by modern pattern density
@@ -57,9 +57,9 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Knowledge Graph
 
 - [x] **GRPH-01**: SQLite schema with nodes (file, class, function, method, variable, module), edges (CONTAINS, CALLS, IMPORTS, EXTENDS, IMPLEMENTS, USES_TYPE), and communities tables
-- [ ] **GRPH-02**: In-degree centrality calculation for all nodes to identify critical files
-- [ ] **GRPH-03**: Louvain community detection via graphology-communities-louvain for module grouping
-- [ ] **GRPH-04**: BFS blast radius traversal with hop-distance classification (hop 0 Red, hop 1 Orange, hop 2 Yellow, hop 3+ Green)
+- [x] **GRPH-02**: In-degree centrality calculation for all nodes to identify critical files
+- [x] **GRPH-03**: Louvain community detection via graphology-communities-louvain for module grouping
+- [x] **GRPH-04**: BFS blast radius traversal with hop-distance classification (hop 0 Red, hop 1 Orange, hop 2 Yellow, hop 3+ Green)
 - [ ] **GRPH-05**: Graph queries respond in under 100ms
 - [ ] **GRPH-06**: Cross-service dependency map for monorepos (which services call which, shared types, API contracts)
 
@@ -219,7 +219,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BOOT-04 | Phase 2 | Complete |
 | BOOT-05 | Phase 2 | Complete |
 | BOOT-06 | Phase 2 | Complete |
-| BOOT-07 | Phase 2 | Pending |
+| BOOT-07 | Phase 2 | Complete |
 | BOOT-08 | Phase 2 | Pending |
 | BOOT-09 | Phase 2 | Pending |
 | BOOT-10 | Phase 2 | Complete |
@@ -234,9 +234,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PARS-03 | Phase 1 | Complete |
 | PARS-04 | Phase 1 | Complete |
 | GRPH-01 | Phase 1 | Complete |
-| GRPH-02 | Phase 2 | Pending |
-| GRPH-03 | Phase 2 | Pending |
-| GRPH-04 | Phase 2 | Pending |
+| GRPH-02 | Phase 2 | Complete |
+| GRPH-03 | Phase 2 | Complete |
+| GRPH-04 | Phase 2 | Complete |
 | GRPH-05 | Phase 3 | Pending |
 | GRPH-06 | Phase 3 | Pending |
 | MCP-01 | Phase 3 | Pending |

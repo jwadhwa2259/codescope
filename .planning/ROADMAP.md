@@ -54,7 +54,7 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- Graph builder pipeline + graph analytics (centrality, communities, BFS blast radius)
+- [x] 02-01-PLAN.md -- Graph builder pipeline + graph analytics (centrality, communities, BFS blast radius)
 - [x] 02-02-PLAN.md -- Convention detection (ast-grep rules, runner, adoption calculator, golden files)
 - [ ] 02-03-PLAN.md -- Scout agent (service-manifest.md) + Researcher agent (overview.md)
 - [ ] 02-04-PLAN.md -- Risk Analyzer, Convention Detector, and Learning Synthesizer agents
