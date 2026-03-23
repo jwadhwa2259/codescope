@@ -77,14 +77,14 @@ Plans:
 - [ ] 03-03: TBD
 
 ### Phase 4: Orient and Execution Engine
-**Goal**: The /codescope:orient command takes a user task description and autonomously produces a scope contract, researches external context, analyzes graph impact, generates a dependency-ordered execution plan, and spawns agents using dual-mode execution — sequential sub-agents for dependent work, agent teams with SendMessage coordination for independent work, with filesystem coordination as the universal audit trail
+**Goal**: The /codescope:orient command takes a user task description and autonomously produces a scope contract, researches external context, analyzes graph impact, generates a dependency-ordered execution plan, and spawns agents using hybrid execution — the planner always analyzes the dependency graph and picks agent teams for independent work, sequential for dependent work, and wave-based for mixed workloads, with filesystem coordination as the universal audit trail
 **Depends on**: Phase 3
 **Requirements**: ONBD-06, ORNT-01, ORNT-02, ORNT-03, ORNT-04, ORNT-05, ORNT-06, ORNT-07, ORNT-08, ORNT-09, ORNT-10, ORNT-11, EXEC-01, EXEC-02, EXEC-03, EXEC-04, EXEC-05, EXEC-06, EXEC-07, EXEC-08, EXEC-09, EXEC-10
 **Success Criteria** (what must be TRUE):
   1. Running /codescope:orient with a vague task triggers graph-informed clarification questions and produces a scope contract (In Scope / Out of Scope); specific tasks skip clarification
   2. Research sub-agent produces scoped research output using Context7 and web search, written to the execution directory
-  3. Plan sub-agent produces an execution plan with agent assignments, dependency ordering, estimated changes, and execution mode tag (sequential/agent_teams/hybrid) based on dependency graph analysis
-  4. Execution agents run in the plan-specified mode: agent teams for independent tasks (SendMessage coordination), sequential for dependent tasks (filesystem coordination), or hybrid waves; max 3 concurrent agents configurable
+  3. Plan sub-agent produces an execution plan with agent assignments, dependency ordering, estimated changes, and hybrid execution strategy (agent teams for independent tasks, sequential for dependent, wave-based for mixed)
+  4. Execution agents run per the planner's hybrid analysis: agent teams with SendMessage for independent tasks, sequential sub-agents for dependent tasks, wave-based for mixed; max 3 concurrent agents
   5. Plan validation gate rejects plans where agents in the same team wave write to overlapping files
   6. Orchestrator detects agent teams availability at runtime and falls back to sequential transparently
   7. Orient completes in under 60 seconds after clarification, and the orchestrator stays under 15K tokens throughout execution

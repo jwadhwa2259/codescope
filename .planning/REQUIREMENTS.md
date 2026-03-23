@@ -21,7 +21,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **ONBD-03**: User can configure workflow preferences (orient verbosity, clarification style, eval gate mode, convention strictness) during onboarding
 - [x] **ONBD-04**: Onboard produces .claude/codescope/config.yml with all settings in structured YAML format
 - [x] **ONBD-05**: Onboard pulls from global memory (~/.codescope/global-memory.md) for returning users to pre-populate preferences
-- [ ] **ONBD-06**: Onboard includes execution mode configuration: `execute.parallel` preference (`auto` / `sequential` / `agent_teams`), detects agent teams availability (env var check), and explains trade-offs (parallel speed vs sequential safety) with sensible default (`auto`)
+- [ ] **ONBD-06**: Onboard detects agent teams availability (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` env var) and guides user through enabling it in `~/.claude/settings.json` if not set — required for parallel execution in the orient pipeline
 
 ### Bootstrap — Scout
 
@@ -98,13 +98,13 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Execution
 
-- [ ] **EXEC-01**: Orchestrator spawns execution agents using plan-specified mode: `sequential` (dependency-ordered sub-agents), `agent_teams` (parallel with SendMessage coordination), or `hybrid` (dependency waves of agent teams)
+- [ ] **EXEC-01**: Orchestrator spawns execution agents using the planner's hybrid analysis: agent teams (parallel with SendMessage) for independent tasks, sequential sub-agents for dependent tasks, wave-based execution for mixed workloads
 - [ ] **EXEC-02**: Each agent receives scope contract, relevant conventions, golden files, coordination context, and research output
 - [ ] **EXEC-03**: Coordination file (.claude/codescope/execution/coordination.md) is the append-only audit trail in all modes — sequential agents read before starting; agent team members append on completion but use SendMessage for real-time coordination
 - [ ] **EXEC-04**: No-dependency agents run as agent teams with direct messaging when available; max concurrent still configurable (default 3); sequential fallback when agent teams unavailable
 - [ ] **EXEC-05**: Per-agent change reports written to .claude/codescope/execution/[agent-name]-changes.md
 - [ ] **EXEC-06**: Orchestrator stays under 15K tokens throughout execution (thin orchestrator pattern)
-- [ ] **EXEC-07**: Plan sub-agent tags execution plan with mode (`sequential` / `agent_teams` / `hybrid`) based on dependency graph analysis: independent tasks with exclusive file assignments → agent_teams; blockedBy chains or shared files → sequential; mixed → hybrid
+- [ ] **EXEC-07**: Plan sub-agent always performs hybrid dependency analysis: independent tasks with exclusive file assignments → agent teams; blockedBy chains or shared files → sequential; mixed → wave-based execution. No user-facing mode config — the planner always picks the optimal strategy
 - [ ] **EXEC-08**: Agent team members use SendMessage for real-time handoff signals (file readiness, completion, blocking issues) with structured messages: `{type: "ready" | "done" | "blocked", files: [], detail: ""}`
 - [ ] **EXEC-09**: Orchestrator detects agent teams availability at runtime (env var, feature flag); if unavailable, falls back to sequential mode transparently with no user intervention required
 - [ ] **EXEC-10**: Plan validation gate: before execution starts, orchestrator verifies no two agents in the same team wave write to overlapping files; rejects plan and triggers re-plan if violated
