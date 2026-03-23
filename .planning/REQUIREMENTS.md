@@ -41,12 +41,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Bootstrap — Synthesis & Scaling
 
-- [ ] **BOOT-11**: For monorepos (>100K LOC, multiple services): one analysis squad per service, writing to .claude/codescope/services/[service-name]/
-- [ ] **BOOT-12**: Squad cap configurable (default 10) to prevent runaway on massive monorepos
-- [ ] **BOOT-13**: Synthesis agent produces cross-service dependency map, merged convention summary, global danger zones
-- [ ] **BOOT-14**: AI readiness score produced in readiness.md with transparent rubric and actionable improvement steps
-- [ ] **BOOT-15**: High-confidence conventions promoted to conventions-enforced.md (never auto-promoted — requires explicit confirmation)
-- [ ] **BOOT-16**: Full bootstrap completes in under 5 minutes for 100K LOC
+- [x] **BOOT-11**: For monorepos (>100K LOC, multiple services): one analysis squad per service, writing to .claude/codescope/services/[service-name]/
+- [x] **BOOT-12**: Squad cap configurable (default 10) to prevent runaway on massive monorepos
+- [x] **BOOT-13**: Synthesis agent produces cross-service dependency map, merged convention summary, global danger zones
+- [x] **BOOT-14**: AI readiness score produced in readiness.md with transparent rubric and actionable improvement steps
+- [x] **BOOT-15**: High-confidence conventions promoted to conventions-enforced.md (never auto-promoted — requires explicit confirmation)
+- [x] **BOOT-16**: Full bootstrap completes in under 5 minutes for 100K LOC
 
 ### AST Parsing & Import Resolution
 
@@ -62,21 +62,21 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **GRPH-03**: Louvain community detection via graphology-communities-louvain for module grouping
 - [x] **GRPH-04**: BFS blast radius traversal with hop-distance classification (hop 0 Red, hop 1 Orange, hop 2 Yellow, hop 3+ Green)
 - [x] **GRPH-05**: Graph queries respond in under 100ms
-- [ ] **GRPH-06**: Cross-service dependency map for monorepos (which services call which, shared types, API contracts)
+- [x] **GRPH-06**: Cross-service dependency map for monorepos (which services call which, shared types, API contracts)
 
 ### MCP Server
 
 - [ ] **MCP-01**: MCP server implemented with @modelcontextprotocol/sdk using StdioServerTransport
 - [x] **MCP-02**: `codescope_recall` tool — retrieve conventions, learnings, overview for a topic
-- [ ] **MCP-03**: `codescope_graph_query` tool — query knowledge graph (neighbors, paths, communities)
-- [ ] **MCP-04**: `codescope_blast_radius` tool — BFS traversal with hop-distance classification
+- [x] **MCP-03**: `codescope_graph_query` tool — query knowledge graph (neighbors, paths, communities)
+- [x] **MCP-04**: `codescope_blast_radius` tool — BFS traversal with hop-distance classification
 - [x] **MCP-05**: `codescope_conventions` tool — get conventions for specific files/modules
 - [ ] **MCP-06**: `codescope_orient` tool — generate orient brief programmatically
 - [ ] **MCP-07**: `codescope_verify` tool — run verification checks programmatically
-- [ ] **MCP-08**: `codescope_search` tool — hybrid search (graph + text) across the codebase
+- [x] **MCP-08**: `codescope_search` tool — hybrid search (graph + text) across the codebase
 - [x] **MCP-09**: `codescope_readiness` tool — get AI readiness score
 - [x] **MCP-10**: `codescope_status` tool — current state (last bootstrap, active task, etc.)
-- [ ] **MCP-11**: `codescope_detect_changes` tool — map git diff to affected symbols with risk classification
+- [x] **MCP-11**: `codescope_detect_changes` tool — map git diff to affected symbols with risk classification
 - [x] **MCP-12**: `codescope_service_map` tool — cross-service dependency overview
 
 ### Orient — Clarification
@@ -228,12 +228,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BOOT-08 | Phase 2 | Complete |
 | BOOT-09 | Phase 2 | Complete |
 | BOOT-10 | Phase 2 | Complete |
-| BOOT-11 | Phase 3 | Pending |
-| BOOT-12 | Phase 3 | Pending |
-| BOOT-13 | Phase 3 | Pending |
-| BOOT-14 | Phase 3 | Pending |
-| BOOT-15 | Phase 3 | Pending |
-| BOOT-16 | Phase 3 | Pending |
+| BOOT-11 | Phase 3 | Complete |
+| BOOT-12 | Phase 3 | Complete |
+| BOOT-13 | Phase 3 | Complete |
+| BOOT-14 | Phase 3 | Complete |
+| BOOT-15 | Phase 3 | Complete |
+| BOOT-16 | Phase 3 | Complete |
 | PARS-01 | Phase 1 | Complete |
 | PARS-02 | Phase 1 | Complete |
 | PARS-03 | Phase 1 | Complete |
@@ -243,18 +243,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GRPH-03 | Phase 2 | Complete |
 | GRPH-04 | Phase 2 | Complete |
 | GRPH-05 | Phase 3 | Complete |
-| GRPH-06 | Phase 3 | Pending |
+| GRPH-06 | Phase 3 | Complete |
 | MCP-01 | Phase 3 | Pending |
 | MCP-02 | Phase 3 | Complete |
-| MCP-03 | Phase 3 | Pending |
-| MCP-04 | Phase 3 | Pending |
+| MCP-03 | Phase 3 | Complete |
+| MCP-04 | Phase 3 | Complete |
 | MCP-05 | Phase 3 | Complete |
 | MCP-06 | Phase 3 | Pending |
 | MCP-07 | Phase 3 | Pending |
-| MCP-08 | Phase 3 | Pending |
+| MCP-08 | Phase 3 | Complete |
 | MCP-09 | Phase 3 | Complete |
 | MCP-10 | Phase 3 | Complete |
-| MCP-11 | Phase 3 | Pending |
+| MCP-11 | Phase 3 | Complete |
 | MCP-12 | Phase 3 | Complete |
 | ONBD-06 | Phase 4 | Pending |
 | ORNT-01 | Phase 4 | Pending |

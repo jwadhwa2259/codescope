@@ -75,7 +75,7 @@ Plans:
 - [x] 03-01-PLAN.md -- Graph cache with TTL, MCP response helpers, bootstrap metadata, codescope_status D-17 update
 - [x] 03-02-PLAN.md -- File-reading MCP tools (recall, conventions, readiness, service-map)
 - [ ] 03-03-PLAN.md -- Graph-querying MCP tools (graph-query, blast-radius, search, detect-changes)
-- [ ] 03-04-PLAN.md -- Bootstrap orchestrator, synthesis, readiness scoring, incremental re-bootstrap
+- [x] 03-04-PLAN.md -- Bootstrap orchestrator, synthesis, readiness scoring, incremental re-bootstrap
 - [ ] 03-05-PLAN.md -- Orient + verify tools, tool registration wiring, MCP server, bootstrap skill body
 
 ### Phase 4: Orient and Execution Engine
