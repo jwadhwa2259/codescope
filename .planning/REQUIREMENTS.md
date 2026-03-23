@@ -9,18 +9,18 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Plugin Foundation
 
-- [ ] **PLUG-01**: Plugin skeleton with manifest (plugin.json), skills directory, hooks, scripts, and .mcp.json for MCP server configuration
-- [ ] **PLUG-02**: Plugin installs cleanly via Claude Code plugin system and MCP server starts automatically
-- [ ] **PLUG-03**: Persistent file structure created at .claude/codescope/ with all required subdirectories (services/, orient/, plans/, execution/, reports/)
-- [ ] **PLUG-04**: Global memory directory created at ~/.codescope/ on first use
+- [x] **PLUG-01**: Plugin skeleton with manifest (plugin.json), skills directory, hooks, scripts, and .mcp.json for MCP server configuration
+- [x] **PLUG-02**: Plugin installs cleanly via Claude Code plugin system and MCP server starts automatically
+- [x] **PLUG-03**: Persistent file structure created at .claude/codescope/ with all required subdirectories (services/, orient/, plans/, execution/, reports/)
+- [x] **PLUG-04**: Global memory directory created at ~/.codescope/ on first use
 
 ### Onboarding
 
-- [ ] **ONBD-01**: `/codescope:onboard` detects project type (single/monorepo), languages, build/test/E2E commands from existing config files
-- [ ] **ONBD-02**: User can select agent model assignments (researcher, convention detector, risk analyzer, learning synthesizer, eval judge, debug) during onboarding
-- [ ] **ONBD-03**: User can configure workflow preferences (orient verbosity, clarification style, eval gate mode, convention strictness) during onboarding
-- [ ] **ONBD-04**: Onboard produces .claude/codescope/config.yml with all settings in structured YAML format
-- [ ] **ONBD-05**: Onboard pulls from global memory (~/.codescope/global-memory.md) for returning users to pre-populate preferences
+- [x] **ONBD-01**: `/codescope:onboard` detects project type (single/monorepo), languages, build/test/E2E commands from existing config files
+- [x] **ONBD-02**: User can select agent model assignments (researcher, convention detector, risk analyzer, learning synthesizer, eval judge, debug) during onboarding
+- [x] **ONBD-03**: User can configure workflow preferences (orient verbosity, clarification style, eval gate mode, convention strictness) during onboarding
+- [x] **ONBD-04**: Onboard produces .claude/codescope/config.yml with all settings in structured YAML format
+- [x] **ONBD-05**: Onboard pulls from global memory (~/.codescope/global-memory.md) for returning users to pre-populate preferences
 
 ### Bootstrap — Scout
 
@@ -49,14 +49,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### AST Parsing & Import Resolution
 
-- [ ] **PARS-01**: web-tree-sitter WASM parsing for TypeScript, JavaScript, and Python source files
-- [ ] **PARS-02**: Import resolution for TS/JS using enhanced-resolve + tsconfig-paths with 95-99% accuracy
-- [ ] **PARS-03**: Import resolution for Python using filesystem-based resolution with ~80% accuracy
-- [ ] **PARS-04**: Parser lifecycle management: periodic parser.delete() and recreate to prevent memory leaks
+- [x] **PARS-01**: web-tree-sitter WASM parsing for TypeScript, JavaScript, and Python source files
+- [x] **PARS-02**: Import resolution for TS/JS using enhanced-resolve + tsconfig-paths with 95-99% accuracy
+- [x] **PARS-03**: Import resolution for Python using filesystem-based resolution with ~80% accuracy
+- [x] **PARS-04**: Parser lifecycle management: periodic parser.delete() and recreate to prevent memory leaks
 
 ### Knowledge Graph
 
-- [ ] **GRPH-01**: SQLite schema with nodes (file, class, function, method, variable, module), edges (CONTAINS, CALLS, IMPORTS, EXTENDS, IMPLEMENTS, USES_TYPE), and communities tables
+- [x] **GRPH-01**: SQLite schema with nodes (file, class, function, method, variable, module), edges (CONTAINS, CALLS, IMPORTS, EXTENDS, IMPLEMENTS, USES_TYPE), and communities tables
 - [ ] **GRPH-02**: In-degree centrality calculation for all nodes to identify critical files
 - [ ] **GRPH-03**: Louvain community detection via graphology-communities-louvain for module grouping
 - [ ] **GRPH-04**: BFS blast radius traversal with hop-distance classification (hop 0 Red, hop 1 Orange, hop 2 Yellow, hop 3+ Green)
@@ -204,15 +204,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PLUG-01 | Phase 1 | Pending |
-| PLUG-02 | Phase 1 | Pending |
-| PLUG-03 | Phase 1 | Pending |
-| PLUG-04 | Phase 1 | Pending |
-| ONBD-01 | Phase 1 | Pending |
-| ONBD-02 | Phase 1 | Pending |
-| ONBD-03 | Phase 1 | Pending |
-| ONBD-04 | Phase 1 | Pending |
-| ONBD-05 | Phase 1 | Pending |
+| PLUG-01 | Phase 1 | Complete |
+| PLUG-02 | Phase 1 | Complete |
+| PLUG-03 | Phase 1 | Complete |
+| PLUG-04 | Phase 1 | Complete |
+| ONBD-01 | Phase 1 | Complete |
+| ONBD-02 | Phase 1 | Complete |
+| ONBD-03 | Phase 1 | Complete |
+| ONBD-04 | Phase 1 | Complete |
+| ONBD-05 | Phase 1 | Complete |
 | BOOT-01 | Phase 2 | Pending |
 | BOOT-02 | Phase 2 | Pending |
 | BOOT-03 | Phase 2 | Pending |
@@ -229,11 +229,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BOOT-14 | Phase 3 | Pending |
 | BOOT-15 | Phase 3 | Pending |
 | BOOT-16 | Phase 3 | Pending |
-| PARS-01 | Phase 1 | Pending |
-| PARS-02 | Phase 1 | Pending |
-| PARS-03 | Phase 1 | Pending |
-| PARS-04 | Phase 1 | Pending |
-| GRPH-01 | Phase 1 | Pending |
+| PARS-01 | Phase 1 | Complete |
+| PARS-02 | Phase 1 | Complete |
+| PARS-03 | Phase 1 | Complete |
+| PARS-04 | Phase 1 | Complete |
+| GRPH-01 | Phase 1 | Complete |
 | GRPH-02 | Phase 2 | Pending |
 | GRPH-03 | Phase 2 | Pending |
 | GRPH-04 | Phase 2 | Pending |
