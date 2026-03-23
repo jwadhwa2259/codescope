@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
-import { getStatus } from "../../src/tools/status.js";
+import { getStatus, formatStatusResponse } from "../../src/tools/status.js";
 import { STUB_TOOLS, makeStubResponse } from "../../src/tools/stubs.js";
 
 describe("codescope_status (getStatus)", () => {
@@ -105,6 +105,67 @@ describe("stub tools", () => {
     expect(parsed.tool).toBe("codescope_blast_radius");
     expect(parsed.status).toBe("not_bootstrapped");
     expect(parsed.message).toBe("Run /codescope:bootstrap first");
+  });
+});
+
+describe("codescope_status D-17 response format", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "codescope-d17-test-"));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("formatStatusResponse wraps StatusResponse in D-17 format with status ok", async () => {
+    const result = await formatStatusResponse(tmpDir);
+
+    expect(result.content).toHaveLength(1);
+    expect(result.content[0].type).toBe("text");
+
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.status).toBe("ok");
+    expect(parsed.data).toHaveProperty("config_exists");
+    expect(parsed.data).toHaveProperty("bootstrap_completed");
+    expect(parsed.data).toHaveProperty("graph_nodes");
+    expect(parsed.data).toHaveProperty("plugin_version");
+  });
+
+  it("formatStatusResponse includes staleness metadata", async () => {
+    const result = await formatStatusResponse(tmpDir);
+    const parsed = JSON.parse(result.content[0].text);
+
+    expect(parsed.metadata).toHaveProperty("staleness");
+    expect(parsed.metadata).toHaveProperty("query_ms");
+    expect(parsed.metadata).toHaveProperty("last_bootstrap");
+  });
+
+  it("when bootstrap-meta.json missing, last_bootstrap is null and staleness is very_stale", async () => {
+    const result = await formatStatusResponse(tmpDir);
+    const parsed = JSON.parse(result.content[0].text);
+
+    expect(parsed.metadata.last_bootstrap).toBeNull();
+    expect(parsed.metadata.staleness).toBe("very_stale");
+  });
+
+  it("getStatus reads last_bootstrap from bootstrap-meta.json when it exists", async () => {
+    const codescopePath = path.join(tmpDir, ".claude", "codescope");
+    fs.mkdirSync(codescopePath, { recursive: true });
+    const meta = {
+      last_bootstrap: "2026-03-20T10:00:00Z",
+      duration_ms: 120000,
+      mode: "full",
+      version: "0.1.0",
+    };
+    fs.writeFileSync(
+      path.join(codescopePath, "bootstrap-meta.json"),
+      JSON.stringify(meta),
+    );
+
+    const status = await getStatus(tmpDir);
+    expect(status.last_bootstrap).toBe("2026-03-20T10:00:00Z");
   });
 });
 
