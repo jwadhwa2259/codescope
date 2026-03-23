@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
 import * as os from "node:os";
 import * as path from "node:path";
 import * as fs from "node:fs";
@@ -7,6 +7,12 @@ import { openDatabase, closeDatabase } from "../../src/graph/database.js";
 import { createSchema } from "../../src/graph/schema.js";
 import type { Database as DatabaseType } from "better-sqlite3";
 import { buildGraph, type BuildGraphOptions, type BuildGraphResult } from "../../src/graph/builder.js";
+
+const grammarDir = path.resolve("grammars");
+const grammarsExist =
+  fs.existsSync(path.join(grammarDir, "tree-sitter-typescript.wasm")) &&
+  fs.existsSync(path.join(grammarDir, "tree-sitter-javascript.wasm")) &&
+  fs.existsSync(path.join(grammarDir, "tree-sitter-python.wasm"));
 
 function tmpDir(): string {
   const dir = path.join(os.tmpdir(), `codescope-builder-test-${crypto.randomUUID()}`);
@@ -49,7 +55,7 @@ function createFixtureDir(): string {
   // app.ts - imports from utils
   fs.writeFileSync(
     path.join(srcDir, "app.ts"),
-    `import { helper } from "./utils.js";
+    `import { helper } from "./utils";
 
 export function greet(name: string): string {
   return helper(name);
@@ -67,7 +73,7 @@ export class App {
   // utils.ts - imports from types, exports helper
   fs.writeFileSync(
     path.join(srcDir, "utils.ts"),
-    `import { Config } from "./types.js";
+    `import { Config } from "./types";
 
 export function helper(name: string): string {
   return "Hello, " + name;
@@ -110,10 +116,18 @@ export const DEFAULT_NAME = "World";
   return root;
 }
 
-describe("buildGraph", () => {
+describe.skipIf(!grammarsExist)("buildGraph", () => {
   let fixtureDir: string;
   let dbPath: string;
   let batchDir: string;
+
+  beforeAll(() => {
+    process.env.CODESCOPE_GRAMMAR_DIR = grammarDir;
+  });
+
+  afterAll(() => {
+    delete process.env.CODESCOPE_GRAMMAR_DIR;
+  });
 
   beforeEach(() => {
     fixtureDir = createFixtureDir();
@@ -163,7 +177,7 @@ describe("buildGraph", () => {
   });
 
   it("creates IMPORTS edges between files that import from each other", async () => {
-    const result = await buildGraph({
+    await buildGraph({
       projectRoot: fixtureDir,
       dbPath,
       batchDir,
