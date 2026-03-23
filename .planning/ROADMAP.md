@@ -55,7 +55,7 @@ Plans:
 
 Plans:
 - [ ] 02-01-PLAN.md -- Graph builder pipeline + graph analytics (centrality, communities, BFS blast radius)
-- [ ] 02-02-PLAN.md -- Convention detection (ast-grep rules, runner, adoption calculator, golden files)
+- [x] 02-02-PLAN.md -- Convention detection (ast-grep rules, runner, adoption calculator, golden files)
 - [ ] 02-03-PLAN.md -- Scout agent (service-manifest.md) + Researcher agent (overview.md)
 - [ ] 02-04-PLAN.md -- Risk Analyzer, Convention Detector, and Learning Synthesizer agents
 
@@ -151,7 +151,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Plugin Foundation and Infrastructure | 5/5 | Complete | - |
-| 2. Scout and Analysis Squad | 0/4 | Planned | - |
+| 2. Scout and Analysis Squad | 0/4 | Planned    |  |
 | 3. Bootstrap Synthesis and MCP Server | 0/3 | Not started | - |
 | 4. Orient and Execution Engine | 0/3 | Not started | - |
 | 5. Verification | 0/2 | Not started | - |

@@ -24,19 +24,19 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Bootstrap — Scout
 
-- [ ] **BOOT-01**: Scout agent (Haiku, read-only) maps top-level project structure from root configs (package.json, docker-compose.yml, workspace configs, CI/CD files)
-- [ ] **BOOT-02**: Scout produces service-manifest.md with list of services, paths, approximate LOC, detected frameworks
-- [ ] **BOOT-03**: Scout completes in under 30 seconds for typical projects
+- [x] **BOOT-01**: Scout agent (Haiku, read-only) maps top-level project structure from root configs (package.json, docker-compose.yml, workspace configs, CI/CD files)
+- [x] **BOOT-02**: Scout produces service-manifest.md with list of services, paths, approximate LOC, detected frameworks
+- [x] **BOOT-03**: Scout completes in under 30 seconds for typical projects
 
 ### Bootstrap — Analysis Squad
 
-- [ ] **BOOT-04**: Researcher agent maps structure, frameworks, entry points and writes overview.md (~200 lines)
-- [ ] **BOOT-05**: Convention Detector runs ast-grep frequency analysis and produces conventions.md with adoption %, trend direction (Rising/Declining/Stable), golden files, conflict detection (>20% competing patterns), and evidence chains
-- [ ] **BOOT-06**: Convention detection false positive rate below 5% for high-confidence patterns (>80% adoption, >10 files)
+- [x] **BOOT-04**: Researcher agent maps structure, frameworks, entry points and writes overview.md (~200 lines)
+- [x] **BOOT-05**: Convention Detector runs ast-grep frequency analysis and produces conventions.md with adoption %, trend direction (Rising/Declining/Stable), golden files, conflict detection (>20% competing patterns), and evidence chains
+- [x] **BOOT-06**: Convention detection false positive rate below 5% for high-confidence patterns (>80% adoption, >10 files)
 - [ ] **BOOT-07**: Risk Analyzer builds SQLite knowledge graph (better-sqlite3) with nodes, edges, communities tables and calculates in-degree centrality for file importance
 - [ ] **BOOT-08**: Risk Analyzer produces danger-zones.md with high-centrality nodes, high-churn files, and cross-boundary dependencies
 - [ ] **BOOT-09**: Learning Synthesizer initializes learnings.md (empty or minimal initial observations)
-- [ ] **BOOT-10**: Golden files identified and written to golden-files.md ranked by modern pattern density
+- [x] **BOOT-10**: Golden files identified and written to golden-files.md ranked by modern pattern density
 
 ### Bootstrap — Synthesis & Scaling
 
@@ -213,16 +213,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ONBD-03 | Phase 1 | Complete |
 | ONBD-04 | Phase 1 | Complete |
 | ONBD-05 | Phase 1 | Complete |
-| BOOT-01 | Phase 2 | Pending |
-| BOOT-02 | Phase 2 | Pending |
-| BOOT-03 | Phase 2 | Pending |
-| BOOT-04 | Phase 2 | Pending |
-| BOOT-05 | Phase 2 | Pending |
-| BOOT-06 | Phase 2 | Pending |
+| BOOT-01 | Phase 2 | Complete |
+| BOOT-02 | Phase 2 | Complete |
+| BOOT-03 | Phase 2 | Complete |
+| BOOT-04 | Phase 2 | Complete |
+| BOOT-05 | Phase 2 | Complete |
+| BOOT-06 | Phase 2 | Complete |
 | BOOT-07 | Phase 2 | Pending |
 | BOOT-08 | Phase 2 | Pending |
 | BOOT-09 | Phase 2 | Pending |
-| BOOT-10 | Phase 2 | Pending |
+| BOOT-10 | Phase 2 | Complete |
 | BOOT-11 | Phase 3 | Pending |
 | BOOT-12 | Phase 3 | Pending |
 | BOOT-13 | Phase 3 | Pending |
