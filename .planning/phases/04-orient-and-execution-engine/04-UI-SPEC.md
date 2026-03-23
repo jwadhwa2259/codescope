@@ -1,7 +1,7 @@
 ---
 phase: 4
 slug: orient-and-execution-engine
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-03-23
