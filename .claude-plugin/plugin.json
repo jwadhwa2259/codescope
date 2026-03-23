@@ -1,0 +1,12 @@
+{
+  "name": "codescope",
+  "version": "0.1.0",
+  "description": "Deep codebase analysis for AI-powered code changes that respect existing conventions and stay within safe blast radius",
+  "skills": [
+    { "name": "onboard", "path": "skills/onboard/SKILL.md" },
+    { "name": "bootstrap", "path": "skills/bootstrap/SKILL.md" },
+    { "name": "orient", "path": "skills/orient/SKILL.md" },
+    { "name": "settings", "path": "skills/settings/SKILL.md" },
+    { "name": "review-learnings", "path": "skills/review-learnings/SKILL.md" }
+  ]
+}
