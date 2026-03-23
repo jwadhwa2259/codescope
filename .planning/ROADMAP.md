@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 1: Plugin Foundation and Infrastructure** - Plugin skeleton, onboarding, AST parsing, graph schema, and filesystem-first coordination patterns
 - [ ] **Phase 2: Scout and Analysis Squad** - Scout maps project structure, analysis agents build codebase intelligence (conventions, graph, danger zones, golden files)
 - [ ] **Phase 3: Bootstrap Synthesis and MCP Server** - Monorepo scaling, cross-service synthesis, AI readiness score, and all 11 MCP tools operational
-- [ ] **Phase 4: Orient and Execution Engine** - Graph-informed clarification, research, planning, and multi-agent execution with filesystem coordination
+- [ ] **Phase 4: Orient and Execution Engine** - Graph-informed clarification, research, planning, and dual-mode multi-agent execution (sequential sub-agents + agent teams with SendMessage coordination)
 - [ ] **Phase 5: Verification** - Static convention compliance, blast radius diff, runtime build/test verification, E2E auto-detection, and auto-smoke generation
 - [ ] **Phase 6: Eval, User Gate, and Debug** - LLM-as-judge scoring, interactive finding selection, and self-correcting debug cycles with escalation
 - [ ] **Phase 7: Learning System and Settings** - Persistent project memory with decay and contradiction detection, global memory, and management skills
@@ -77,21 +77,24 @@ Plans:
 - [ ] 03-03: TBD
 
 ### Phase 4: Orient and Execution Engine
-**Goal**: The /codescope:orient command takes a user task description and autonomously produces a scope contract, researches external context, analyzes graph impact, generates a dependency-ordered execution plan, and spawns agents that implement changes with filesystem coordination
+**Goal**: The /codescope:orient command takes a user task description and autonomously produces a scope contract, researches external context, analyzes graph impact, generates a dependency-ordered execution plan, and spawns agents using dual-mode execution — sequential sub-agents for dependent work, agent teams with SendMessage coordination for independent work, with filesystem coordination as the universal audit trail
 **Depends on**: Phase 3
-**Requirements**: ORNT-01, ORNT-02, ORNT-03, ORNT-04, ORNT-05, ORNT-06, ORNT-07, ORNT-08, ORNT-09, ORNT-10, ORNT-11, EXEC-01, EXEC-02, EXEC-03, EXEC-04, EXEC-05, EXEC-06
+**Requirements**: ONBD-06, ORNT-01, ORNT-02, ORNT-03, ORNT-04, ORNT-05, ORNT-06, ORNT-07, ORNT-08, ORNT-09, ORNT-10, ORNT-11, EXEC-01, EXEC-02, EXEC-03, EXEC-04, EXEC-05, EXEC-06, EXEC-07, EXEC-08, EXEC-09, EXEC-10
 **Success Criteria** (what must be TRUE):
   1. Running /codescope:orient with a vague task triggers graph-informed clarification questions and produces a scope contract (In Scope / Out of Scope); specific tasks skip clarification
   2. Research sub-agent produces scoped research output using Context7 and web search, written to the execution directory
-  3. Plan sub-agent produces an execution plan with agent assignments, dependency ordering, and estimated changes, saved to plans directory
-  4. Execution agents run in dependency order (parallel where safe, max 3 concurrent), each reading coordination context and appending what they changed
-  5. Orient completes in under 60 seconds after clarification, and the orchestrator stays under 15K tokens throughout execution
+  3. Plan sub-agent produces an execution plan with agent assignments, dependency ordering, estimated changes, and execution mode tag (sequential/agent_teams/hybrid) based on dependency graph analysis
+  4. Execution agents run in the plan-specified mode: agent teams for independent tasks (SendMessage coordination), sequential for dependent tasks (filesystem coordination), or hybrid waves; max 3 concurrent agents configurable
+  5. Plan validation gate rejects plans where agents in the same team wave write to overlapping files
+  6. Orchestrator detects agent teams availability at runtime and falls back to sequential transparently
+  7. Orient completes in under 60 seconds after clarification, and the orchestrator stays under 15K tokens throughout execution
 **Plans**: TBD
 
 Plans:
 - [ ] 04-01: TBD
 - [ ] 04-02: TBD
 - [ ] 04-03: TBD
+- [ ] 04-04: TBD
 
 ### Phase 5: Verification
 **Goal**: After execution, static and runtime verification agents validate that changes comply with conventions, stay within predicted blast radius, build successfully, pass tests, and work end-to-end

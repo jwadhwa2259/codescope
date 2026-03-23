@@ -43,9 +43,14 @@ AI-generated code changes that respect existing conventions, stay within safe bl
   - Phase B: Research sub-agent (Context7 + web search)
   - Phase C: Internal analysis (graph traversal, blast radius, convention matching, test mapping)
   - Phase D: Plan sub-agent (execution plan with agent assignments, dependency ordering)
-- [ ] Execution engine — sub-agents per concern with filesystem coordination
-  - Coordination file (append-only agent communication log)
-  - Dependency-ordered and parallel execution (configurable max concurrent agents)
+- [ ] Execution engine — dual-mode multi-agent execution with plan-driven mode selection
+  - Sequential mode: dependency-ordered sub-agents with filesystem coordination
+  - Agent teams mode: parallel agents with SendMessage for real-time handoff signals
+  - Hybrid mode: dependency waves of agent teams for mixed workloads
+  - Coordination file (append-only audit trail in all modes)
+  - Plan validation gate: no overlapping file writes within a team wave
+  - Runtime fallback: agent teams → sequential if feature unavailable
+  - Configurable: `execute.parallel: auto | sequential | agent_teams` in config
   - Each agent gets scope contract, conventions, golden files, coordination context
 - [ ] Static verify agent — convention compliance (ast-grep), blast radius diff, code review
 - [ ] Runtime verify agent — build verification, unit/integration tests, E2E (Playwright/Xcode/Gradle auto-detection), auto-smoke generation
@@ -101,6 +106,7 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 |----------|-----------|---------|
 | Thin orchestrator pattern | Main context stays under 15K tokens — compaction either never triggers or doesn't matter because all state is on disk | — Pending |
 | Filesystem coordination over return values | Issue #5812: sub-agents can't return file contents. Append-only coordination.md pattern. | — Pending |
+| Dual-mode execution (sequential + agent teams) | Agent teams enable true parallel execution with direct messaging for independent tasks. Sequential sub-agents remain the stable path for dependent work. Planner decides mode based on dependency graph. Filesystem coordination.md stays as universal audit trail. | — Decided 2026-03-23 |
 | Task tool delegation over context: fork | Issue #17283: context: fork silently ignored on auto-invoked skills | — Pending |
 | web-tree-sitter WASM over node-tree-sitter | node-tree-sitter is broken with no maintainer. web-tree-sitter is what Claude Code uses internally. | — Pending |
 | ast-grep for convention detection | Structural pattern matching by syntax, not text. Supports 27 languages. Zero compilation required. | — Pending |
@@ -126,4 +132,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-23 after Phase 2 completion — all bootstrap analysis agents operational (Scout, Researcher, Convention Detector, Risk Analyzer, Learning Synthesizer), graph analytics with centrality/communities/blast radius, convention detection with 18 ast-grep rules*
+*Last updated: 2026-03-23 — added dual-mode execution decision (sequential + agent teams) for Phase 4; all bootstrap analysis agents operational from Phase 2*

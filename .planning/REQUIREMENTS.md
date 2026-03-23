@@ -21,6 +21,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **ONBD-03**: User can configure workflow preferences (orient verbosity, clarification style, eval gate mode, convention strictness) during onboarding
 - [x] **ONBD-04**: Onboard produces .claude/codescope/config.yml with all settings in structured YAML format
 - [x] **ONBD-05**: Onboard pulls from global memory (~/.codescope/global-memory.md) for returning users to pre-populate preferences
+- [ ] **ONBD-06**: Onboard includes execution mode configuration: `execute.parallel` preference (`auto` / `sequential` / `agent_teams`), detects agent teams availability (env var check), and explains trade-offs (parallel speed vs sequential safety) with sensible default (`auto`)
 
 ### Bootstrap — Scout
 
@@ -97,12 +98,16 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Execution
 
-- [ ] **EXEC-01**: Orchestrator spawns execution agents in plan-specified order with dependency ordering
+- [ ] **EXEC-01**: Orchestrator spawns execution agents using plan-specified mode: `sequential` (dependency-ordered sub-agents), `agent_teams` (parallel with SendMessage coordination), or `hybrid` (dependency waves of agent teams)
 - [ ] **EXEC-02**: Each agent receives scope contract, relevant conventions, golden files, coordination context, and research output
-- [ ] **EXEC-03**: Coordination file (.claude/codescope/execution/coordination.md) is append-only — every agent reads before starting and appends what it changed
-- [ ] **EXEC-04**: Agents with no dependencies can run in parallel (configurable max concurrent, default 3)
+- [ ] **EXEC-03**: Coordination file (.claude/codescope/execution/coordination.md) is the append-only audit trail in all modes — sequential agents read before starting; agent team members append on completion but use SendMessage for real-time coordination
+- [ ] **EXEC-04**: No-dependency agents run as agent teams with direct messaging when available; max concurrent still configurable (default 3); sequential fallback when agent teams unavailable
 - [ ] **EXEC-05**: Per-agent change reports written to .claude/codescope/execution/[agent-name]-changes.md
 - [ ] **EXEC-06**: Orchestrator stays under 15K tokens throughout execution (thin orchestrator pattern)
+- [ ] **EXEC-07**: Plan sub-agent tags execution plan with mode (`sequential` / `agent_teams` / `hybrid`) based on dependency graph analysis: independent tasks with exclusive file assignments → agent_teams; blockedBy chains or shared files → sequential; mixed → hybrid
+- [ ] **EXEC-08**: Agent team members use SendMessage for real-time handoff signals (file readiness, completion, blocking issues) with structured messages: `{type: "ready" | "done" | "blocked", files: [], detail: ""}`
+- [ ] **EXEC-09**: Orchestrator detects agent teams availability at runtime (env var, feature flag); if unavailable, falls back to sequential mode transparently with no user intervention required
+- [ ] **EXEC-10**: Plan validation gate: before execution starts, orchestrator verifies no two agents in the same team wave write to overlapping files; rejects plan and triggers re-plan if violated
 
 ### Verification
 
@@ -251,6 +256,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MCP-10 | Phase 3 | Pending |
 | MCP-11 | Phase 3 | Pending |
 | MCP-12 | Phase 3 | Pending |
+| ONBD-06 | Phase 4 | Pending |
 | ORNT-01 | Phase 4 | Pending |
 | ORNT-02 | Phase 4 | Pending |
 | ORNT-03 | Phase 4 | Pending |
@@ -268,6 +274,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXEC-04 | Phase 4 | Pending |
 | EXEC-05 | Phase 4 | Pending |
 | EXEC-06 | Phase 4 | Pending |
+| EXEC-07 | Phase 4 | Pending |
+| EXEC-08 | Phase 4 | Pending |
+| EXEC-09 | Phase 4 | Pending |
+| EXEC-10 | Phase 4 | Pending |
 | VRFY-01 | Phase 5 | Pending |
 | VRFY-02 | Phase 5 | Pending |
 | VRFY-03 | Phase 5 | Pending |
@@ -304,10 +314,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MGMT-03 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 98 total
-- Mapped to phases: 98
+- v1 requirements: 103 total
+- Mapped to phases: 103
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-22*
-*Last updated: 2026-03-22 after roadmap creation*
+*Last updated: 2026-03-23 — added EXEC-07 through EXEC-10 for dual-mode execution (agent teams + sequential)*
