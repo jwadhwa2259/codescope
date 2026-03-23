@@ -69,14 +69,14 @@ describe("readiness", () => {
       expect(result.dimensions).toHaveProperty("testCoverageProxy");
       expect(result.dimensions).toHaveProperty("importGraphHealth");
 
-      // Overall is average of the 4 dimensions
+      // Overall is Math.round of the average of 4 dimensions
       const avg =
         (result.dimensions.conventionCoverage.percent +
           result.dimensions.typeSafety.percent +
           result.dimensions.testCoverageProxy.percent +
           result.dimensions.importGraphHealth.percent) /
         4;
-      expect(result.overall.percent).toBeCloseTo(avg, 0);
+      expect(result.overall.percent).toBe(Math.round(avg));
       expect(result.overall.grade).toBe(percentToGrade(Math.round(avg)));
     });
 
