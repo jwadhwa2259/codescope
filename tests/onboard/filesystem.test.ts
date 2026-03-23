@@ -88,8 +88,13 @@ describe("createDirectoryTree", () => {
     expect(content).toContain("graph.db");
     expect(content).toContain("execution/");
     expect(content).toContain("reports/screenshots/");
-    expect(content).not.toContain("config.yml\n");
-    expect(content).not.toContain("conventions-enforced.md");
+    // Verify config.yml and conventions-enforced.md are NOT gitignored
+    // (they may appear in comments as tracked items, but not as ignore rules)
+    const ignoreRules = content
+      .split("\n")
+      .filter((line) => line.trim() && !line.startsWith("#"));
+    expect(ignoreRules).not.toContain("config.yml");
+    expect(ignoreRules).not.toContain("conventions-enforced.md");
   });
 });
 
