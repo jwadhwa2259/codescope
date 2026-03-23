@@ -1,9 +1,9 @@
 ---
 phase: 02
 slug: scout-and-analysis-squad
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: approved
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-22
 ---
 
@@ -36,16 +36,16 @@ created: 2026-03-22
 
 ## Per-Task Verification Map
 
-| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 02-01-01 | 01 | 1 | BOOT-01 | unit | `npx vitest run src/scouts/__tests__/` | ❌ W0 | ⬜ pending |
-| 02-01-02 | 01 | 1 | BOOT-02 | unit | `npx vitest run src/scouts/__tests__/` | ❌ W0 | ⬜ pending |
-| 02-02-01 | 02 | 1 | BOOT-03 | unit | `npx vitest run src/conventions/__tests__/` | ❌ W0 | ⬜ pending |
-| 02-02-02 | 02 | 1 | BOOT-04 | unit | `npx vitest run src/conventions/__tests__/` | ❌ W0 | ⬜ pending |
-| 02-02-03 | 02 | 1 | BOOT-05 | unit | `npx vitest run src/conventions/__tests__/` | ❌ W0 | ⬜ pending |
-| 02-03-01 | 03 | 2 | GRPH-02 | unit | `npx vitest run src/graph/__tests__/` | ❌ W0 | ⬜ pending |
-| 02-03-02 | 03 | 2 | GRPH-03 | unit | `npx vitest run src/graph/__tests__/` | ❌ W0 | ⬜ pending |
-| 02-03-03 | 03 | 2 | GRPH-04 | unit | `npx vitest run src/graph/__tests__/` | ❌ W0 | ⬜ pending |
+| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | Status |
+|---------|------|------|-------------|-----------|-------------------|--------|
+| 02-01-T1 | 01 | 1 | BOOT-07, GRPH-02 | unit | `npx vitest run tests/graph/builder.test.ts --reporter=verbose` | ⬜ pending |
+| 02-01-T2 | 01 | 1 | GRPH-03, GRPH-04 | unit | `npx vitest run tests/graph/analytics.test.ts --reporter=verbose` | ⬜ pending |
+| 02-02-T1 | 02 | 1 | BOOT-05, BOOT-06 | integration | `sg scan --rule src/conventions/rules/typescript/ --json tests/fixtures/sample-project/src/` | ⬜ pending |
+| 02-02-T2 | 02 | 1 | BOOT-05, BOOT-06, BOOT-10 | unit | `npx vitest run tests/conventions/ --reporter=verbose` | ⬜ pending |
+| 02-03-T1 | 03 | 1 | BOOT-01, BOOT-02 | unit | `npx vitest run tests/agents/scout.test.ts --reporter=verbose` | ⬜ pending |
+| 02-03-T2 | 03 | 1 | BOOT-03, BOOT-04 | unit | `npx vitest run tests/agents/researcher.test.ts --reporter=verbose` | ⬜ pending |
+| 02-04-T1 | 04 | 2 | BOOT-07, BOOT-08, BOOT-09 | unit | `npx vitest run tests/agents/risk-analyzer.test.ts --reporter=verbose` | ⬜ pending |
+| 02-04-T2 | 04 | 2 | BOOT-09, BOOT-10 | unit | `npx vitest run tests/agents/convention-detector.test.ts tests/agents/learning-synthesizer.test.ts --reporter=verbose` | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -53,12 +53,7 @@ created: 2026-03-22
 
 ## Wave 0 Requirements
 
-- [ ] `src/scouts/__tests__/scout.test.ts` — stubs for BOOT-01, BOOT-02
-- [ ] `src/conventions/__tests__/runner.test.ts` — stubs for BOOT-03, BOOT-04, BOOT-05
-- [ ] `src/graph/__tests__/analytics.test.ts` — stubs for GRPH-02, GRPH-03, GRPH-04
-- [ ] `src/graph/__tests__/blast-radius.test.ts` — stubs for GRPH-04 BFS traversal
-
-*Existing vitest infrastructure from Phase 1 covers framework setup.*
+Existing vitest infrastructure from Phase 1 covers framework setup. All plans use inline TDD (tests created in the same task as implementation) — no separate Wave 0 stub plan required.
 
 ---
 
@@ -73,11 +68,11 @@ created: 2026-03-22
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify commands
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0: inline TDD approach — no separate stubs needed
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-03-22
