@@ -69,12 +69,14 @@ Plans:
   3. All 11 MCP tools respond correctly when called (codescope_recall through codescope_service_map) with Zod-validated inputs and structured error responses
   4. Graph queries (codescope_graph_query, codescope_blast_radius) respond in under 100ms on graphs with 10K+ nodes
   5. High-confidence conventions can be confirmed to conventions-enforced.md (never auto-promoted)
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
+- [ ] 03-01-PLAN.md -- Graph cache with TTL, MCP response helpers, bootstrap metadata, codescope_status D-17 update
+- [ ] 03-02-PLAN.md -- File-reading MCP tools (recall, conventions, readiness, service-map)
+- [ ] 03-03-PLAN.md -- Graph-querying MCP tools (graph-query, blast-radius, search, detect-changes)
+- [ ] 03-04-PLAN.md -- Bootstrap orchestrator, synthesis, readiness scoring, incremental re-bootstrap
+- [ ] 03-05-PLAN.md -- Orient + verify tools, tool registration wiring, MCP server, bootstrap skill body
 
 ### Phase 4: Orient and Execution Engine
 **Goal**: The /codescope:orient command takes a user task description and autonomously produces a scope contract, researches external context, analyzes graph impact, generates a dependency-ordered execution plan, and spawns agents using hybrid execution — the planner always analyzes the dependency graph and picks agent teams for independent work, sequential for dependent work, and wave-based for mixed workloads, with filesystem coordination as the universal audit trail
@@ -154,8 +156,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Plugin Foundation and Infrastructure | 5/5 | Complete | - |
-| 2. Scout and Analysis Squad | 0/4 | Planned    |  |
-| 3. Bootstrap Synthesis and MCP Server | 0/3 | Not started | - |
+| 2. Scout and Analysis Squad | 4/4 | Complete    |  |
+| 3. Bootstrap Synthesis and MCP Server | 0/5 | Planned | - |
 | 4. Orient and Execution Engine | 0/3 | Not started | - |
 | 5. Verification | 0/2 | Not started | - |
 | 6. Eval, User Gate, and Debug | 0/3 | Not started | - |
