@@ -1,7 +1,8 @@
 ---
 phase: 2
 slug: scout-and-analysis-squad
-status: draft
+status: approved
+reviewed_at: 2026-03-22
 shadcn_initialized: false
 preset: none
 created: 2026-03-22
