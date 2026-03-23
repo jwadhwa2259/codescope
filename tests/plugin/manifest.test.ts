@@ -142,12 +142,14 @@ describe("Plugin Manifest", () => {
       expect(content).toContain("Configure CodeScope");
     });
 
-    it("skills/bootstrap/SKILL.md body contains phase 2 message", () => {
+    it("skills/bootstrap/SKILL.md body contains bootstrap instructions", () => {
       const content = fs.readFileSync(
         path.join(PROJECT_ROOT, "skills", "bootstrap", "SKILL.md"),
         "utf-8"
       );
-      expect(content).toContain("This skill will be available after Phase 2");
+      expect(content).toContain("name: bootstrap");
+      expect(content).toContain("## /codescope:bootstrap");
+      expect(content).toContain("codescope_status");
     });
 
     it("skills/orient/SKILL.md body contains phase 4 message", () => {
