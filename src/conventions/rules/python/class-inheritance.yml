@@ -1,0 +1,8 @@
+id: python-class-inheritance
+language: Python
+rule:
+  kind: class_definition
+  has:
+    kind: argument_list
+severity: info
+message: "Class with explicit base class detected"

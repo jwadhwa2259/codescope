@@ -1,0 +1,10 @@
+id: functional-component
+language: Tsx
+rule:
+  kind: function_declaration
+  has:
+    kind: return_statement
+    has:
+      kind: jsx_element
+severity: info
+message: "Functional React component detected"

@@ -1,0 +1,11 @@
+id: class-component
+language: Tsx
+rule:
+  kind: class_declaration
+  has:
+    kind: class_heritage
+    has:
+      kind: identifier
+      regex: "^(Component|PureComponent|React\\.Component|React\\.PureComponent)$"
+severity: info
+message: "Class React component detected"

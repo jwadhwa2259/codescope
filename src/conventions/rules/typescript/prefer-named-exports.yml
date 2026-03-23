@@ -1,0 +1,8 @@
+id: prefer-named-exports
+language: TypeScript
+rule:
+  kind: export_statement
+  not:
+    pattern: "export default $EXPR"
+severity: info
+message: "Named export detected"

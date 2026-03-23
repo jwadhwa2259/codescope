@@ -1,0 +1,11 @@
+id: detect-async-await
+language: TypeScript
+rule:
+  any:
+    - pattern: "async function $NAME($$$PARAMS) { $$$BODY }"
+    - pattern: "async function $NAME($$$PARAMS): $RET { $$$BODY }"
+    - pattern: "async ($$$PARAMS) => { $$$BODY }"
+    - pattern: "async ($$$PARAMS): $RET => { $$$BODY }"
+    - pattern: "async ($$$PARAMS) => $EXPR"
+severity: info
+message: "Async function detected"

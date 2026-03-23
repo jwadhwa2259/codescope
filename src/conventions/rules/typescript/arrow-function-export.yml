@@ -1,0 +1,12 @@
+id: arrow-function-export
+language: TypeScript
+rule:
+  kind: export_statement
+  has:
+    kind: lexical_declaration
+    has:
+      kind: variable_declarator
+      has:
+        kind: arrow_function
+severity: info
+message: "Arrow function export detected"

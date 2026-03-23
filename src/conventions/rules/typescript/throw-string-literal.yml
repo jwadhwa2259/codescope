@@ -1,0 +1,8 @@
+id: throw-string-literal
+language: TypeScript
+rule:
+  kind: throw_statement
+  has:
+    kind: string
+severity: info
+message: "Throw string literal detected"

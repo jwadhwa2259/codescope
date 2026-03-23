@@ -1,0 +1,8 @@
+id: python-type-hints
+language: Python
+rule:
+  kind: typed_parameter
+  inside:
+    kind: function_definition
+severity: info
+message: "Typed parameter in function definition"

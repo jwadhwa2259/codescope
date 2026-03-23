@@ -1,0 +1,6 @@
+id: detect-default-export
+language: TypeScript
+rule:
+  pattern: "export default $EXPR"
+severity: info
+message: "Default export detected"

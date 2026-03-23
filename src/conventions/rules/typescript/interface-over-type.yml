@@ -1,0 +1,6 @@
+id: interface-over-type
+language: TypeScript
+rule:
+  kind: interface_declaration
+severity: info
+message: "Interface declaration detected"

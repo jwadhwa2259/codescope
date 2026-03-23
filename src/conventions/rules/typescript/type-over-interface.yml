@@ -1,0 +1,6 @@
+id: type-over-interface
+language: TypeScript
+rule:
+  kind: type_alias_declaration
+severity: info
+message: "Type alias declaration detected"

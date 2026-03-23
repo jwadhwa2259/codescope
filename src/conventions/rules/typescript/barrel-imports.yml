@@ -1,0 +1,10 @@
+id: barrel-imports
+language: TypeScript
+rule:
+  kind: import_statement
+  has:
+    kind: import_clause
+    has:
+      kind: namespace_import
+severity: info
+message: "Barrel/namespace import detected"

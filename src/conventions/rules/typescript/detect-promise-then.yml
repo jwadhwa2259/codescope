@@ -1,0 +1,6 @@
+id: detect-promise-then
+language: TypeScript
+rule:
+  pattern: "$PROMISE.then($$$ARGS)"
+severity: info
+message: "Promise .then() chain detected"

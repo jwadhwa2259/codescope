@@ -1,0 +1,9 @@
+id: explicit-return-type
+language: TypeScript
+rule:
+  kind: function_declaration
+  has:
+    kind: type_annotation
+    field: return_type
+severity: info
+message: "Function with explicit return type detected"

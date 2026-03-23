@@ -1,0 +1,11 @@
+id: python-docstrings
+language: Python
+rule:
+  kind: expression_statement
+  has:
+    kind: string
+  inside:
+    kind: function_definition
+    stopBy: end
+severity: info
+message: "Docstring detected in function"

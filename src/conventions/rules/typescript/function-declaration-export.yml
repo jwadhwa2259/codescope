@@ -1,0 +1,8 @@
+id: function-declaration-export
+language: TypeScript
+rule:
+  kind: export_statement
+  has:
+    kind: function_declaration
+severity: info
+message: "Function declaration export detected"
