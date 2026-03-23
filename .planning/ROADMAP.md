@@ -35,11 +35,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 5 plans
 
 Plans:
-- [ ] 01-01-PLAN.md -- Project scaffolding + plugin skeleton + filesystem utilities
-- [ ] 01-02-PLAN.md -- Config system (Zod schema, loader, writer) + MCP server with 11 tools
-- [ ] 01-03-PLAN.md -- AST parsing (web-tree-sitter pool, extraction API) + import resolution (TS/JS, Python)
-- [ ] 01-04-PLAN.md -- SQLite graph schema (nodes, edges, communities) + JSONL batch writer
-- [ ] 01-05-PLAN.md -- Onboarding skill (project detection, global memory, full interactive flow)
+- [x] 01-01-PLAN.md -- Project scaffolding + plugin skeleton + filesystem utilities
+- [x] 01-02-PLAN.md -- Config system (Zod schema, loader, writer) + MCP server with 11 tools
+- [x] 01-03-PLAN.md -- AST parsing (web-tree-sitter pool, extraction API) + import resolution (TS/JS, Python)
+- [x] 01-04-PLAN.md -- SQLite graph schema (nodes, edges, communities) + JSONL batch writer
+- [x] 01-05-PLAN.md -- Onboarding skill (project detection, global memory, full interactive flow)
 
 ### Phase 2: Scout and Analysis Squad
 **Goal**: The bootstrap pipeline's individual agents work end-to-end: Scout maps project structure, Researcher writes overview, Convention Detector produces conventions with evidence, Risk Analyzer builds the knowledge graph with centrality and communities, and golden files are identified
