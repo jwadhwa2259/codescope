@@ -24,20 +24,18 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - [x] Convention Detector: ast-grep frequency analysis, conflict detection, golden files → conventions.md — *Validated in Phase 2*
 - [x] Risk Analyzer: knowledge graph construction, centrality, communities, danger zones → danger-zones.md — *Validated in Phase 2*
 - [x] Learning Synthesizer: learnings.md schema initialization — *Validated in Phase 2*
+- [x] `/codescope:bootstrap` — full autonomous codebase analysis pipeline with monorepo squad scaling, cross-service synthesis, AI readiness scoring — *Validated in Phase 3: Bootstrap Synthesis and MCP Server*
+- [x] MCP server with 11 operational tools (status, recall, graph_query, blast_radius, conventions, orient, verify, search, readiness, detect_changes, service_map) — *Validated in Phase 3*
+- [x] Graph cache with 5-min TTL for sub-100ms tool queries — *Validated in Phase 3*
+- [x] D-17/D-18/D-19 MCP response contract (ok/error/partial envelopes with staleness metadata) — *Validated in Phase 3*
+- [x] AI readiness score (4 dimensions, A-F grades, delta tracking, improvement suggestions) — *Validated in Phase 3*
+- [x] Incremental re-bootstrap via git diff with 50% threshold — *Validated in Phase 3*
+- [x] Bootstrap --force confirmation (D-30: shows rebuilt vs preserved before proceeding) — *Validated in Phase 3*
 
 ### Active
 
 - [x] Plugin skeleton with manifest, skills, hooks, and scripts
 - [x] `/codescope:onboard` — interactive config creation (project detection, agent model selection, workflow preferences)
-- [ ] `/codescope:bootstrap` — full autonomous codebase analysis pipeline
-  - Scout agent: maps service boundaries, produces service manifest
-  - Researcher agent: maps structure, frameworks, entry points → overview.md
-  - Convention Detector: ast-grep frequency analysis, trend detection, golden files, conflict detection → conventions.md
-  - Risk Analyzer: knowledge graph construction, in-degree centrality, danger zones → danger-zones.md, graph.db
-  - Learning Synthesizer: initialize learnings.md
-  - Synthesis agent: cross-service dependency map, merged conventions, AI readiness score
-  - Squad scaling: 1 squad under 100K LOC, per-service squads above, configurable cap
-- [ ] MCP server with 11 tools (codescope_recall, codescope_graph_query, codescope_blast_radius, codescope_conventions, codescope_orient, codescope_verify, codescope_search, codescope_readiness, codescope_status, codescope_detect_changes, codescope_service_map)
 - [ ] `/codescope:orient [task]` — full autonomous pipeline trigger
   - Phase A: Graph-informed deep clarification (scope contract: in-scope / out-of-scope)
   - Phase B: Research sub-agent (Context7 + web search)
@@ -132,4 +130,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-23 — added dual-mode execution decision (sequential + agent teams) for Phase 4; all bootstrap analysis agents operational from Phase 2*
+*Last updated: 2026-03-23 — Phase 3 complete: 11 MCP tools operational, bootstrap orchestrator with monorepo scaling, AI readiness scoring, graph cache for sub-100ms queries*
