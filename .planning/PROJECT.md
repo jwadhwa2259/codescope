@@ -12,12 +12,17 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Plugin skeleton with manifest, skills, hooks, and scripts — *Validated in Phase 1: Plugin Foundation and Infrastructure*
+- [x] `/codescope:onboard` — interactive config creation (project detection, agent model selection, workflow preferences) — *Validated in Phase 1*
+- [x] SQLite knowledge graph (better-sqlite3) with nodes, edges, communities tables — *Validated in Phase 1*
+- [x] web-tree-sitter WASM parsing for TS/JS/Python — *Validated in Phase 1*
+- [x] Import resolution: enhanced-resolve + tsconfig-paths (TS/JS), filesystem-based (Python ~80%) — *Validated in Phase 1*
+- [x] Persistent file structure under .claude/codescope/ — *Validated in Phase 1 (directory tree creation)*
 
 ### Active
 
-- [ ] Plugin skeleton with manifest, skills, hooks, and scripts
-- [ ] `/codescope:onboard` — interactive config creation (project detection, agent model selection, workflow preferences)
+- [x] Plugin skeleton with manifest, skills, hooks, and scripts
+- [x] `/codescope:onboard` — interactive config creation (project detection, agent model selection, workflow preferences)
 - [ ] `/codescope:bootstrap` — full autonomous codebase analysis pipeline
   - Scout agent: maps service boundaries, produces service manifest
   - Researcher agent: maps structure, frameworks, entry points → overview.md
@@ -45,11 +50,11 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - [ ] Learning system — project memory (learnings.md, max 50, UNVERIFIED default, confidence decay, contradiction detection) + global memory (~/.codescope/global-memory.md)
 - [ ] `/codescope:review-learnings` — review and confirm/reject accumulated learnings
 - [ ] `/codescope:settings` — interactive configuration changes
-- [ ] SQLite knowledge graph (better-sqlite3) with nodes, edges, communities tables
-- [ ] web-tree-sitter WASM parsing for TS/JS/Python
-- [ ] Import resolution: enhanced-resolve + tsconfig-paths (TS/JS), ast-grep patterns (Python ~80%)
+- [x] SQLite knowledge graph (better-sqlite3) with nodes, edges, communities tables
+- [x] web-tree-sitter WASM parsing for TS/JS/Python
+- [x] Import resolution: enhanced-resolve + tsconfig-paths (TS/JS), filesystem-based (Python ~80%)
 - [ ] Graph analysis: graphology (in-degree centrality, Louvain community detection, BFS blast radius)
-- [ ] Persistent file structure under .claude/codescope/ (config.md, overview.md, conventions.md, conventions-enforced.md, danger-zones.md, readiness.md, golden-files.md, learnings.md, graph.db, services/, orient/, plans/, execution/, reports/)
+- [x] Persistent file structure under .claude/codescope/ (directory tree creation, .gitignore management)
 
 ### Out of Scope
 
@@ -115,4 +120,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-22 after initialization*
+*Last updated: 2026-03-23 after Phase 1 completion — plugin foundation, parsing, graph, and onboarding infrastructure in place*
