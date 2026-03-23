@@ -18,6 +18,12 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - [x] web-tree-sitter WASM parsing for TS/JS/Python — *Validated in Phase 1*
 - [x] Import resolution: enhanced-resolve + tsconfig-paths (TS/JS), filesystem-based (Python ~80%) — *Validated in Phase 1*
 - [x] Persistent file structure under .claude/codescope/ — *Validated in Phase 1 (directory tree creation)*
+- [x] Graph analysis: graphology (in-degree centrality, Louvain community detection, BFS blast radius) — *Validated in Phase 2: Scout and Analysis Squad*
+- [x] Scout agent: service-manifest.md with LOC, frameworks, entry points, CI/CD — *Validated in Phase 2*
+- [x] Researcher agent: overview.md covering structure, frameworks, entry points, key directories — *Validated in Phase 2*
+- [x] Convention Detector: ast-grep frequency analysis, conflict detection, golden files → conventions.md — *Validated in Phase 2*
+- [x] Risk Analyzer: knowledge graph construction, centrality, communities, danger zones → danger-zones.md — *Validated in Phase 2*
+- [x] Learning Synthesizer: learnings.md schema initialization — *Validated in Phase 2*
 
 ### Active
 
@@ -53,7 +59,7 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - [x] SQLite knowledge graph (better-sqlite3) with nodes, edges, communities tables
 - [x] web-tree-sitter WASM parsing for TS/JS/Python
 - [x] Import resolution: enhanced-resolve + tsconfig-paths (TS/JS), filesystem-based (Python ~80%)
-- [ ] Graph analysis: graphology (in-degree centrality, Louvain community detection, BFS blast radius)
+- [x] Graph analysis: graphology (in-degree centrality, Louvain community detection, BFS blast radius)
 - [x] Persistent file structure under .claude/codescope/ (directory tree creation, .gitignore management)
 
 ### Out of Scope
@@ -120,4 +126,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-23 after Phase 1 completion — plugin foundation, parsing, graph, and onboarding infrastructure in place*
+*Last updated: 2026-03-23 after Phase 2 completion — all bootstrap analysis agents operational (Scout, Researcher, Convention Detector, Risk Analyzer, Learning Synthesizer), graph analytics with centrality/communities/blast radius, convention detection with 18 ast-grep rules*
