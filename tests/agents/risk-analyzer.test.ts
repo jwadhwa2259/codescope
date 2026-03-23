@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from "vitest";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
@@ -9,6 +9,16 @@ import {
   type RiskAnalyzerOptions,
   type RiskAnalyzerResult,
 } from "../../src/agents/risk-analyzer.js";
+
+// ---------------------------------------------------------------------------
+// Grammar setup
+// ---------------------------------------------------------------------------
+
+const grammarDir = path.resolve("grammars");
+const grammarsExist =
+  fs.existsSync(path.join(grammarDir, "tree-sitter-typescript.wasm")) &&
+  fs.existsSync(path.join(grammarDir, "tree-sitter-javascript.wasm")) &&
+  fs.existsSync(path.join(grammarDir, "tree-sitter-python.wasm"));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -134,11 +144,19 @@ function createMinimalProject(dir: string): void {
 // Test suite
 // ---------------------------------------------------------------------------
 
-describe("Risk Analyzer Agent", () => {
+describe.skipIf(!grammarsExist)("Risk Analyzer Agent", () => {
   let projectDir: string;
   let outputDir: string;
   let dbPath: string;
   let batchDir: string;
+
+  beforeAll(() => {
+    process.env.CODESCOPE_GRAMMAR_DIR = grammarDir;
+  });
+
+  afterAll(() => {
+    delete process.env.CODESCOPE_GRAMMAR_DIR;
+  });
 
   beforeEach(() => {
     projectDir = makeTmpDir("project");
