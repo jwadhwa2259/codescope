@@ -34,8 +34,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **BOOT-05**: Convention Detector runs ast-grep frequency analysis and produces conventions.md with adoption %, trend direction (Rising/Declining/Stable), golden files, conflict detection (>20% competing patterns), and evidence chains
 - [x] **BOOT-06**: Convention detection false positive rate below 5% for high-confidence patterns (>80% adoption, >10 files)
 - [x] **BOOT-07**: Risk Analyzer builds SQLite knowledge graph (better-sqlite3) with nodes, edges, communities tables and calculates in-degree centrality for file importance
-- [ ] **BOOT-08**: Risk Analyzer produces danger-zones.md with high-centrality nodes, high-churn files, and cross-boundary dependencies
-- [ ] **BOOT-09**: Learning Synthesizer initializes learnings.md (empty or minimal initial observations)
+- [x] **BOOT-08**: Risk Analyzer produces danger-zones.md with high-centrality nodes, high-churn files, and cross-boundary dependencies
+- [x] **BOOT-09**: Learning Synthesizer initializes learnings.md (empty or minimal initial observations)
 - [x] **BOOT-10**: Golden files identified and written to golden-files.md ranked by modern pattern density
 
 ### Bootstrap — Synthesis & Scaling
@@ -220,8 +220,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BOOT-05 | Phase 2 | Complete |
 | BOOT-06 | Phase 2 | Complete |
 | BOOT-07 | Phase 2 | Complete |
-| BOOT-08 | Phase 2 | Pending |
-| BOOT-09 | Phase 2 | Pending |
+| BOOT-08 | Phase 2 | Complete |
+| BOOT-09 | Phase 2 | Complete |
 | BOOT-10 | Phase 2 | Complete |
 | BOOT-11 | Phase 3 | Pending |
 | BOOT-12 | Phase 3 | Pending |

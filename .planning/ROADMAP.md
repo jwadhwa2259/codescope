@@ -56,8 +56,8 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md -- Graph builder pipeline + graph analytics (centrality, communities, BFS blast radius)
 - [x] 02-02-PLAN.md -- Convention detection (ast-grep rules, runner, adoption calculator, golden files)
-- [ ] 02-03-PLAN.md -- Scout agent (service-manifest.md) + Researcher agent (overview.md)
-- [ ] 02-04-PLAN.md -- Risk Analyzer, Convention Detector, and Learning Synthesizer agents
+- [x] 02-03-PLAN.md -- Scout agent (service-manifest.md) + Researcher agent (overview.md)
+- [x] 02-04-PLAN.md -- Risk Analyzer, Convention Detector, and Learning Synthesizer agents
 
 ### Phase 3: Bootstrap Synthesis and MCP Server
 **Goal**: The /codescope:bootstrap command works end-to-end for both single projects and monorepos, the full analysis pipeline produces all artifacts with an AI readiness score, and all 11 MCP tools are operational with graph queries under 100ms
