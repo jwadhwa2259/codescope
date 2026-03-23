@@ -74,9 +74,9 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md -- Graph cache with TTL, MCP response helpers, bootstrap metadata, codescope_status D-17 update
 - [x] 03-02-PLAN.md -- File-reading MCP tools (recall, conventions, readiness, service-map)
-- [ ] 03-03-PLAN.md -- Graph-querying MCP tools (graph-query, blast-radius, search, detect-changes)
+- [x] 03-03-PLAN.md -- Graph-querying MCP tools (graph-query, blast-radius, search, detect-changes)
 - [x] 03-04-PLAN.md -- Bootstrap orchestrator, synthesis, readiness scoring, incremental re-bootstrap
-- [ ] 03-05-PLAN.md -- Orient + verify tools, tool registration wiring, MCP server, bootstrap skill body
+- [x] 03-05-PLAN.md -- Orient + verify tools, tool registration wiring, MCP server, bootstrap skill body
 
 ### Phase 4: Orient and Execution Engine
 **Goal**: The /codescope:orient command takes a user task description and autonomously produces a scope contract, researches external context, analyzes graph impact, generates a dependency-ordered execution plan, and spawns agents using hybrid execution — the planner always analyzes the dependency graph and picks agent teams for independent work, sequential for dependent work, and wave-based for mixed workloads, with filesystem coordination as the universal audit trail

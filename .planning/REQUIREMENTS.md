@@ -66,13 +66,13 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### MCP Server
 
-- [ ] **MCP-01**: MCP server implemented with @modelcontextprotocol/sdk using StdioServerTransport
+- [x] **MCP-01**: MCP server implemented with @modelcontextprotocol/sdk using StdioServerTransport
 - [x] **MCP-02**: `codescope_recall` tool — retrieve conventions, learnings, overview for a topic
 - [x] **MCP-03**: `codescope_graph_query` tool — query knowledge graph (neighbors, paths, communities)
 - [x] **MCP-04**: `codescope_blast_radius` tool — BFS traversal with hop-distance classification
 - [x] **MCP-05**: `codescope_conventions` tool — get conventions for specific files/modules
-- [ ] **MCP-06**: `codescope_orient` tool — generate orient brief programmatically
-- [ ] **MCP-07**: `codescope_verify` tool — run verification checks programmatically
+- [x] **MCP-06**: `codescope_orient` tool — generate orient brief programmatically
+- [x] **MCP-07**: `codescope_verify` tool — run verification checks programmatically
 - [x] **MCP-08**: `codescope_search` tool — hybrid search (graph + text) across the codebase
 - [x] **MCP-09**: `codescope_readiness` tool — get AI readiness score
 - [x] **MCP-10**: `codescope_status` tool — current state (last bootstrap, active task, etc.)
@@ -244,13 +244,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GRPH-04 | Phase 2 | Complete |
 | GRPH-05 | Phase 3 | Complete |
 | GRPH-06 | Phase 3 | Complete |
-| MCP-01 | Phase 3 | Pending |
+| MCP-01 | Phase 3 | Complete |
 | MCP-02 | Phase 3 | Complete |
 | MCP-03 | Phase 3 | Complete |
 | MCP-04 | Phase 3 | Complete |
 | MCP-05 | Phase 3 | Complete |
-| MCP-06 | Phase 3 | Pending |
-| MCP-07 | Phase 3 | Pending |
+| MCP-06 | Phase 3 | Complete |
+| MCP-07 | Phase 3 | Complete |
 | MCP-08 | Phase 3 | Complete |
 | MCP-09 | Phase 3 | Complete |
 | MCP-10 | Phase 3 | Complete |
