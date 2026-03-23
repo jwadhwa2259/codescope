@@ -4,6 +4,8 @@ import * as fs from "node:fs";
 import * as childProcess from "node:child_process";
 import { configExists } from "../config/loader.js";
 import { getGraphDbPath } from "../utils/paths.js";
+import { okResponse, buildMetadata } from "./helpers.js";
+import { readBootstrapMeta } from "../bootstrap/meta.js";
 
 export interface StatusResponse {
   config_exists: boolean;
@@ -53,7 +55,7 @@ export async function getStatus(
   const status: StatusResponse = {
     config_exists: hasConfig,
     bootstrap_completed: hasGraphDb && graphNodes > 0,
-    last_bootstrap: null, // TODO: read from metadata in graph.db
+    last_bootstrap: readBootstrapMeta(projectRoot)?.last_bootstrap ?? null,
     graph_nodes: graphNodes,
     graph_edges: graphEdges,
     dependency_health: {
@@ -67,6 +69,19 @@ export async function getStatus(
   };
 
   return status;
+}
+
+/**
+ * Formats a status response in D-17 envelope format.
+ * Extracted for testability without requiring MCP transport.
+ */
+export async function formatStatusResponse(
+  projectRoot: string,
+  verbose?: boolean,
+): Promise<{ content: Array<{ type: "text"; text: string }> }> {
+  const startMs = Date.now();
+  const status = await getStatus(projectRoot, verbose);
+  return okResponse(status, buildMetadata(projectRoot, startMs));
 }
 
 /**
@@ -86,12 +101,7 @@ export function registerStatusTool(
         .describe("Include detailed dependency health"),
     },
     async ({ verbose }) => {
-      const status = await getStatus(projectRoot, verbose);
-      return {
-        content: [
-          { type: "text" as const, text: JSON.stringify(status, null, 2) },
-        ],
-      };
+      return formatStatusResponse(projectRoot, verbose);
     },
   );
 }
