@@ -28,16 +28,18 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Requirements**: PLUG-01, PLUG-02, PLUG-03, PLUG-04, ONBD-01, ONBD-02, ONBD-03, ONBD-04, ONBD-05, PARS-01, PARS-02, PARS-03, PARS-04, GRPH-01
 **Success Criteria** (what must be TRUE):
   1. Plugin installs via Claude Code plugin system and MCP server starts without errors
-  2. Running /codescope:onboard detects the project type, languages, and build commands, then produces a valid config.md
+  2. Running /codescope:onboard detects the project type, languages, and build commands, then produces a valid config.yml
   3. The .claude/codescope/ directory tree exists with all required subdirectories after first use
   4. web-tree-sitter can parse TypeScript, JavaScript, and Python files with proper memory lifecycle (no leaks after 500+ files)
   5. SQLite graph database is created with nodes, edges, and communities tables and responds to basic queries
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md -- Project scaffolding + plugin skeleton + filesystem utilities
+- [ ] 01-02-PLAN.md -- Config system (Zod schema, loader, writer) + MCP server with 11 tools
+- [ ] 01-03-PLAN.md -- AST parsing (web-tree-sitter pool, extraction API) + import resolution (TS/JS, Python)
+- [ ] 01-04-PLAN.md -- SQLite graph schema (nodes, edges, communities) + JSONL batch writer
+- [ ] 01-05-PLAN.md -- Onboarding skill (project detection, global memory, full interactive flow)
 
 ### Phase 2: Scout and Analysis Squad
 **Goal**: The bootstrap pipeline's individual agents work end-to-end: Scout maps project structure, Researcher writes overview, Convention Detector produces conventions with evidence, Risk Analyzer builds the knowledge graph with centrality and communities, and golden files are identified
@@ -147,7 +149,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Plugin Foundation and Infrastructure | 0/3 | Not started | - |
+| 1. Plugin Foundation and Infrastructure | 0/5 | Planned | - |
 | 2. Scout and Analysis Squad | 0/3 | Not started | - |
 | 3. Bootstrap Synthesis and MCP Server | 0/3 | Not started | - |
 | 4. Orient and Execution Engine | 0/3 | Not started | - |
