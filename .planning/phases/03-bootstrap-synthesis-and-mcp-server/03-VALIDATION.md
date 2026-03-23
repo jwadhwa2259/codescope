@@ -7,7 +7,7 @@ wave_0_complete: false
 created: 2026-03-23
 ---
 
-# Phase 3 — Validation Strategy
+# Phase 3 -- Validation Strategy
 
 > Per-phase validation contract for feedback sampling during execution.
 
@@ -38,53 +38,52 @@ created: 2026-03-23
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 03-01-01 | 01 | 1 | GRPH-05 | unit | `npx vitest run tests/graph/cache.test.ts` | ❌ W0 | ⬜ pending |
-| 03-01-02 | 01 | 1 | MCP-01 | unit | `npx vitest run tests/tools/helpers.test.ts` | ❌ W0 | ⬜ pending |
-| 03-02-01 | 02 | 2 | MCP-02 | unit | `npx vitest run tests/tools/recall.test.ts` | ❌ W0 | ⬜ pending |
-| 03-02-02 | 02 | 2 | MCP-03 | unit | `npx vitest run tests/tools/graph-query.test.ts` | ❌ W0 | ⬜ pending |
-| 03-02-03 | 02 | 2 | MCP-04 | unit | `npx vitest run tests/tools/blast-radius.test.ts` | ❌ W0 | ⬜ pending |
-| 03-02-04 | 02 | 2 | MCP-05 | unit | `npx vitest run tests/tools/conventions.test.ts` | ❌ W0 | ⬜ pending |
-| 03-02-05 | 02 | 2 | MCP-06 | unit | `npx vitest run tests/tools/orient.test.ts` | ❌ W0 | ⬜ pending |
-| 03-02-06 | 02 | 2 | MCP-07 | unit | `npx vitest run tests/tools/verify.test.ts` | ❌ W0 | ⬜ pending |
-| 03-02-07 | 02 | 2 | MCP-08 | unit | `npx vitest run tests/tools/search.test.ts` | ❌ W0 | ⬜ pending |
-| 03-02-08 | 02 | 2 | MCP-09 | unit | `npx vitest run tests/tools/readiness.test.ts` | ❌ W0 | ⬜ pending |
-| 03-02-09 | 02 | 2 | MCP-10 | unit | `npx vitest run tests/tools/status.test.ts` | ✅ (update) | ⬜ pending |
-| 03-02-10 | 02 | 2 | MCP-11 | unit | `npx vitest run tests/tools/detect-changes.test.ts` | ❌ W0 | ⬜ pending |
-| 03-02-11 | 02 | 2 | MCP-12 | unit | `npx vitest run tests/tools/service-map.test.ts` | ❌ W0 | ⬜ pending |
-| 03-03-01 | 03 | 3 | BOOT-11 | integration | `npx vitest run tests/bootstrap/orchestrator.test.ts -t "monorepo"` | ❌ W0 | ⬜ pending |
-| 03-03-02 | 03 | 3 | BOOT-12 | unit | `npx vitest run tests/bootstrap/orchestrator.test.ts -t "squad cap"` | ❌ W0 | ⬜ pending |
-| 03-03-03 | 03 | 3 | BOOT-13 | unit | `npx vitest run tests/bootstrap/synthesis.test.ts` | ❌ W0 | ⬜ pending |
-| 03-03-04 | 03 | 3 | BOOT-14 | unit | `npx vitest run tests/bootstrap/readiness.test.ts` | ❌ W0 | ⬜ pending |
-| 03-03-05 | 03 | 3 | BOOT-15 | unit | `npx vitest run tests/bootstrap/orchestrator.test.ts -t "conventions-enforced"` | ❌ W0 | ⬜ pending |
-| 03-03-06 | 03 | 3 | BOOT-16 | unit | `npx vitest run tests/bootstrap/orchestrator.test.ts -t "timing"` | ❌ W0 | ⬜ pending |
-| 03-03-07 | 03 | 3 | GRPH-06 | unit | `npx vitest run tests/bootstrap/synthesis.test.ts -t "cross-service"` | ❌ W0 | ⬜ pending |
-| 03-04-01 | 04 | 4 | BOOT-11 | integration | `npx vitest run tests/bootstrap/orchestrator.test.ts` | ❌ W0 | ⬜ pending |
-| 03-04-02 | 04 | 4 | BOOT-14 | unit | `npx vitest run tests/bootstrap/readiness.test.ts` | ❌ W0 | ⬜ pending |
-| 03-04-03 | 04 | 4 | BOOT-14 | unit | `npx vitest run tests/bootstrap/incremental.test.ts` | ❌ W0 | ⬜ pending |
+| 03-01-01 | 01 | 1 | GRPH-05 | unit | `npx vitest run tests/graph/cache.test.ts` | -- W0 | pending |
+| 03-01-02 | 01 | 1 | MCP-10 | unit | `npx vitest run tests/tools/helpers.test.ts` | -- W0 | pending |
+| 03-01-03 | 01 | 1 | MCP-10 | unit | `npx vitest run tests/tools/status.test.ts` | yes (update) | pending |
+| 03-02-01 | 02 | 2 | MCP-02 | unit | `npx vitest run tests/tools/recall.test.ts` | -- W0 | pending |
+| 03-02-02 | 02 | 2 | MCP-05 | unit | `npx vitest run tests/tools/conventions.test.ts` | -- W0 | pending |
+| 03-02-03 | 02 | 2 | MCP-09 | unit | `npx vitest run tests/tools/readiness-tool.test.ts` | -- W0 | pending |
+| 03-02-04 | 02 | 2 | MCP-12 | unit | `npx vitest run tests/tools/service-map.test.ts` | -- W0 | pending |
+| 03-03-01 | 03 | 2 | MCP-03 | unit | `npx vitest run tests/tools/graph-query.test.ts` | -- W0 | pending |
+| 03-03-02 | 03 | 2 | MCP-04 | unit | `npx vitest run tests/tools/blast-radius.test.ts` | -- W0 | pending |
+| 03-03-03 | 03 | 2 | MCP-08 | unit | `npx vitest run tests/tools/search.test.ts` | -- W0 | pending |
+| 03-03-04 | 03 | 2 | MCP-11 | unit | `npx vitest run tests/tools/detect-changes.test.ts` | -- W0 | pending |
+| 03-04-01 | 04 | 2 | BOOT-14 | unit | `npx vitest run tests/bootstrap/readiness.test.ts` | -- W0 | pending |
+| 03-04-02 | 04 | 2 | BOOT-14 | unit | `npx vitest run tests/bootstrap/incremental.test.ts` | -- W0 | pending |
+| 03-04-03 | 04 | 2 | BOOT-11 | integration | `npx vitest run tests/bootstrap/orchestrator.test.ts` | -- W0 | pending |
+| 03-04-04 | 04 | 2 | BOOT-12 | unit | `npx vitest run tests/bootstrap/orchestrator.test.ts -t "squad cap"` | -- W0 | pending |
+| 03-04-05 | 04 | 2 | BOOT-13 | unit | `npx vitest run tests/bootstrap/synthesis.test.ts` | -- W0 | pending |
+| 03-04-06 | 04 | 2 | BOOT-15 | unit | `npx vitest run tests/bootstrap/orchestrator.test.ts -t "conventions-enforced"` | -- W0 | pending |
+| 03-04-07 | 04 | 2 | BOOT-16 | unit | `npx vitest run tests/bootstrap/orchestrator.test.ts -t "timing"` | -- W0 | pending |
+| 03-04-08 | 04 | 2 | GRPH-06 | unit | `npx vitest run tests/bootstrap/synthesis.test.ts -t "cross-service"` | -- W0 | pending |
+| 03-05-01 | 05 | 3 | MCP-06 | unit | `npx vitest run tests/tools/orient.test.ts` | -- W0 | pending |
+| 03-05-02 | 05 | 3 | MCP-07 | unit | `npx vitest run tests/tools/verify.test.ts` | -- W0 | pending |
+| 03-05-03 | 05 | 3 | MCP-01 | integration | `npx vitest run` | yes | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `tests/graph/cache.test.ts` — graph cache TTL, invalidation, lazy loading (GRPH-05)
-- [ ] `tests/tools/helpers.test.ts` — response builders, staleness calc (MCP-01)
-- [ ] `tests/tools/recall.test.ts` — topic matching, artifact reading (MCP-02)
-- [ ] `tests/tools/graph-query.test.ts` — neighbors, paths, communities queries (MCP-03)
-- [ ] `tests/tools/blast-radius.test.ts` — BFS, hop classification, node-not-found (MCP-04)
-- [ ] `tests/tools/conventions.test.ts` — file/module filtering (MCP-05)
-- [ ] `tests/tools/orient.test.ts` — keyword extraction, graph walk, brief generation (MCP-06)
-- [ ] `tests/tools/verify.test.ts` — convention compliance (MCP-07)
-- [ ] `tests/tools/search.test.ts` — graph-based symbol/file/relationship search (MCP-08)
-- [ ] `tests/tools/readiness.test.ts` — structured score response (MCP-09)
-- [ ] `tests/tools/detect-changes.test.ts` — git diff parsing, risk classification (MCP-11)
-- [ ] `tests/tools/service-map.test.ts` — service list, dependencies, single-project (MCP-12)
-- [ ] `tests/bootstrap/orchestrator.test.ts` — pipeline sequencing, monorepo, squad cap, timing (BOOT-11/12/15/16)
-- [ ] `tests/bootstrap/synthesis.test.ts` — cross-service deps, merged conventions (BOOT-13, GRPH-06)
-- [ ] `tests/bootstrap/readiness.test.ts` — 4-dimension scoring, grading, delta tracking (BOOT-14)
-- [ ] `tests/bootstrap/incremental.test.ts` — git diff detection, threshold, --force (BOOT-14)
-- [ ] Update `tests/tools/status.test.ts` — verify D-17 response format wrapper (MCP-10)
+- [ ] `tests/graph/cache.test.ts` -- graph cache TTL, invalidation, lazy loading (GRPH-05)
+- [ ] `tests/tools/helpers.test.ts` -- response builders, staleness calc (MCP-10)
+- [ ] `tests/tools/recall.test.ts` -- topic matching, artifact reading (MCP-02)
+- [ ] `tests/tools/graph-query.test.ts` -- neighbors, paths, communities queries (MCP-03)
+- [ ] `tests/tools/blast-radius.test.ts` -- BFS, hop classification, node-not-found (MCP-04)
+- [ ] `tests/tools/conventions.test.ts` -- file/module filtering (MCP-05)
+- [ ] `tests/tools/orient.test.ts` -- keyword extraction, graph walk, brief generation (MCP-06)
+- [ ] `tests/tools/verify.test.ts` -- convention compliance (MCP-07)
+- [ ] `tests/tools/search.test.ts` -- graph-based symbol/file/relationship search (MCP-08)
+- [ ] `tests/tools/readiness-tool.test.ts` -- structured score response (MCP-09)
+- [ ] `tests/tools/detect-changes.test.ts` -- git diff parsing, risk classification (MCP-11)
+- [ ] `tests/tools/service-map.test.ts` -- service list, dependencies, single-project (MCP-12)
+- [ ] `tests/bootstrap/orchestrator.test.ts` -- pipeline sequencing, monorepo, squad cap, timing, D-30 confirmation (BOOT-11/12/15/16)
+- [ ] `tests/bootstrap/synthesis.test.ts` -- cross-service deps, merged conventions (BOOT-13, GRPH-06)
+- [ ] `tests/bootstrap/readiness.test.ts` -- 4-dimension scoring, grading, delta tracking (BOOT-14)
+- [ ] `tests/bootstrap/incremental.test.ts` -- git diff detection, threshold, --force (BOOT-14)
+- [ ] Update `tests/tools/status.test.ts` -- verify D-17 response format wrapper (MCP-10)
 
 ---
 
