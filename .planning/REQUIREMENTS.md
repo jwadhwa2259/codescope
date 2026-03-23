@@ -61,23 +61,23 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **GRPH-02**: In-degree centrality calculation for all nodes to identify critical files
 - [x] **GRPH-03**: Louvain community detection via graphology-communities-louvain for module grouping
 - [x] **GRPH-04**: BFS blast radius traversal with hop-distance classification (hop 0 Red, hop 1 Orange, hop 2 Yellow, hop 3+ Green)
-- [ ] **GRPH-05**: Graph queries respond in under 100ms
+- [x] **GRPH-05**: Graph queries respond in under 100ms
 - [ ] **GRPH-06**: Cross-service dependency map for monorepos (which services call which, shared types, API contracts)
 
 ### MCP Server
 
 - [ ] **MCP-01**: MCP server implemented with @modelcontextprotocol/sdk using StdioServerTransport
-- [ ] **MCP-02**: `codescope_recall` tool — retrieve conventions, learnings, overview for a topic
+- [x] **MCP-02**: `codescope_recall` tool — retrieve conventions, learnings, overview for a topic
 - [ ] **MCP-03**: `codescope_graph_query` tool — query knowledge graph (neighbors, paths, communities)
 - [ ] **MCP-04**: `codescope_blast_radius` tool — BFS traversal with hop-distance classification
-- [ ] **MCP-05**: `codescope_conventions` tool — get conventions for specific files/modules
+- [x] **MCP-05**: `codescope_conventions` tool — get conventions for specific files/modules
 - [ ] **MCP-06**: `codescope_orient` tool — generate orient brief programmatically
 - [ ] **MCP-07**: `codescope_verify` tool — run verification checks programmatically
 - [ ] **MCP-08**: `codescope_search` tool — hybrid search (graph + text) across the codebase
-- [ ] **MCP-09**: `codescope_readiness` tool — get AI readiness score
-- [ ] **MCP-10**: `codescope_status` tool — current state (last bootstrap, active task, etc.)
+- [x] **MCP-09**: `codescope_readiness` tool — get AI readiness score
+- [x] **MCP-10**: `codescope_status` tool — current state (last bootstrap, active task, etc.)
 - [ ] **MCP-11**: `codescope_detect_changes` tool — map git diff to affected symbols with risk classification
-- [ ] **MCP-12**: `codescope_service_map` tool — cross-service dependency overview
+- [x] **MCP-12**: `codescope_service_map` tool — cross-service dependency overview
 
 ### Orient — Clarification
 
@@ -242,20 +242,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GRPH-02 | Phase 2 | Complete |
 | GRPH-03 | Phase 2 | Complete |
 | GRPH-04 | Phase 2 | Complete |
-| GRPH-05 | Phase 3 | Pending |
+| GRPH-05 | Phase 3 | Complete |
 | GRPH-06 | Phase 3 | Pending |
 | MCP-01 | Phase 3 | Pending |
-| MCP-02 | Phase 3 | Pending |
+| MCP-02 | Phase 3 | Complete |
 | MCP-03 | Phase 3 | Pending |
 | MCP-04 | Phase 3 | Pending |
-| MCP-05 | Phase 3 | Pending |
+| MCP-05 | Phase 3 | Complete |
 | MCP-06 | Phase 3 | Pending |
 | MCP-07 | Phase 3 | Pending |
 | MCP-08 | Phase 3 | Pending |
-| MCP-09 | Phase 3 | Pending |
-| MCP-10 | Phase 3 | Pending |
+| MCP-09 | Phase 3 | Complete |
+| MCP-10 | Phase 3 | Complete |
 | MCP-11 | Phase 3 | Pending |
-| MCP-12 | Phase 3 | Pending |
+| MCP-12 | Phase 3 | Complete |
 | ONBD-06 | Phase 4 | Pending |
 | ORNT-01 | Phase 4 | Pending |
 | ORNT-02 | Phase 4 | Pending |
