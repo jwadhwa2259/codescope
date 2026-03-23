@@ -19,7 +19,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **ONBD-01**: `/codescope:onboard` detects project type (single/monorepo), languages, build/test/E2E commands from existing config files
 - [ ] **ONBD-02**: User can select agent model assignments (researcher, convention detector, risk analyzer, learning synthesizer, eval judge, debug) during onboarding
 - [ ] **ONBD-03**: User can configure workflow preferences (orient verbosity, clarification style, eval gate mode, convention strictness) during onboarding
-- [ ] **ONBD-04**: Onboard produces .claude/codescope/config.md with all settings in structured YAML format
+- [ ] **ONBD-04**: Onboard produces .claude/codescope/config.yml with all settings in structured YAML format
 - [ ] **ONBD-05**: Onboard pulls from global memory (~/.codescope/global-memory.md) for returning users to pre-populate preferences
 
 ### Bootstrap — Scout
@@ -51,7 +51,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **PARS-01**: web-tree-sitter WASM parsing for TypeScript, JavaScript, and Python source files
 - [ ] **PARS-02**: Import resolution for TS/JS using enhanced-resolve + tsconfig-paths with 95-99% accuracy
-- [ ] **PARS-03**: Import resolution for Python using ast-grep patterns with ~80% accuracy
+- [ ] **PARS-03**: Import resolution for Python using filesystem-based resolution with ~80% accuracy
 - [ ] **PARS-04**: Parser lifecycle management: periodic parser.delete() and recreate to prevent memory leaks
 
 ### Knowledge Graph

@@ -67,7 +67,7 @@ A working Claude Code plugin that installs cleanly, creates its filesystem struc
 - **D-41:** Create all three tables (nodes, edges, communities) in Phase 1. Communities table populated later by Phase 2's Risk Analyzer with Louvain results.
 
 ### Plugin Manifest & Skill Registration
-- **D-42:** One skill file per skill: `skills/onboard.md`, `skills/bootstrap.md`, `skills/orient.md`, `skills/settings.md`, `skills/review-learnings.md`.
+- **D-42:** One skill file per skill: `skills/onboard/SKILL.md`, `skills/bootstrap/SKILL.md`, `skills/orient/SKILL.md`, `skills/settings/SKILL.md`, `skills/review-learnings/SKILL.md`.
 - **D-43:** Register all 5 skills in plugin.json from Phase 1. Unimplemented skills show: "This skill will be available after Phase N." Users see the full product surface.
 - **D-44:** No hooks registered in Phase 1. Hooks added in phases where they're needed (Phase 7 for learning hooks). Keep Phase 1 focused on the skeleton.
 - **D-45:** MCP server built with tsdown to single `dist/server.js`. `.mcp.json` points to `node dist/server.js`. Fast startup, no runtime TS compilation.
