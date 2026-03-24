@@ -38,39 +38,50 @@ created: 2026-03-23
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 04-01-01 | 01 | 1 | ONBD-06 | unit | `npx vitest run tests/onboard/agent-teams.test.ts -x` | ❌ W0 | ⬜ pending |
-| 04-01-02 | 01 | 1 | ORNT-02, ORNT-03, ORNT-04, ORNT-05 | unit | `npx vitest run tests/orient/clarification.test.ts -x` | ❌ W0 | ⬜ pending |
-| 04-01-03 | 01 | 1 | ORNT-06, ORNT-07 | unit | `npx vitest run tests/orient/research.test.ts -x` | ❌ W0 | ⬜ pending |
-| 04-01-04 | 01 | 1 | ORNT-08 | unit | `npx vitest run tests/orient/analysis.test.ts -x` | ❌ W0 | ⬜ pending |
-| 04-02-01 | 02 | 1 | ORNT-09, ORNT-10 | unit | `npx vitest run tests/orient/planner.test.ts -x` | ❌ W0 | ⬜ pending |
-| 04-02-02 | 02 | 1 | EXEC-10 | unit | `npx vitest run tests/orient/validation.test.ts -x` | ❌ W0 | ⬜ pending |
-| 04-03-01 | 03 | 2 | EXEC-01, EXEC-05 | unit | `npx vitest run tests/execution/orchestrator.test.ts -x` | ❌ W0 | ⬜ pending |
-| 04-03-02 | 03 | 2 | EXEC-02 | unit | `npx vitest run tests/execution/agent-spawner.test.ts -x` | ❌ W0 | ⬜ pending |
-| 04-03-03 | 03 | 2 | EXEC-03, EXEC-08 | unit | `npx vitest run tests/execution/coordination.test.ts -x` | ❌ W0 | ⬜ pending |
-| 04-03-04 | 03 | 2 | EXEC-04, EXEC-09 | unit | `npx vitest run tests/execution/teams-detector.test.ts -x` | ❌ W0 | ⬜ pending |
-| 04-03-05 | 03 | 2 | EXEC-07 | unit | `npx vitest run tests/execution/wave-scheduler.test.ts -x` | ❌ W0 | ⬜ pending |
-| 04-04-01 | 04 | 3 | ORNT-01, ORNT-11 | integration | `npx vitest run tests/orient/pipeline.test.ts -x` | ❌ W0 | ⬜ pending |
-| 04-04-02 | 04 | 3 | EXEC-06 | manual-only | Review orchestrator module size and prompt construction | N/A | ⬜ pending |
+| 04-01-01 | 01 | 1 | ONBD-06 | unit | `npx vitest run tests/onboard/agent-teams.test.ts -x` | W0:TDD | pending |
+| 04-01-02 | 01 | 1 | ORNT-02, ORNT-03, ORNT-04, ORNT-05 | unit | `npx vitest run tests/orient/clarification.test.ts -x` | W0:TDD | pending |
+| 04-01-03 | 01 | 1 | ORNT-06, ORNT-07 | unit | `npx vitest run tests/orient/research.test.ts -x` | W0:TDD | pending |
+| 04-01-04 | 01 | 1 | ORNT-08 | unit | `npx vitest run tests/orient/analysis.test.ts -x` | W0:TDD | pending |
+| 04-02-01 | 02 | 1 | ORNT-09, ORNT-10 | unit | `npx vitest run tests/orient/planner.test.ts -x` | W0:TDD | pending |
+| 04-02-02 | 02 | 1 | EXEC-10 | unit | `npx vitest run tests/orient/validation.test.ts -x` | W0:TDD | pending |
+| 04-03-01 | 03 | 2 | EXEC-01, EXEC-05 | unit | `npx vitest run tests/execution/orchestrator.test.ts -x` | W0:TDD | pending |
+| 04-03-02 | 03 | 2 | EXEC-02, EXEC-08 | unit | `npx vitest run tests/execution/agent-spawner.test.ts -x` | W0:TDD | pending |
+| 04-03-03 | 03 | 2 | EXEC-03 | unit | `npx vitest run tests/execution/coordination.test.ts -x` | W0:TDD | pending |
+| 04-03-04 | 03 | 2 | EXEC-04, EXEC-09 | unit | `npx vitest run tests/execution/teams-detector.test.ts -x` | W0:TDD | pending |
+| 04-03-05 | 03 | 2 | EXEC-07 | unit | `npx vitest run tests/execution/wave-scheduler.test.ts -x` | W0:TDD | pending |
+| 04-04-01 | 04 | 3 | ORNT-01, ORNT-11 | integration | `npx vitest run tests/orient/pipeline.test.ts -x` | W0:TDD | pending |
+| 04-04-02 | 04 | 3 | EXEC-06 | manual-only | Review orchestrator module size and prompt construction | N/A | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
-## Wave 0 Requirements
+## Wave 0 Strategy: TDD-First Within Tasks
 
-- [ ] `tests/onboard/agent-teams.test.ts` — stubs for ONBD-06 (agent teams detection)
-- [ ] `tests/orient/clarification.test.ts` — stubs for ORNT-02, ORNT-03, ORNT-04, ORNT-05
-- [ ] `tests/orient/research.test.ts` — stubs for ORNT-06, ORNT-07
-- [ ] `tests/orient/analysis.test.ts` — stubs for ORNT-08
-- [ ] `tests/orient/planner.test.ts` — stubs for ORNT-09, ORNT-10
-- [ ] `tests/orient/validation.test.ts` — stubs for EXEC-10
-- [ ] `tests/orient/pipeline.test.ts` — stubs for ORNT-01, ORNT-11 (integration)
-- [ ] `tests/execution/orchestrator.test.ts` — stubs for EXEC-01, EXEC-05
-- [ ] `tests/execution/agent-spawner.test.ts` — stubs for EXEC-02
-- [ ] `tests/execution/coordination.test.ts` — stubs for EXEC-03, EXEC-08
-- [ ] `tests/execution/teams-detector.test.ts` — stubs for EXEC-04, EXEC-09
-- [ ] `tests/execution/wave-scheduler.test.ts` — stubs for EXEC-07
-- [ ] `tests/orient/types.test.ts` — shared type validation for ScopeContract, ExecutionPlan, etc.
+Wave 0 is satisfied by TDD-first ordering within each plan task (all plans with `tdd="true"` tasks). The executor MUST:
+
+1. **Create test files BEFORE implementation files** within each task
+2. Write failing tests first (RED), then implement to pass (GREEN), then refactor
+3. Test files listed in `<files>` are created in order: test file first, then source file
+
+This eliminates the need for a separate Wave 0 plan with test stubs. The TDD attribute on each task (`tdd="true"`) signals the executor to follow RED-GREEN-REFACTOR ordering.
+
+### Test Files Created by TDD Tasks
+
+- [ ] `tests/orient/types.test.ts` — shared type validation for ScopeContract, ExecutionPlan, etc. (Plan 01, Task 1)
+- [ ] `tests/orient/clarification.test.ts` — ORNT-02, ORNT-03, ORNT-04, ORNT-05 (Plan 01, Task 1)
+- [ ] `tests/orient/analysis.test.ts` — ORNT-08 (Plan 01, Task 2)
+- [ ] `tests/execution/coordination.test.ts` — EXEC-03 (Plan 02, Task 1)
+- [ ] `tests/execution/teams-detector.test.ts` — EXEC-04, EXEC-09 (Plan 02, Task 1)
+- [ ] `tests/execution/wave-scheduler.test.ts` — EXEC-07 (Plan 02, Task 2)
+- [ ] `tests/onboard/agent-teams.test.ts` — ONBD-06 (Plan 03, Task 1)
+- [ ] `tests/config/schema.test.ts` — D-44 config migration (Plan 03, Task 1)
+- [ ] `tests/orient/research.test.ts` — ORNT-06, ORNT-07 (Plan 04, Task 1)
+- [ ] `tests/orient/planner.test.ts` — ORNT-09, ORNT-10 (Plan 04, Task 2)
+- [ ] `tests/orient/validation.test.ts` — EXEC-10 (Plan 04, Task 2)
+- [ ] `tests/execution/agent-spawner.test.ts` — EXEC-02, EXEC-08 (Plan 05, Task 1)
+- [ ] `tests/execution/orchestrator.test.ts` — EXEC-01, EXEC-04, EXEC-05 (Plan 05, Task 2)
+- [ ] `tests/orient/pipeline.test.ts` — ORNT-01, ORNT-11 (Plan 06, Task 1)
 
 ---
 
@@ -84,9 +95,9 @@ created: 2026-03-23
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
+- [ ] All tasks have `<automated>` verify or TDD-first ordering
 - [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
+- [ ] TDD tasks create test files before implementation files
 - [ ] No watch-mode flags
 - [ ] Feedback latency < 30s
 - [ ] `nyquist_compliant: true` set in frontmatter
