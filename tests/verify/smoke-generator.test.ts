@@ -1,6 +1,30 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ---------------------------------------------------------------------------
+// Hoisted Mocks -- these are available to vi.mock factories
+// ---------------------------------------------------------------------------
+
+const { mockTreeDelete, mockTree, mockParser, mockLanguageLoad, mockParserInit } = vi.hoisted(() => {
+  const mockTreeDelete = vi.fn();
+  const mockTree = {
+    rootNode: {
+      descendantsOfType: vi.fn().mockReturnValue([]),
+      children: [],
+      type: "program",
+    },
+    delete: mockTreeDelete,
+  };
+  const mockParser = {
+    setLanguage: vi.fn(),
+    parse: vi.fn().mockReturnValue(mockTree),
+    delete: vi.fn(),
+  };
+  const mockLanguageLoad = vi.fn().mockResolvedValue({});
+  const mockParserInit = vi.fn().mockResolvedValue(undefined);
+  return { mockTreeDelete, mockTree, mockParser, mockLanguageLoad, mockParserInit };
+});
+
+// ---------------------------------------------------------------------------
 // Mocks
 // ---------------------------------------------------------------------------
 
@@ -20,30 +44,16 @@ vi.mock("node:fs", async () => {
 });
 
 // Mock web-tree-sitter
-const mockTreeDelete = vi.fn();
-const mockTree = {
-  rootNode: {
-    descendantsOfType: vi.fn().mockReturnValue([]),
-    children: [],
-    type: "program",
-  },
-  delete: mockTreeDelete,
-};
-
-const mockParser = {
-  setLanguage: vi.fn(),
-  parse: vi.fn().mockReturnValue(mockTree),
-  delete: vi.fn(),
-};
-
-const mockLanguageLoad = vi.fn().mockResolvedValue({});
-const mockParserInit = vi.fn().mockResolvedValue(undefined);
-
 vi.mock("web-tree-sitter", () => {
-  const ParserClass = vi.fn().mockImplementation(() => mockParser);
-  (ParserClass as any).init = mockParserInit;
-  (ParserClass as any).Language = { load: mockLanguageLoad };
-  return { Parser: ParserClass, Language: { load: mockLanguageLoad }, default: ParserClass };
+  // Use a real class so `new Parser()` works
+  class MockParser {
+    setLanguage = mockParser.setLanguage;
+    parse = mockParser.parse;
+    delete = mockParser.delete;
+    static init = mockParserInit;
+    static Language = { load: mockLanguageLoad };
+  }
+  return { Parser: MockParser, Language: { load: mockLanguageLoad }, default: MockParser };
 });
 
 // Mock parser/languages for grammar path resolution
@@ -295,6 +305,7 @@ describe("smoke-generator", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockTreeDelete.mockClear();
+    mockParser.parse.mockReturnValue(mockTree);
   });
 
   describe("detectNewEndpoints", () => {

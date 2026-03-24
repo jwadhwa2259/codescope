@@ -59,16 +59,16 @@ function createMockProcess(pid: number): {
 // ---------------------------------------------------------------------------
 
 describe("server-lifecycle", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   describe("startServer", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it("Test 1: spawns process with detached: true for process group killing", async () => {
       const { process: mockProc } = createMockProcess(12345);
       vi.mocked(spawn).mockReturnValue(mockProc);
@@ -172,18 +172,29 @@ describe("server-lifecycle", () => {
         timeoutSeconds: 3,
       });
 
-      // Advance past timeout
-      await vi.advanceTimersByTimeAsync(4000);
+      // Suppress unhandled rejection from the promise during timer advancement
+      promise.catch(() => {});
+
+      // Advance past timeout -- need to advance past multiple poll cycles
+      for (let i = 0; i < 5; i++) {
+        await vi.advanceTimersByTimeAsync(1000);
+      }
 
       await expect(promise).rejects.toThrow(/timeout/i);
     });
   });
 
   describe("stopServer", () => {
+    // stopServer uses real sleep internally; we use real timers here
+    // and mock the port checking (execSync for lsof) to be fast
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
     it("Test 6: sends SIGTERM to process group via negative PID", async () => {
       const killSpy = vi.spyOn(process, "kill").mockImplementation(() => true);
 
-      // Port is free immediately
+      // Port is free immediately (lsof throws = no process)
       vi.mocked(execSync).mockImplementation(() => {
         throw new Error("no process");
       });
@@ -198,25 +209,14 @@ describe("server-lifecycle", () => {
 
       expect(killSpy).toHaveBeenCalledWith(-12345, "SIGTERM");
       killSpy.mockRestore();
-    });
+    }, 15000);
 
     it("Test 7: force-kills via lsof if port still in use after 3s", async () => {
       const killSpy = vi.spyOn(process, "kill").mockImplementation(() => true);
 
-      // First calls: port is still in use (lsof returns PID)
-      // Then after force kill: port is free
-      let callCount = 0;
-      vi.mocked(execSync).mockImplementation((cmd: string) => {
-        const cmdStr = String(cmd);
-        if (cmdStr.includes("lsof")) {
-          callCount++;
-          if (callCount <= 7) {
-            // Port in use for all polling calls and the force-kill query
-            return Buffer.from("99999");
-          }
-          throw new Error("no process"); // Port finally free
-        }
-        return Buffer.from("");
+      // Port is always in use (lsof returns a PID string)
+      vi.mocked(execSync).mockImplementation(() => {
+        return "99999\n";
       });
 
       const handle: ServerHandle = {
@@ -225,20 +225,13 @@ describe("server-lifecycle", () => {
         pid: 12345,
       };
 
-      const promise = stopServer(handle);
-
-      // Advance through the 500ms port checks up to 3s, then force kill
-      for (let i = 0; i < 10; i++) {
-        await vi.advanceTimersByTimeAsync(500);
-      }
-
-      await promise;
+      await stopServer(handle);
 
       // Should have attempted SIGTERM on process group first
       expect(killSpy).toHaveBeenCalledWith(-12345, "SIGTERM");
       // Should have force-killed the process occupying the port
       expect(killSpy).toHaveBeenCalledWith(99999, "SIGKILL");
       killSpy.mockRestore();
-    });
+    }, 15000);
   });
 });
