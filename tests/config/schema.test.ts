@@ -121,6 +121,29 @@ describe("ConfigSchema", () => {
     const result = ConfigSchema.safeParse(config);
     expect(result.success).toBe(false);
   });
+
+  it("accepts config with execute.parallel present (backward compat, D-44)", () => {
+    const config = validConfig();
+    config.execute.parallel = "sequential" as any;
+    const result = ConfigSchema.safeParse(config);
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts config WITHOUT execute.parallel (new configs, D-44)", () => {
+    const config = validConfig();
+    const { parallel, ...executeWithout } = config.execute;
+    (config as any).execute = executeWithout;
+    const result = ConfigSchema.safeParse(config);
+    expect(result.success).toBe(true);
+  });
+
+  it("still requires execute.max_agents_concurrent", () => {
+    const config = validConfig();
+    const { max_agents_concurrent, ...executeWithout } = config.execute;
+    (config as any).execute = executeWithout;
+    const result = ConfigSchema.safeParse(config);
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("AgentModelSchema", () => {
