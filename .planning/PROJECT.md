@@ -25,7 +25,7 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - [x] Risk Analyzer: knowledge graph construction, centrality, communities, danger zones → danger-zones.md — *Validated in Phase 2*
 - [x] Learning Synthesizer: learnings.md schema initialization — *Validated in Phase 2*
 - [x] `/codescope:bootstrap` — full autonomous codebase analysis pipeline with monorepo squad scaling, cross-service synthesis, AI readiness scoring — *Validated in Phase 3: Bootstrap Synthesis and MCP Server*
-- [x] MCP server with 11 operational tools (status, recall, graph_query, blast_radius, conventions, orient, verify, search, readiness, detect_changes, service_map) — *Validated in Phase 3*
+- [x] MCP server with 12 operational tools (status, recall, graph_query, blast_radius, conventions, orient, verify, eval, search, readiness, detect_changes, service_map) — *Validated in Phase 3, expanded in Phase 6*
 - [x] Graph cache with 5-min TTL for sub-100ms tool queries — *Validated in Phase 3*
 - [x] D-17/D-18/D-19 MCP response contract (ok/error/partial envelopes with staleness metadata) — *Validated in Phase 3*
 - [x] AI readiness score (4 dimensions, A-F grades, delta tracking, improvement suggestions) — *Validated in Phase 3*
@@ -55,10 +55,10 @@ AI-generated code changes that respect existing conventions, stay within safe bl
   - Each agent gets scope contract, conventions, golden files, coordination context
 - [ ] Static verify agent — convention compliance (ast-grep), blast radius diff, code review
 - [ ] Runtime verify agent — build verification, unit/integration tests, E2E (Playwright/Xcode/Gradle auto-detection), auto-smoke generation
-- [ ] Eval agent — LLM-as-judge scoring scope compliance, convention adherence, completeness, correctness
-- [ ] User gate — interactive finding selection (debug selected / ignore all / defer to TODO)
-- [ ] Auto-debug and auto-skip-minor modes
-- [ ] Debug agent — targeted fix plans, re-execute, re-verify, re-eval (max 3 cycles), design decision escalation
+- [x] Eval agent — LLM-as-judge scoring scope compliance, convention adherence, completeness, correctness — *Validated in Phase 6: Eval, User Gate, and Debug*
+- [x] User gate — interactive finding selection (debug selected / ignore all / defer to TODO) — *Validated in Phase 6*
+- [x] Auto-debug and auto-skip-minor modes — *Validated in Phase 6*
+- [x] Debug agent — targeted fix plans, re-execute, re-verify, re-eval (max 3 cycles), design decision escalation — *Validated in Phase 6*
 - [ ] Learning system — project memory (learnings.md, max 50, UNVERIFIED default, confidence decay, contradiction detection) + global memory (~/.codescope/global-memory.md)
 - [ ] `/codescope:review-learnings` — review and confirm/reject accumulated learnings
 - [ ] `/codescope:settings` — interactive configuration changes
@@ -133,4 +133,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-23 — Phase 4 complete: orient pipeline (clarification, research, analysis, planning, validation), execution engine (wave scheduling, agent spawning, coordination, failure handling), 556 tests passing*
+*Last updated: 2026-03-24 — Phase 6 complete: eval agent (LLM-as-judge, 4 criteria, 50K chunking), user gate (3 modes), debug agent (bounded fix cycles, design decision escalation), codescope_eval MCP tool, orient skill body Step 6 integration, 735 tests passing*
