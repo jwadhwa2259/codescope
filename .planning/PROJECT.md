@@ -31,17 +31,20 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - [x] AI readiness score (4 dimensions, A-F grades, delta tracking, improvement suggestions) — *Validated in Phase 3*
 - [x] Incremental re-bootstrap via git diff with 50% threshold — *Validated in Phase 3*
 - [x] Bootstrap --force confirmation (D-30: shows rebuilt vs preserved before proceeding) — *Validated in Phase 3*
+- [x] `/codescope:orient [task]` — full orient pipeline with two-gate approval (scope + plan), graph-informed clarification, research sub-agent, hybrid execution engine — *Validated in Phase 4: Orient and Execution Engine*
+- [x] Execution engine with wave-based scheduling, agent teams detection, file overlap validation, coordination audit trail, failure retry/skip — *Validated in Phase 4*
+- [x] Agent teams onboarding detection (ONBD-06), config D-44 (execute.parallel deprecated) — *Validated in Phase 4*
 
 ### Active
 
 - [x] Plugin skeleton with manifest, skills, hooks, and scripts
 - [x] `/codescope:onboard` — interactive config creation (project detection, agent model selection, workflow preferences)
-- [ ] `/codescope:orient [task]` — full autonomous pipeline trigger
+- [x] `/codescope:orient [task]` — full autonomous pipeline trigger — *Validated in Phase 4: Orient and Execution Engine*
   - Phase A: Graph-informed deep clarification (scope contract: in-scope / out-of-scope)
   - Phase B: Research sub-agent (Context7 + web search)
   - Phase C: Internal analysis (graph traversal, blast radius, convention matching, test mapping)
   - Phase D: Plan sub-agent (execution plan with agent assignments, dependency ordering)
-- [ ] Execution engine — hybrid multi-agent execution, planner always picks optimal strategy
+- [x] Execution engine — hybrid multi-agent execution, planner always picks optimal strategy — *Validated in Phase 4*
   - Planner analyzes dependency graph: agent teams for independent tasks, sequential for dependent, wave-based for mixed
   - Agent teams: parallel agents with SendMessage for real-time handoff signals
   - Sequential: dependency-ordered sub-agents with filesystem coordination
@@ -130,4 +133,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-23 — Phase 3 complete: 11 MCP tools operational, bootstrap orchestrator with monorepo scaling, AI readiness scoring, graph cache for sub-100ms queries*
+*Last updated: 2026-03-23 — Phase 4 complete: orient pipeline (clarification, research, analysis, planning, validation), execution engine (wave scheduling, agent spawning, coordination, failure handling), 556 tests passing*
