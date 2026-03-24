@@ -90,13 +90,15 @@ Plans:
   5. Plan validation gate rejects plans where agents in the same team wave write to overlapping files
   6. Orchestrator detects agent teams availability at runtime and falls back to sequential transparently
   7. Orient completes in under 60 seconds after clarification, and the orchestrator stays under 15K tokens throughout execution
-**Plans**: TBD
+**Plans**: 6 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
-- [ ] 04-03: TBD
-- [ ] 04-04: TBD
+- [ ] 04-01-PLAN.md -- Orient types + clarification module + analysis module (graph-informed ambiguity, scope contracts)
+- [ ] 04-02-PLAN.md -- Execution types + coordination + teams detector + wave scheduler (execution infrastructure)
+- [ ] 04-03-PLAN.md -- Config schema D-44 update + agent teams onboarding detection (ONBD-06)
+- [ ] 04-04-PLAN.md -- Research module + planner module + plan validation with auto-fix
+- [ ] 04-05-PLAN.md -- Agent spawner + execution orchestrator (wave dispatch, failure handling)
+- [ ] 04-06-PLAN.md -- Orient pipeline + CLI entry points + orient skill body (full integration)
 
 ### Phase 5: Verification
 **Goal**: After execution, static and runtime verification agents validate that changes comply with conventions, stay within predicted blast radius, build successfully, pass tests, and work end-to-end
@@ -157,8 +159,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 |-------|----------------|--------|-----------|
 | 1. Plugin Foundation and Infrastructure | 5/5 | Complete | - |
 | 2. Scout and Analysis Squad | 4/4 | Complete    |  |
-| 3. Bootstrap Synthesis and MCP Server | 0/5 | Planned    |  |
-| 4. Orient and Execution Engine | 0/3 | Not started | - |
+| 3. Bootstrap Synthesis and MCP Server | 5/5 | Complete    |  |
+| 4. Orient and Execution Engine | 0/6 | Planned | - |
 | 5. Verification | 0/2 | Not started | - |
 | 6. Eval, User Gate, and Debug | 0/3 | Not started | - |
 | 7. Learning System and Settings | 0/2 | Not started | - |
