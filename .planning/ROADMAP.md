@@ -110,11 +110,13 @@ Plans:
   3. Runtime verify agent runs the project build command and unit/integration tests, reporting pass/fail with file and line references
   4. Runtime verify agent auto-detects and runs E2E verification (Playwright, Xcode, Gradle, HTTP, or Shell) based on project type
   5. A verify report is written to .claude/codescope/reports/ with all check results, including auto-generated smoke tests for new untested endpoints
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md -- Verify types + blast radius diff + report writer (shared foundation)
+- [ ] 05-02-PLAN.md -- Static verify agent (convention compliance, code review prompt)
+- [ ] 05-03-PLAN.md -- Runtime verify agent (build, tests, E2E, server lifecycle, auto-smoke)
+- [ ] 05-04-PLAN.md -- CLI entry point + MCP tool upgrade + pipeline integration + skill body
 
 ### Phase 6: Eval, User Gate, and Debug
 **Goal**: An LLM-as-judge eval agent scores changes on 4 dimensions, the user can interactively triage findings, and a debug agent autonomously fixes issues through targeted re-execution with a 3-cycle limit and design decision escalation
@@ -161,6 +163,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 2. Scout and Analysis Squad | 4/4 | Complete    |  |
 | 3. Bootstrap Synthesis and MCP Server | 5/5 | Complete    |  |
 | 4. Orient and Execution Engine | 0/6 | Planned | - |
-| 5. Verification | 0/2 | Not started | - |
+| 5. Verification | 0/4 | Planned | - |
 | 6. Eval, User Gate, and Debug | 0/3 | Not started | - |
 | 7. Learning System and Settings | 0/2 | Not started | - |
