@@ -173,15 +173,100 @@ After execution completes, run the verification pipeline:
 11. Display: "Verification complete. Report written to {reportPath}."
 12. Display: "Proceeding to evaluation... (Phase 6)"
 
-## Step 6: Summary
+## Step 6: Evaluate, Gate, and Debug
 
-After all waves and verification complete, display the execution summary:
+After verification completes, evaluate the changes and run the debug loop if needed.
+
+### 6a. Run Eval
+
+Read config.yml to determine `agents.eval_judge.model` and `eval.mode`. Store `{execution_dir}` as `.claude/codescope/execution/{taskSlug}`.
+
+Run the eval CLI to score changes on 4 criteria:
+
+```bash
+node --import tsx/esm src/eval/run-eval.ts \
+  --task-slug "{task_slug}" \
+  --project-root "{project_root}" \
+  --report-path "{report_path}" \
+  --scope-contract-path "{scope_contract_path}" \
+  --plan-path "{plan_path}" \
+  --coordination-path "{coordination_path}" \
+  --research-path "{research_path}" \
+  --execution-dir "{execution_dir}"
+```
+
+Display: `## Evaluating changes...`
+
+Capture stderr for dispatch requests. When you see `{"type": "dispatch_eval", "prompt": "..."}` on stderr, dispatch a sub-agent (Agent tool) with the `eval_judge` model from config to act as the LLM-as-judge evaluator. Pass the prompt from the dispatch request. Capture the agent's response (JSON findings array) and pass it back by re-running the eval CLI with the response.
+
+Parse the stdout JSON result. Display: `Eval complete: {N} findings ({errors} errors, {warnings} warnings, {info} info)`
+
+If `result.overallStatus === "PASS"`, proceed to Step 7 (Summary).
+
+### 6b. User Gate
+
+Read `eval.mode` from config.yml:
+
+- **interactive**: Present findings to the user grouped by criterion using the format from the eval result. For each finding, ask: `Action? [debug / ignore / defer]`. Collect decisions.
+  - `debug`: Add to debug list
+  - `ignore`: Record ignore pattern in learnings.md (learning system will use this in future evals)
+  - `defer`: Record as TODO in learnings.md with file:line context
+  Display: `Gate: {N} to debug, {N} ignored, {N} deferred`
+
+- **auto-debug**: Send all findings to debug agent. Display: `{N} finding(s) -- all sent to debug agent automatically.`
+
+- **auto-skip-minor**: Auto-skip INFO findings, send WARN + ERROR to debug. Display: `{N_skipped} INFO finding(s) auto-skipped. {N_debug} WARN + ERROR finding(s) sent to debug agent automatically.`
+
+If no findings selected for debug, proceed to Step 7 (Summary).
+
+### 6c. Debug Loop
+
+Write the findings to debug to a temporary JSON file:
+```bash
+echo '{findings_json}' > {execution_dir}/debug-findings.json
+```
+
+Run the debug CLI:
+```bash
+node --import tsx/esm src/debug/run-debug.ts \
+  --task-slug "{task_slug}" \
+  --project-root "{project_root}" \
+  --findings-path "{execution_dir}/debug-findings.json" \
+  --scope-contract-path "{scope_contract_path}" \
+  --plan-path "{plan_path}" \
+  --coordination-path "{coordination_path}" \
+  --report-path "{report_path}" \
+  --max-cycles "{max_cycles}" \
+  --execution-dir "{execution_dir}"
+```
+
+Display: `## Debug cycle {N}/{max}...`
+
+Handle stderr dispatch requests:
+- `{"type": "dispatch_fix", "prompt": "..."}`: Dispatch a sub-agent (Agent tool) with the debug model from config. This agent fixes the code. It has full tool access: Read, Write, Edit, Bash, Glob, Grep, WebFetch, and CodeScope MCP tools (codescope_blast_radius, codescope_conventions, codescope_recall, codescope_search, Context7, WebSearch). Per DBUG-02.
+- `{"type": "dispatch_eval", "prompt": "..."}`: Dispatch `eval_judge` agent for scoped re-eval.
+- `{"type": "dispatch_verify", "changedFiles": [...]}`: Run scoped re-verify on just the changed files.
+- `{"type": "design_decision", "decision": {...}}`: Present design decision to user with options. Display the finding, options with impacts. Get user's choice. Return the chosen option ID.
+
+### 6d. Loop Termination
+
+The debug CLI handles cycle counting internally (capped at `eval.auto_debug_max_cycles` from config, default 3).
+
+After debug completes, check the result:
+- If `result.remaining.length === 0`: All findings resolved. Display: `All findings resolved after {N} cycle(s).`
+- If `result.remaining.length > 0`: Some findings remain. Display: `Max debug cycles ({max}) reached. {remaining} finding(s) remain.`
+  - In interactive mode: ask user `Action? [retry / ignore-all / defer-all]`
+  - In auto modes: log remaining findings and proceed
+
+Proceed to Step 7 (Summary).
+
+## Step 7: Summary
+
+After all waves, verification, and evaluation complete, display the execution summary:
 
 ## Summary
 
-Total: {duration}s | Files changed: {N} | Agents: {succeeded}/{total} | Verify: {errors} errors, {warnings} warnings
-
-Next: Proceeding to evaluation... (Phase 6)
+Total: {duration}s | Files changed: {N} | Agents: {succeeded}/{total} | Verify: {errors} errors, {warnings} warnings | Eval: {eval_status}
 
 If there were failures, also display:
 - List each failed agent with its error

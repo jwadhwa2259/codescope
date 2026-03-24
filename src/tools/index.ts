@@ -10,9 +10,10 @@ import { registerSearchTool } from "./search.js";
 import { registerReadinessTool } from "./readiness-tool.js";
 import { registerDetectChangesTool } from "./detect-changes.js";
 import { registerServiceMapTool } from "./service-map.js";
+import { registerEvalTool } from "./eval.js";
 
 /**
- * Register all 11 CodeScope MCP tools on the server.
+ * Register all 12 CodeScope MCP tools on the server.
  *
  * Each tool handler checks isBootstrapped() internally and returns
  * NOT_BOOTSTRAPPED error if no data exists. No stubs needed.
@@ -29,6 +30,7 @@ import { registerServiceMapTool } from "./service-map.js";
  * 9.  codescope_readiness    - AI readiness score
  * 10. codescope_detect_changes - Classify working directory changes by risk
  * 11. codescope_service_map  - Service map for monorepos
+ * 12. codescope_eval         - Evaluate code changes against criteria (Phase 6)
  */
 export function registerTools(
   server: McpServer,
@@ -48,4 +50,5 @@ export function registerTools(
   registerReadinessTool(server, projectRoot);
   registerDetectChangesTool(server, projectRoot);
   registerServiceMapTool(server, projectRoot);
+  registerEvalTool(server, projectRoot);
 }
