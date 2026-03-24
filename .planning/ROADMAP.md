@@ -133,8 +133,8 @@ Plans:
 Plans:
 - [x] 06-01-PLAN.md -- Eval types + eval agent + report appender + ignore filter (eval foundation)
 - [x] 06-02-PLAN.md -- Debug types + fix planner + debug agent loop (debug foundation)
-- [ ] 06-03-PLAN.md -- User gate routing + codescope_eval MCP tool (gate and MCP)
-- [ ] 06-04-PLAN.md -- CLI entry points + MCP registration + orient skill body Step 6 (pipeline integration)
+- [x] 06-03-PLAN.md -- User gate routing + codescope_eval MCP tool (gate and MCP)
+- [x] 06-04-PLAN.md -- CLI entry points + MCP registration + orient skill body Step 6 (pipeline integration)
 
 ### Phase 7: Learning System and Settings
 **Goal**: CodeScope accumulates project memory that improves over time -- learnings from completed tasks are captured with confidence decay and contradiction detection, global memory tracks user preferences across projects, and management skills let the user curate and configure everything
