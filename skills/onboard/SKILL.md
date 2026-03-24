@@ -78,7 +78,36 @@ Offer: "Accept all defaults" or let the user override specific agents.
 3. **Eval gate mode**: interactive (you review findings) / auto-debug (sends all to debug) / auto-skip-minor (only MEDIUM+ to debug)? Default: interactive
 4. **Convention strictness**: suggest-only (suggestions) / warn (warnings) / block (errors)? Default: suggest-only
 
-## Step 4: Write Config & Create Structure
+## Step 4: Agent Teams Detection
+
+Check if agent teams are available for parallel execution during orient (D-41):
+
+1. Run the detection check:
+   ```
+   node --import tsx/esm -e "import { detectAgentTeamsOnboard } from './src/onboard/agent-teams.js'; console.log(JSON.stringify(detectAgentTeamsOnboard()));"
+   ```
+
+2. Parse the JSON result and act based on the `status` field:
+
+   - **If status is `already_enabled`**: Display to the user:
+     "Agent teams already enabled. Orient will use parallel execution when the planner identifies independent tasks."
+     Proceed to Step 5.
+
+   - **If status is `not_enabled`**: Ask the user:
+     "Agent teams enable parallel execution during orient. Enable now? [Y/n]"
+
+     - **If yes (or Enter)**: Run the enablement:
+       ```
+       node --import tsx/esm -e "import { enableAgentTeams } from './src/onboard/agent-teams.js'; console.log(JSON.stringify(enableAgentTeams()));"
+       ```
+       Parse the result. If `success` is true, display:
+       "Agent teams enabled in `~/.claude/settings.json`. Orient will use parallel execution when the planner identifies independent tasks."
+       If `success` is false, display the error message and continue.
+
+     - **If no**: Display:
+       "Agent teams not enabled. Orient will run sequentially. You can enable later via `/codescope:settings`."
+
+## Step 5: Write Config & Create Structure
 
 1. Create the `.claude/codescope/` directory tree with all subdirectories:
    - .claude/codescope/
@@ -120,7 +149,6 @@ Offer: "Accept all defaults" or let the user override specific agents.
      research_sources: [context7, web_search]
      max_research_time: 60
    execute:
-     parallel: auto
      max_agents_concurrent: 3
    verify:
      build_command: {same as project.build_command}

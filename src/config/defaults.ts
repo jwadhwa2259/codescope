@@ -36,7 +36,7 @@ export const DEFAULT_CONFIG: Omit<Config, "project"> & {
   },
 
   execute: {
-    parallel: "auto",
+    // parallel: removed per D-44, planner always picks optimal strategy
     max_agents_concurrent: 3,
   },
 
