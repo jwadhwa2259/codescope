@@ -98,11 +98,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Execution
 
-- [ ] **EXEC-01**: Orchestrator spawns execution agents using the planner's hybrid analysis: agent teams (parallel with SendMessage) for independent tasks, sequential sub-agents for dependent tasks, wave-based execution for mixed workloads
-- [ ] **EXEC-02**: Each agent receives scope contract, relevant conventions, golden files, coordination context, and research output
+- [x] **EXEC-01**: Orchestrator spawns execution agents using the planner's hybrid analysis: agent teams (parallel with SendMessage) for independent tasks, sequential sub-agents for dependent tasks, wave-based execution for mixed workloads
+- [x] **EXEC-02**: Each agent receives scope contract, relevant conventions, golden files, coordination context, and research output
 - [x] **EXEC-03**: Coordination file (.claude/codescope/execution/coordination.md) is the append-only audit trail in all modes — sequential agents read before starting; agent team members append on completion but use SendMessage for real-time coordination
 - [x] **EXEC-04**: No-dependency agents run as agent teams with direct messaging when available; max concurrent still configurable (default 3); sequential fallback when agent teams unavailable
-- [ ] **EXEC-05**: Per-agent change reports written to .claude/codescope/execution/[agent-name]-changes.md
+- [x] **EXEC-05**: Per-agent change reports written to .claude/codescope/execution/[agent-name]-changes.md
 - [x] **EXEC-06**: Orchestrator stays under 15K tokens throughout execution (thin orchestrator pattern)
 - [x] **EXEC-07**: Plan sub-agent always performs hybrid dependency analysis: independent tasks with exclusive file assignments → agent teams; blockedBy chains or shared files → sequential; mixed → wave-based execution. No user-facing mode config — the planner always picks the optimal strategy
 - [x] **EXEC-08**: Agent team members use SendMessage for real-time handoff signals (file readiness, completion, blocking issues) with structured messages: `{type: "ready" | "done" | "blocked", files: [], detail: ""}`
@@ -268,11 +268,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ORNT-09 | Phase 4 | Pending |
 | ORNT-10 | Phase 4 | Pending |
 | ORNT-11 | Phase 4 | Pending |
-| EXEC-01 | Phase 4 | Pending |
-| EXEC-02 | Phase 4 | Pending |
+| EXEC-01 | Phase 4 | Complete |
+| EXEC-02 | Phase 4 | Complete |
 | EXEC-03 | Phase 4 | Complete |
 | EXEC-04 | Phase 4 | Complete |
-| EXEC-05 | Phase 4 | Pending |
+| EXEC-05 | Phase 4 | Complete |
 | EXEC-06 | Phase 4 | Complete |
 | EXEC-07 | Phase 4 | Complete |
 | EXEC-08 | Phase 4 | Complete |

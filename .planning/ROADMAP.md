@@ -95,9 +95,9 @@ Plans:
 Plans:
 - [x] 04-01-PLAN.md -- Orient types + clarification module + analysis module (graph-informed ambiguity, scope contracts)
 - [x] 04-02-PLAN.md -- Execution types + coordination + teams detector + wave scheduler (execution infrastructure)
-- [ ] 04-03-PLAN.md -- Config schema D-44 update + agent teams onboarding detection (ONBD-06)
+- [x] 04-03-PLAN.md -- Config schema D-44 update + agent teams onboarding detection (ONBD-06)
 - [ ] 04-04-PLAN.md -- Research module + planner module + plan validation with auto-fix
-- [ ] 04-05-PLAN.md -- Agent spawner + execution orchestrator (wave dispatch, failure handling)
+- [x] 04-05-PLAN.md -- Agent spawner + execution orchestrator (wave dispatch, failure handling)
 - [ ] 04-06-PLAN.md -- Orient pipeline + CLI entry points + orient skill body (full integration)
 
 ### Phase 5: Verification
