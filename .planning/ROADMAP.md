@@ -128,12 +128,13 @@ Plans:
   3. Debug agent creates targeted fix plans (not full re-orient), re-executes only broken agents, re-verifies only changed files, and re-evals only fixed findings
   4. Debug cycles cap at 3 (configurable) with design decisions escalated to user, and resolution rate exceeds 80% of findings fixed within 3 cycles
   5. User ignore patterns are captured for future eval tuning
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
-- [ ] 06-03: TBD
+- [ ] 06-01-PLAN.md -- Eval types + eval agent + report appender + ignore filter (eval foundation)
+- [ ] 06-02-PLAN.md -- Debug types + fix planner + debug agent loop (debug foundation)
+- [ ] 06-03-PLAN.md -- User gate routing + codescope_eval MCP tool (gate and MCP)
+- [ ] 06-04-PLAN.md -- CLI entry points + MCP registration + orient skill body Step 6 (pipeline integration)
 
 ### Phase 7: Learning System and Settings
 **Goal**: CodeScope accumulates project memory that improves over time -- learnings from completed tasks are captured with confidence decay and contradiction detection, global memory tracks user preferences across projects, and management skills let the user curate and configure everything
@@ -164,5 +165,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 3. Bootstrap Synthesis and MCP Server | 5/5 | Complete    |  |
 | 4. Orient and Execution Engine | 0/6 | Planned | - |
 | 5. Verification | 0/4 | Planned | - |
-| 6. Eval, User Gate, and Debug | 0/3 | Not started | - |
+| 6. Eval, User Gate, and Debug | 0/4 | Planned | - |
 | 7. Learning System and Settings | 0/2 | Not started | - |
