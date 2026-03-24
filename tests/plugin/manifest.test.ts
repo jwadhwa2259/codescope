@@ -152,12 +152,15 @@ describe("Plugin Manifest", () => {
       expect(content).toContain("codescope_status");
     });
 
-    it("skills/orient/SKILL.md body contains phase 4 message", () => {
+    it("skills/orient/SKILL.md body contains full orient pipeline", () => {
       const content = fs.readFileSync(
         path.join(PROJECT_ROOT, "skills", "orient", "SKILL.md"),
         "utf-8"
       );
-      expect(content).toContain("This skill will be available after Phase 4");
+      expect(content).toContain("name: orient");
+      expect(content).toContain("# /codescope:orient");
+      expect(content).toContain("run-orient.ts");
+      expect(content).toContain("run-execution.ts");
     });
 
     it("skills/settings/SKILL.md body contains phase 7 message", () => {
