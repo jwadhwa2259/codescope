@@ -116,7 +116,7 @@ Plans:
 - [x] 05-01-PLAN.md -- Verify types + blast radius diff + report writer (shared foundation)
 - [x] 05-02-PLAN.md -- Static verify agent (convention compliance, code review prompt)
 - [x] 05-03-PLAN.md -- Runtime verify agent (build, tests, E2E, server lifecycle, auto-smoke)
-- [ ] 05-04-PLAN.md -- CLI entry point + MCP tool upgrade + pipeline integration + skill body
+- [x] 05-04-PLAN.md -- CLI entry point + MCP tool upgrade + pipeline integration + skill body
 
 ### Phase 6: Eval, User Gate, and Debug
 **Goal**: An LLM-as-judge eval agent scores changes on 4 dimensions, the user can interactively triage findings, and a debug agent autonomously fixes issues through targeted re-execution with a 3-cycle limit and design decision escalation
