@@ -111,14 +111,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Verification
 
-- [ ] **VRFY-01**: Static verify agent checks convention compliance by scanning all new/modified files against conventions-enforced.md using ast-grep
-- [ ] **VRFY-02**: Static verify agent compares predicted blast radius (from orient) against actual files changed (git diff --name-only) and reports surprises/skips
-- [ ] **VRFY-03**: Static verify agent performs semantic code review of changes
+- [x] **VRFY-01**: Static verify agent checks convention compliance by scanning all new/modified files against conventions-enforced.md using ast-grep
+- [x] **VRFY-02**: Static verify agent compares predicted blast radius (from orient) against actual files changed (git diff --name-only) and reports surprises/skips
+- [x] **VRFY-03**: Static verify agent performs semantic code review of changes
 - [ ] **VRFY-04**: Runtime verify agent runs project build command and reports clean build or errors with file/line
 - [ ] **VRFY-05**: Runtime verify agent runs unit/integration test commands and reports pass/fail with output
 - [ ] **VRFY-06**: Runtime verify agent runs E2E verification using auto-detected tool (Playwright for web, Xcode for iOS/macOS, Gradle for Android, HTTP for API, Shell for CLI)
 - [ ] **VRFY-07**: Auto-smoke test generation for new routes/views/endpoints that lack E2E tests (minimal smoke, not full test suite)
-- [ ] **VRFY-08**: Verify report written to .claude/codescope/reports/[task]-[date].md with all check results
+- [x] **VRFY-08**: Verify report written to .claude/codescope/reports/[task]-[date].md with all check results
 
 ### Evaluation
 
@@ -278,14 +278,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXEC-08 | Phase 4 | Complete |
 | EXEC-09 | Phase 4 | Complete |
 | EXEC-10 | Phase 4 | Complete |
-| VRFY-01 | Phase 5 | Pending |
-| VRFY-02 | Phase 5 | Pending |
-| VRFY-03 | Phase 5 | Pending |
+| VRFY-01 | Phase 5 | Complete |
+| VRFY-02 | Phase 5 | Complete |
+| VRFY-03 | Phase 5 | Complete |
 | VRFY-04 | Phase 5 | Pending |
 | VRFY-05 | Phase 5 | Pending |
 | VRFY-06 | Phase 5 | Pending |
 | VRFY-07 | Phase 5 | Pending |
-| VRFY-08 | Phase 5 | Pending |
+| VRFY-08 | Phase 5 | Complete |
 | EVAL-01 | Phase 6 | Pending |
 | EVAL-02 | Phase 6 | Pending |
 | EVAL-03 | Phase 6 | Pending |
