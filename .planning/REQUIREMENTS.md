@@ -89,12 +89,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Orient — Research & Planning
 
-- [ ] **ORNT-06**: Research sub-agent investigates external domain using Context7 (current library docs) and web search (best practices, known issues)
-- [ ] **ORNT-07**: Research output scoped to what the task needs, written to .claude/codescope/execution/research.md
+- [x] **ORNT-06**: Research sub-agent investigates external domain using Context7 (current library docs) and web search (best practices, known issues)
+- [x] **ORNT-07**: Research output scoped to what the task needs, written to .claude/codescope/execution/research.md
 - [x] **ORNT-08**: Analysis phase runs graph traversal for all affected files, hop-distance blast radius, convention matching, test mapping, cross-service impact
-- [ ] **ORNT-09**: Plan sub-agent produces execution plan with agents to spawn, execution order, estimated changes, per-agent tasks, verify criteria
-- [ ] **ORNT-10**: Plan saved to .claude/codescope/plans/[task-slug].md before execution starts
-- [ ] **ORNT-11**: Orient completes in under 60 seconds after clarification
+- [x] **ORNT-09**: Plan sub-agent produces execution plan with agents to spawn, execution order, estimated changes, per-agent tasks, verify criteria
+- [x] **ORNT-10**: Plan saved to .claude/codescope/plans/[task-slug].md before execution starts
+- [x] **ORNT-11**: Orient completes in under 60 seconds after clarification
 
 ### Execution
 
@@ -262,12 +262,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ORNT-03 | Phase 4 | Complete |
 | ORNT-04 | Phase 4 | Complete |
 | ORNT-05 | Phase 4 | Complete |
-| ORNT-06 | Phase 4 | Pending |
-| ORNT-07 | Phase 4 | Pending |
+| ORNT-06 | Phase 4 | Complete |
+| ORNT-07 | Phase 4 | Complete |
 | ORNT-08 | Phase 4 | Complete |
-| ORNT-09 | Phase 4 | Pending |
-| ORNT-10 | Phase 4 | Pending |
-| ORNT-11 | Phase 4 | Pending |
+| ORNT-09 | Phase 4 | Complete |
+| ORNT-10 | Phase 4 | Complete |
+| ORNT-11 | Phase 4 | Complete |
 | EXEC-01 | Phase 4 | Complete |
 | EXEC-02 | Phase 4 | Complete |
 | EXEC-03 | Phase 4 | Complete |
