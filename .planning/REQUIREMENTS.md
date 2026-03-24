@@ -122,27 +122,27 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Evaluation
 
-- [ ] **EVAL-01**: Eval agent (LLM-as-judge) reads scope contract, plan, coordination log, git diff, verify report, and research output
-- [ ] **EVAL-02**: Eval scores on 4 criteria: scope compliance, convention adherence, completeness, correctness
-- [ ] **EVAL-03**: Each finding has severity (LOW/MEDIUM/HIGH) and categorization (missing implementation, incorrect implementation, design decision)
-- [ ] **EVAL-04**: Eval report appended to verify report at .claude/codescope/reports/[task]-[date].md
+- [x] **EVAL-01**: Eval agent (LLM-as-judge) reads scope contract, plan, coordination log, git diff, verify report, and research output
+- [x] **EVAL-02**: Eval scores on 4 criteria: scope compliance, convention adherence, completeness, correctness
+- [x] **EVAL-03**: Each finding has severity (LOW/MEDIUM/HIGH) and categorization (missing implementation, incorrect implementation, design decision)
+- [x] **EVAL-04**: Eval report appended to verify report at .claude/codescope/reports/[task]-[date].md
 
 ### User Gate
 
-- [ ] **GATE-01**: In interactive mode, user sees eval findings and can select which to debug, ignore, or defer to TODO
-- [ ] **GATE-02**: Auto-debug mode sends all findings directly to debug (configurable in config.md)
-- [ ] **GATE-03**: Auto-skip-minor mode only sends MEDIUM+ findings to debug, auto-ignores LOW
-- [ ] **GATE-04**: User ignore patterns captured by learning system for future eval tuning
+- [x] **GATE-01**: In interactive mode, user sees eval findings and can select which to debug, ignore, or defer to TODO
+- [x] **GATE-02**: Auto-debug mode sends all findings directly to debug (configurable in config.md)
+- [x] **GATE-03**: Auto-skip-minor mode only sends MEDIUM+ findings to debug, auto-ignores LOW
+- [x] **GATE-04**: User ignore patterns captured by learning system for future eval tuning
 
 ### Debug
 
-- [ ] **DBUG-01**: Debug agent reads findings and creates targeted fix plans (not full re-orient)
-- [ ] **DBUG-02**: Debug agent has full tool access: file tools, Bash, CodeScope MCP tools, Context7, web search
-- [ ] **DBUG-03**: Fix plan goes to execution agents — only agents responsible for broken pieces re-execute
-- [ ] **DBUG-04**: Re-verify runs on just changed files, re-eval runs on just fixed findings
-- [ ] **DBUG-05**: Design decisions escalate to user with concrete options
-- [ ] **DBUG-06**: Max 3 debug cycles (configurable), then defer to user with status report
-- [ ] **DBUG-07**: Debug resolution rate >80% of findings fixed within 3 cycles
+- [x] **DBUG-01**: Debug agent reads findings and creates targeted fix plans (not full re-orient)
+- [x] **DBUG-02**: Debug agent has full tool access: file tools, Bash, CodeScope MCP tools, Context7, web search
+- [x] **DBUG-03**: Fix plan goes to execution agents — only agents responsible for broken pieces re-execute
+- [x] **DBUG-04**: Re-verify runs on just changed files, re-eval runs on just fixed findings
+- [x] **DBUG-05**: Design decisions escalate to user with concrete options
+- [x] **DBUG-06**: Max 3 debug cycles (configurable), then defer to user with status report
+- [x] **DBUG-07**: Debug resolution rate >80% of findings fixed within 3 cycles
 
 ### Learning
 
@@ -286,21 +286,21 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VRFY-06 | Phase 5 | Complete |
 | VRFY-07 | Phase 5 | Complete |
 | VRFY-08 | Phase 5 | Complete |
-| EVAL-01 | Phase 6 | Pending |
-| EVAL-02 | Phase 6 | Pending |
-| EVAL-03 | Phase 6 | Pending |
-| EVAL-04 | Phase 6 | Pending |
-| GATE-01 | Phase 6 | Pending |
-| GATE-02 | Phase 6 | Pending |
-| GATE-03 | Phase 6 | Pending |
-| GATE-04 | Phase 6 | Pending |
-| DBUG-01 | Phase 6 | Pending |
-| DBUG-02 | Phase 6 | Pending |
-| DBUG-03 | Phase 6 | Pending |
-| DBUG-04 | Phase 6 | Pending |
-| DBUG-05 | Phase 6 | Pending |
-| DBUG-06 | Phase 6 | Pending |
-| DBUG-07 | Phase 6 | Pending |
+| EVAL-01 | Phase 6 | Complete |
+| EVAL-02 | Phase 6 | Complete |
+| EVAL-03 | Phase 6 | Complete |
+| EVAL-04 | Phase 6 | Complete |
+| GATE-01 | Phase 6 | Complete |
+| GATE-02 | Phase 6 | Complete |
+| GATE-03 | Phase 6 | Complete |
+| GATE-04 | Phase 6 | Complete |
+| DBUG-01 | Phase 6 | Complete |
+| DBUG-02 | Phase 6 | Complete |
+| DBUG-03 | Phase 6 | Complete |
+| DBUG-04 | Phase 6 | Complete |
+| DBUG-05 | Phase 6 | Complete |
+| DBUG-06 | Phase 6 | Complete |
+| DBUG-07 | Phase 6 | Complete |
 | LRNG-01 | Phase 7 | Pending |
 | LRNG-02 | Phase 7 | Pending |
 | LRNG-03 | Phase 7 | Pending |

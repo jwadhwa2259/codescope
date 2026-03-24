@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 6 UI-SPEC approved
-last_updated: "2026-03-24T16:18:38.087Z"
+status: Ready to execute
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-03-24T18:18:06.791Z"
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 24
-  completed_plans: 24
+  total_plans: 28
+  completed_plans: 26
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-22)
 
 **Core value:** AI-generated code changes that respect existing conventions, stay within safe blast radius, and actually work in the codebase -- verified end-to-end before the user sees them.
-**Current focus:** Phase 05 — verification
+**Current focus:** Phase 06 — eval-user-gate-and-debug
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
+Phase: 06 (eval-user-gate-and-debug) — EXECUTING
+Plan: 4 of 4
 
 ## Performance Metrics
 
@@ -70,6 +70,9 @@ Plan: Not started
 | Phase 05 P02 | 4min | 1 tasks | 2 files |
 | Phase 05 P03 | 12min | 2 tasks | 6 files |
 | Phase 05 P04 | 5min | 2 tasks | 5 files |
+| Phase 06 P01 | 6min | 2 tasks | 7 files |
+| Phase 06 P03 | 4min | 2 tasks | 4 files |
+| Phase 06 P02 | 5min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -143,6 +146,11 @@ Recent decisions affecting current work:
 - [Phase 05]: CLI entry point uses stub callbacks with stderr dispatch protocol for skill body sub-agent spawning
 - [Phase 05]: MCP tool orient-dependent checks (blast_radius_diff, code_review) return unavailable status with partial response for graceful degradation
 - [Phase 05]: Skill body dispatches code review sub-agent with agents.eval_judge.model from config.yml per D-25
+- [Phase 06]: Eval agent uses char/4 token estimation for chunking threshold, finding IDs use 5-line bucket, simpleGlobMatch duplicated in eval-agent and ignore-filter for module independence
+- [Phase 06]: Gate routing is a pure sync function; interactive mode returns presentation string but no pre-routed findings
+- [Phase 06]: MCP eval tool returns static analysis results only; full LLM eval dispatched by skill body pipeline
+- [Phase 06]: ORIENT_DEPENDENT criteria (scope_compliance, completeness) marked unavailable without scope contract, matching verify tool D-29 pattern
+- [Phase 06]: Finding resolution uses file+criterion+line-bucket match keys for cross-cycle tracking since re-eval generates fresh IDs
 
 ### Pending Todos
 
@@ -155,6 +163,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T16:18:38.084Z
-Stopped at: Phase 6 UI-SPEC approved
-Resume file: .planning/phases/06-eval-user-gate-and-debug/06-UI-SPEC.md
+Last session: 2026-03-24T18:18:06.789Z
+Stopped at: Completed 06-02-PLAN.md
+Resume file: None
