@@ -154,6 +154,9 @@ describe("runStaticVerify", () => {
     mockFileContents.set(`${CS_PATH}/conventions.md`, "### Prefer Named Exports\n\n| Metric | Value |\n|--------|-------|\n| Adoption | 85% (17/20 files) |");
     mockFileContents.set(`${CS_PATH}/golden-files.md`, "# Golden Files\n\n1. `src/utils/helpers.ts` -- 5/7 conventions followed (71%)");
 
+    // Mock changed files as existing
+    mockFileContents.set("src/foo.ts", "export default function foo() {}");
+
     // ast-grep returns a match via non-zero exit (common pattern)
     mockExecSyncErrors.set("sg scan", {
       stdout: JSON.stringify([{
@@ -205,6 +208,7 @@ describe("runStaticVerify", () => {
     mockFileContents.set(`${CS_PATH}/golden-files.md`, "# Golden Files\n");
     mockFileContents.set(`${CS_PATH}/rules/typescript/prefer-named-exports.yml`, "rule");
     mockFileContents.set("/mock/scope.json", "{}");
+    mockFileContents.set("src/foo.ts", "export default foo");
 
     mockExecSyncErrors.set("sg scan", {
       stdout: JSON.stringify([{
@@ -255,6 +259,7 @@ describe("runStaticVerify", () => {
 
     mockFileContents.set(`${CS_PATH}/rules/typescript/prefer-named-exports.yml`, "rule");
     mockFileContents.set("/mock/scope.json", "{}");
+    mockFileContents.set("src/bar.ts", "export default something");
 
     mockExecSyncErrors.set("sg scan", {
       stdout: JSON.stringify([{
