@@ -270,6 +270,8 @@ export async function runOrientPipeline(
   // Rewrite with approved status
   writePlanArtifact(plan, plansDir);
 
+  progress("## Plan approved. Ready for execution and verification.");
+
   // Budget warning check (ORNT-11)
   if (budgetStartMs) {
     const elapsed = Date.now() - budgetStartMs;

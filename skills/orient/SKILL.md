@@ -134,15 +134,54 @@ For each wave in the execution plan:
     - If retry fails: display "{agent-name} **failed** after retry -- skipping + {N} dependents"
 - After each wave completes, check for failed agents and skip their dependents in subsequent waves.
 
-## Step 5: Summary
+## Step 5: Verification
 
-After all waves complete, display the execution summary:
+Display: "## Verifying..."
+
+After execution completes, run the verification pipeline:
+
+1. Read config.yml to determine the `agents.eval_judge.model` value. This model will be used for the code review sub-agent (per D-25, code review is a judgment task similar to eval).
+
+2. Run: `node --import tsx/esm src/verify/run-verify.ts --project-root "$(pwd)" --task-slug "{taskSlug}" --task-description "{task}" --plan-path "{planPath}" --scope-contract-path "{scopeContractPath}" --phase static`
+3. Parse the JSON output. Check for dispatch requests on stderr.
+4. If stderr contains `{"type": "dispatch_review", "prompt": "..."}`:
+   - Spawn a code review sub-agent using the Agent tool with the prompt.
+   - **Per D-25:** When invoking the Agent tool, use the model specified in `agents.eval_judge.model` from config.yml (e.g., if config says `model: claude-sonnet-4-20250514`, pass that as the model parameter). Code review is a judgment task and MUST use the eval_judge model, not the default model.
+   - The sub-agent should have access to: Read (to examine files referenced in diff).
+   - Wait for the sub-agent to return review findings as JSON.
+   - Re-run static verify with findings injected (or note findings for the report).
+5. Display static verify results:
+   - Convention violations count
+   - Blast radius: surprises and skips count
+   - Code review findings count
+
+6. Run: `node --import tsx/esm src/verify/run-verify.ts --project-root "$(pwd)" --task-slug "{taskSlug}" --task-description "{task}" --phase runtime`
+7. Parse the JSON output. Check for dispatch requests on stderr.
+8. If stderr contains `{"type": "dispatch_smoke", "prompt": "..."}`:
+   - Spawn a smoke test sub-agent using the Agent tool with the prompt.
+   - The sub-agent should have access to: Read, Write, Bash (to create and run temp test files).
+   - Wait for the sub-agent to return smoke test code.
+   - Note results for the report.
+9. Display runtime verify results:
+   - Build: PASS/FAIL
+   - Unit Tests: {pass}/{total}
+   - Integration Tests: {pass}/{total}
+   - E2E: PASS/FAIL/SKIPPED
+   - Auto-Smoke: {N} endpoints tested
+
+10. The verify report has been written to `.claude/codescope/reports/{taskSlug}-{date}.md`.
+11. Display: "Verification complete. Report written to {reportPath}."
+12. Display: "Proceeding to evaluation... (Phase 6)"
+
+## Step 6: Summary
+
+After all waves and verification complete, display the execution summary:
 
 ## Summary
 
-Total: {duration}s | Files changed: {N} | Agents: {succeeded}/{total} | Mode: {mode} | Tokens: ~{estimate}
+Total: {duration}s | Files changed: {N} | Agents: {succeeded}/{total} | Verify: {errors} errors, {warnings} warnings
 
-Next: Proceeding to verification... (Phase 5)
+Next: Proceeding to evaluation... (Phase 6)
 
 If there were failures, also display:
 - List each failed agent with its error
