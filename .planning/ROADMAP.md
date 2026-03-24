@@ -113,9 +113,9 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 05-01-PLAN.md -- Verify types + blast radius diff + report writer (shared foundation)
-- [ ] 05-02-PLAN.md -- Static verify agent (convention compliance, code review prompt)
-- [ ] 05-03-PLAN.md -- Runtime verify agent (build, tests, E2E, server lifecycle, auto-smoke)
+- [x] 05-01-PLAN.md -- Verify types + blast radius diff + report writer (shared foundation)
+- [x] 05-02-PLAN.md -- Static verify agent (convention compliance, code review prompt)
+- [x] 05-03-PLAN.md -- Runtime verify agent (build, tests, E2E, server lifecycle, auto-smoke)
 - [ ] 05-04-PLAN.md -- CLI entry point + MCP tool upgrade + pipeline integration + skill body
 
 ### Phase 6: Eval, User Gate, and Debug
