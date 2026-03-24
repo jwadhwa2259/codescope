@@ -6,6 +6,12 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { EvalFinding, EvalCriterion } from "../../src/eval/types.js";
+
+vi.mock("../../src/eval/ignore-filter.js", () => ({
+  appendIgnoreEntry: vi.fn(),
+  appendTodoEntry: vi.fn(),
+}));
+
 import {
   routeFindings,
   applyGateDecisions,
@@ -145,12 +151,6 @@ describe("routeFindings", () => {
 // ---------------------------------------------------------------------------
 
 describe("applyGateDecisions", () => {
-  // Mock appendIgnoreEntry and appendTodoEntry
-  vi.mock("../../src/eval/ignore-filter.js", () => ({
-    appendIgnoreEntry: vi.fn(),
-    appendTodoEntry: vi.fn(),
-  }));
-
   it("debug action adds finding to toDebug", async () => {
     const { appendIgnoreEntry, appendTodoEntry } = await import(
       "../../src/eval/ignore-filter.js"
