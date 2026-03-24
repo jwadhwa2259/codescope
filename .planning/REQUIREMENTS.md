@@ -81,7 +81,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Orient — Clarification
 
-- [ ] **ORNT-01**: `/codescope:orient [task]` skill triggers the full autonomous pipeline
+- [x] **ORNT-01**: `/codescope:orient [task]` skill triggers the full autonomous pipeline
 - [x] **ORNT-02**: Clarification uses knowledge graph to ask graph-informed questions (affected modules, convention conflicts, danger zones in blast radius, missing test coverage)
 - [x] **ORNT-03**: Clarification triggers on vague tasks (<4 words, vague terms, ambiguous graph matches) and skips on specific tasks (>6 words with concrete nouns, --no-clarify flag)
 - [x] **ORNT-04**: Clarification produces a scope contract (In Scope / Out of Scope) that locks down exactly what gets built
@@ -257,7 +257,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MCP-11 | Phase 3 | Complete |
 | MCP-12 | Phase 3 | Complete |
 | ONBD-06 | Phase 4 | Complete |
-| ORNT-01 | Phase 4 | Pending |
+| ORNT-01 | Phase 4 | Complete |
 | ORNT-02 | Phase 4 | Complete |
 | ORNT-03 | Phase 4 | Complete |
 | ORNT-04 | Phase 4 | Complete |

@@ -98,7 +98,7 @@ Plans:
 - [x] 04-03-PLAN.md -- Config schema D-44 update + agent teams onboarding detection (ONBD-06)
 - [x] 04-04-PLAN.md -- Research module + planner module + plan validation with auto-fix
 - [x] 04-05-PLAN.md -- Agent spawner + execution orchestrator (wave dispatch, failure handling)
-- [ ] 04-06-PLAN.md -- Orient pipeline + CLI entry points + orient skill body (full integration)
+- [x] 04-06-PLAN.md -- Orient pipeline + CLI entry points + orient skill body (full integration)
 
 ### Phase 5: Verification
 **Goal**: After execution, static and runtime verification agents validate that changes comply with conventions, stay within predicted blast radius, build successfully, pass tests, and work end-to-end
