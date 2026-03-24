@@ -41,8 +41,12 @@ describe("onboard SKILL.md", () => {
     expect(content).toContain("Step 3: Workflow Preferences");
   });
 
-  it("contains Step 4: Write Config", () => {
-    expect(content).toContain("Step 4: Write Config");
+  it("contains Step 4: Agent Teams Detection", () => {
+    expect(content).toContain("Step 4: Agent Teams Detection");
+  });
+
+  it("contains Step 5: Write Config", () => {
+    expect(content).toContain("Step 5: Write Config");
   });
 
   it("contains ONBD-01 copy: prerequisites Node.js check", () => {
