@@ -146,14 +146,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Learning
 
-- [ ] **LRNG-01**: After task completion, project memory (learnings.md) updates with what worked, what didn't, and gotchas discovered
-- [ ] **LRNG-02**: New learnings start as UNVERIFIED and must be confirmed via /codescope:review-learnings
+- [x] **LRNG-01**: After task completion, project memory (learnings.md) updates with what worked, what didn't, and gotchas discovered
+- [x] **LRNG-02**: New learnings start as UNVERIFIED and must be confirmed via /codescope:review-learnings
 - [x] **LRNG-03**: Confidence decay: gotchas expire after 90 days, decisions after 180 days
 - [x] **LRNG-04**: Contradiction detection: new learning that contradicts existing learning or actual code is flagged
 - [x] **LRNG-05**: Max 50 active learnings (~4,000 tokens when fully loaded)
-- [ ] **LRNG-06**: Learnings NEVER auto-promote to enforced conventions
-- [ ] **LRNG-07**: Global memory (~/.codescope/global-memory.md) captures user preferences, tech stack tendencies, ignore patterns, cross-project patterns
-- [ ] **LRNG-08**: Global memory updated automatically from observed behavior at eval gate
+- [x] **LRNG-06**: Learnings NEVER auto-promote to enforced conventions
+- [x] **LRNG-07**: Global memory (~/.codescope/global-memory.md) captures user preferences, tech stack tendencies, ignore patterns, cross-project patterns
+- [x] **LRNG-08**: Global memory updated automatically from observed behavior at eval gate
 
 ### Settings & Management
 
@@ -301,14 +301,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DBUG-05 | Phase 6 | Complete |
 | DBUG-06 | Phase 6 | Complete |
 | DBUG-07 | Phase 6 | Complete |
-| LRNG-01 | Phase 7 | Pending |
-| LRNG-02 | Phase 7 | Pending |
+| LRNG-01 | Phase 7 | Complete |
+| LRNG-02 | Phase 7 | Complete |
 | LRNG-03 | Phase 7 | Complete |
 | LRNG-04 | Phase 7 | Complete |
 | LRNG-05 | Phase 7 | Complete |
-| LRNG-06 | Phase 7 | Pending |
-| LRNG-07 | Phase 7 | Pending |
-| LRNG-08 | Phase 7 | Pending |
+| LRNG-06 | Phase 7 | Complete |
+| LRNG-07 | Phase 7 | Complete |
+| LRNG-08 | Phase 7 | Complete |
 | MGMT-01 | Phase 7 | Complete |
 | MGMT-02 | Phase 7 | Pending |
 | MGMT-03 | Phase 7 | Complete |
