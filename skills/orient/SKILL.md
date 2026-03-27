@@ -26,6 +26,18 @@ First verify CodeScope has analyzed this codebase:
 3. If `bootstrapped` is false, tell the user: "CodeScope has not analyzed this codebase yet. Run `/codescope:bootstrap` first to build the knowledge graph." and stop.
 4. If `bootstrapped` is true, continue.
 
+## Learning Nudge
+
+Check for unreviewed learnings:
+1. Run: `node --import tsx/esm -e "
+     import { loadLearnings } from './src/learning/manager.js';
+     const parsed = loadLearnings(process.cwd());
+     const unreviewed = parsed.entries.filter(e => e.status === 'UNVERIFIED' || e.status === 'CONTRADICTED');
+     console.log(JSON.stringify({ count: unreviewed.length }));
+   "`
+2. If count >= 10: display "**Info:** {count} unreviewed learnings accumulated. Run `/codescope:review-learnings` to curate."
+3. Continue regardless (not blocking).
+
 ## Flag Detection
 
 Check if `$ARGUMENTS` contains special flags:
@@ -201,7 +213,7 @@ Capture stderr for dispatch requests. When you see `{"type": "dispatch_eval", "p
 
 Parse the stdout JSON result. Display: `Eval complete: {N} findings ({errors} errors, {warnings} warnings, {info} info)`
 
-If `result.overallStatus === "PASS"`, proceed to Step 7 (Summary).
+If `result.overallStatus === "PASS"`, proceed to Step 7 (Learning Capture).
 
 ### 6b. User Gate
 
@@ -217,7 +229,7 @@ Read `eval.mode` from config.yml:
 
 - **auto-skip-minor**: Auto-skip INFO findings, send WARN + ERROR to debug. Display: `{N_skipped} INFO finding(s) auto-skipped. {N_debug} WARN + ERROR finding(s) sent to debug agent automatically.`
 
-If no findings selected for debug, proceed to Step 7 (Summary).
+If no findings selected for debug, proceed to Step 7 (Learning Capture).
 
 ### 6c. Debug Loop
 
@@ -258,15 +270,51 @@ After debug completes, check the result:
   - In interactive mode: ask user `Action? [retry / ignore-all / defer-all]`
   - In auto modes: log remaining findings and proceed
 
-Proceed to Step 7 (Summary).
+Proceed to Step 7 (Learning Capture).
 
-## Step 7: Summary
+## Step 7: Learning Capture
+
+After evaluation and debug complete, capture learnings from this pipeline run. Per D-02: runs regardless of whether debug was needed.
+
+1. Check config: read `learning.auto_capture` from config.yml. If false, display "Learning capture disabled (learning.auto_capture=false). Skipping." and proceed to Step 8.
+
+2. Run the learning capture CLI:
+   ```bash
+   node --import tsx/esm src/learning/run-learning-capture.ts \
+     --project-root "$(pwd)" \
+     --task-slug "{taskSlug}" \
+     --scope-contract-path "{scopeContractPath}" \
+     --plan-path "{planPath}" \
+     --coordination-path "{execution_dir}/coordination.md" \
+     --report-path "{reportPath}" \
+     --execution-dir "{execution_dir}"
+   ```
+
+3. Capture stderr for dispatch requests. When you see `{"type": "dispatch_learning", "prompt": "..."}` on stderr:
+   - Read config.yml to get `agents.learning_synthesizer.model`.
+   - Spawn a learning synthesizer sub-agent using the Agent tool with the prompt from the dispatch request.
+   - Use the model specified in `agents.learning_synthesizer.model` from config.yml.
+   - The sub-agent should have access to: Read (to examine pipeline artifacts referenced in the prompt).
+   - Wait for the sub-agent to return a JSON array of extracted learnings.
+   - The run-learning-capture CLI handles persistence (addLearnings with decay, contradiction check, cap enforcement).
+
+4. Parse the stdout JSON result.
+   - If `status === "skipped"`: display "Learning capture skipped ({reason})."
+   - If `status === "complete"`: display "Learning capture: {newLearnings} new learning(s) added, {contradicted} contradiction(s) flagged, {skipped} skipped (cap). Active: {capStatus}."
+   - If `status === "error"`: display "Learning capture failed: {error}. Pipeline results are still valid."
+
+5. Proceed to Step 8 (Summary).
+
+## Step 8: Summary
 
 After all waves, verification, and evaluation complete, display the execution summary:
 
 ## Summary
 
 Total: {duration}s | Files changed: {N} | Agents: {succeeded}/{total} | Verify: {errors} errors, {warnings} warnings | Eval: {eval_status}
+
+If learning capture ran:
+| Learnings: +{newLearnings} new, {contradicted} contradicted, {capStatus} active
 
 If there were failures, also display:
 - List each failed agent with its error
