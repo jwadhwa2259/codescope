@@ -169,10 +169,11 @@ Plans:
   5. No dead variables in learning-synthesizer.ts
   6. run-learning-capture.ts passes separate paths for evalReportPath and verifyReportPath
   7. ROADMAP.md progress table reflects actual completion status for all phases
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md -- Verify→eval JSON sidecar, type consolidation, doc updates, dead code removal
+- [ ] 08-01-PLAN.md -- JSON sidecar pipeline, type consolidation, JSDoc/comment fixes, dead code removal
+- [ ] 08-02-PLAN.md -- Learning capture dual-path args, ROADMAP progress update
 
 ## Progress
 
@@ -188,4 +189,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 5. Verification | 4/4 | Complete | - |
 | 6. Eval, User Gate, and Debug | 4/4 | Complete |  |
 | 7. Learning System and Settings | 4/4 | Complete |  |
-| 8. Tech Debt Cleanup | 0/1 | Planned |  |
+| 8. Tech Debt Cleanup | 0/2 | Planned |  |
