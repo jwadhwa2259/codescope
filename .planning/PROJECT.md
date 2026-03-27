@@ -53,21 +53,36 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 
 ### Active
 
-(None — next milestone requirements to be defined via `/gsd:new-milestone`)
+(Defined in REQUIREMENTS.md for v2.0)
 
 ### Out of Scope
 
-- Visual map (sigma + @react-sigma/core) — V2, significant frontend effort; core value is autonomous pipeline
-- MCP Apps (inline visual rendering) — V2
-- Semantic search (@lancedb/lancedb + Ollama) — V2, structural + text covers 90% of use cases
-- Cross-project learning / pattern library — V2
-- ADR auto-generation — V2
-- CI/CD integration (GitHub Actions hooks) — V2, different deployment/reliability model
-- Cross-service HTTP linking (route detection + HTTP call matching) — V2
-- Convention drift monitoring — V2
-- Automated comparison testing harness — manual testing sufficient for v1
-- Real-time / continuous re-indexing — web-tree-sitter memory leaks; on-demand sufficient
-- Blocking convention enforcement — destroys trust; suggestion-only in v1
+- Semantic search (@lancedb/lancedb + Ollama) — V3, structural + text covers 90% of use cases
+- Cross-project learning / pattern library — V3
+- ADR auto-generation — V3
+- CI/CD integration (GitHub Actions hooks) — V3, different deployment/reliability model
+- Cross-service HTTP linking (route detection + HTTP call matching) — V3
+- Greenfield/ideation features (SEED-like) — Greenfield planning is saturated (25+ tools); CodeScope's moat is brownfield intelligence
+- Session management/restore — 6+ tools in ecosystem do this; not core value
+- IDE extensions — Let community build on MCP tools
+- Usage/cost monitoring — Commodity; 6 tools already exist
+- Own orchestrator/workflow engine — 11+ exist; would compete with potential consumers of the intelligence layer
+
+## Current Milestone: v2.0 Intelligence Layer + Interactive Dashboard
+
+**Goal:** Transform CodeScope from a one-time analysis tool into an always-on intelligence layer with auto-injection, graph-aware PR review, interactive visualization, and self-improving pipeline — ready for npx distribution and marketplace launch.
+
+**Target features:**
+- On-demand incremental graph updates (always-fresh intelligence)
+- Auto-injection hooks (PreToolUse/PostToolUse — invisible codebase context on every edit)
+- Pipeline evolution: per-task qualification, diagnostic failure routing, plan-vs-actual reconciliation, context budget awareness
+- Session continuity with pause/resume skills and handoff documents
+- Graph-aware PR review (structural impact analysis)
+- Change impact prediction (pre-change blast radius)
+- Convention enforcement hooks (opt-in pre-commit blocking)
+- Full interactive visualization dashboard (sigma.js graph, convention heatmap, readiness trends, blast radius explorer, command center)
+- Technical debt tracking (readiness history + trends)
+- `npx codescope` install experience for marketplace readiness
 
 ## Context
 
@@ -124,4 +139,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after v1.0 milestone*
+*Last updated: 2026-03-27 after v2.0 milestone start*

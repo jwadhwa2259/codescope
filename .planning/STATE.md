@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: MVP
-status: v1.0 milestone shipped
-stopped_at: Milestone v1.0 complete
-last_updated: "2026-03-27T20:15:00.000Z"
+milestone: v2.0
+milestone_name: Intelligence Layer + Interactive Dashboard
+status: defining requirements
+stopped_at: null
+last_updated: "2026-03-27T22:00:00.000Z"
 progress:
-  total_phases: 8
-  completed_phases: 8
-  total_plans: 34
-  completed_plans: 34
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -19,12 +19,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** AI-generated code changes that respect existing conventions, stay within safe blast radius, and actually work in the codebase -- verified end-to-end before the user sees them.
-**Current focus:** v1.0 shipped. Planning next milestone.
+**Current focus:** v2.0 Intelligence Layer + Interactive Dashboard
 
 ## Current Position
 
-Milestone: v1.0 MVP shipped 2026-03-27
-Next: `/gsd:new-milestone` to define v1.1 or v2.0
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-27 — Milestone v2.0 started
 
 ## Performance Metrics
 
