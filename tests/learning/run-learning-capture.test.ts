@@ -207,6 +207,32 @@ describe("parseArgs", () => {
     expect(result.reportPath).toBe("/tmp/report.md");
     expect(result.executionDir).toBe("/tmp/exec");
   });
+
+  it("parses --eval-report-path and --verify-report-path", () => {
+    const args = parseArgs([
+      "--task-slug", "test-task",
+      "--eval-report-path", "/path/to/eval.md",
+      "--verify-report-path", "/path/to/verify.md",
+    ]);
+    expect(args.evalReportPath).toBe("/path/to/eval.md");
+    expect(args.verifyReportPath).toBe("/path/to/verify.md");
+  });
+
+  it("defaults evalReportPath and verifyReportPath to empty string", () => {
+    const args = parseArgs(["--task-slug", "test-task"]);
+    expect(args.evalReportPath).toBe("");
+    expect(args.verifyReportPath).toBe("");
+  });
+
+  it("preserves backward compat with --report-path only", () => {
+    const args = parseArgs([
+      "--task-slug", "test-task",
+      "--report-path", "/path/to/report.md",
+    ]);
+    expect(args.reportPath).toBe("/path/to/report.md");
+    expect(args.evalReportPath).toBe("");
+    expect(args.verifyReportPath).toBe("");
+  });
 });
 
 describe("runLearningCapture", () => {
@@ -234,6 +260,8 @@ describe("runLearningCapture", () => {
       planPath: "",
       coordinationPath: "",
       reportPath: "",
+      evalReportPath: "",
+      verifyReportPath: "",
       executionDir: "",
     });
 
@@ -263,6 +291,8 @@ describe("runLearningCapture", () => {
         planPath: "",
         coordinationPath: coordPath,
         reportPath: "",
+        evalReportPath: "",
+        verifyReportPath: "",
         executionDir: "",
       });
 
@@ -284,6 +314,8 @@ describe("runLearningCapture", () => {
       planPath: "",
       coordinationPath: "",
       reportPath: "",
+      evalReportPath: "",
+      verifyReportPath: "",
       executionDir: "",
     });
 
@@ -305,6 +337,8 @@ describe("runLearningCapture", () => {
       planPath: "/nonexistent/plan.md",
       coordinationPath: "/nonexistent/coord.md",
       reportPath: "/nonexistent/report.md",
+      evalReportPath: "",
+      verifyReportPath: "",
       executionDir: "/nonexistent/exec",
     });
 

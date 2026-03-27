@@ -12,13 +12,13 @@ CodeScope is built bottom-up: infrastructure first, then codebase intelligence, 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Plugin Foundation and Infrastructure** - Plugin skeleton, onboarding, AST parsing, graph schema, and filesystem-first coordination patterns
-- [ ] **Phase 2: Scout and Analysis Squad** - Scout maps project structure, analysis agents build codebase intelligence (conventions, graph, danger zones, golden files)
-- [ ] **Phase 3: Bootstrap Synthesis and MCP Server** - Monorepo scaling, cross-service synthesis, AI readiness score, and all 11 MCP tools operational
-- [ ] **Phase 4: Orient and Execution Engine** - Graph-informed clarification, research, planning, and dual-mode multi-agent execution (sequential sub-agents + agent teams with SendMessage coordination)
-- [ ] **Phase 5: Verification** - Static convention compliance, blast radius diff, runtime build/test verification, E2E auto-detection, and auto-smoke generation
-- [ ] **Phase 6: Eval, User Gate, and Debug** - LLM-as-judge scoring, interactive finding selection, and self-correcting debug cycles with escalation
-- [ ] **Phase 7: Learning System and Settings** - Persistent project memory with decay and contradiction detection, global memory, and management skills
+- [x] **Phase 1: Plugin Foundation and Infrastructure** - Plugin skeleton, onboarding, AST parsing, graph schema, and filesystem-first coordination patterns
+- [x] **Phase 2: Scout and Analysis Squad** - Scout maps project structure, analysis agents build codebase intelligence (conventions, graph, danger zones, golden files)
+- [x] **Phase 3: Bootstrap Synthesis and MCP Server** - Monorepo scaling, cross-service synthesis, AI readiness score, and all 11 MCP tools operational
+- [x] **Phase 4: Orient and Execution Engine** - Graph-informed clarification, research, planning, and dual-mode multi-agent execution (sequential sub-agents + agent teams with SendMessage coordination)
+- [x] **Phase 5: Verification** - Static convention compliance, blast radius diff, runtime build/test verification, E2E auto-detection, and auto-smoke generation
+- [x] **Phase 6: Eval, User Gate, and Debug** - LLM-as-judge scoring, interactive finding selection, and self-correcting debug cycles with escalation
+- [x] **Phase 7: Learning System and Settings** - Persistent project memory with decay and contradiction detection, global memory, and management skills
 - [ ] **Phase 8: Tech Debt Cleanup** - Verify→eval JSON sidecar, type consolidation, doc updates, dead code removal, and ROADMAP corrections
 
 ## Phase Details
@@ -189,4 +189,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 5. Verification | 4/4 | Complete | - |
 | 6. Eval, User Gate, and Debug | 4/4 | Complete |  |
 | 7. Learning System and Settings | 4/4 | Complete |  |
-| 8. Tech Debt Cleanup | 0/2 | Planned |  |
+| 8. Tech Debt Cleanup | 0/2 | In Progress |  |

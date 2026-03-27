@@ -27,6 +27,8 @@ export interface LearningCaptureArgs {
   planPath: string;
   coordinationPath: string;
   reportPath: string;
+  evalReportPath: string;
+  verifyReportPath: string;
   executionDir: string;
 }
 
@@ -69,6 +71,8 @@ export function parseArgs(
     planPath: args.planPath || "",
     coordinationPath: args.coordinationPath || "",
     reportPath: args.reportPath || "",
+    evalReportPath: args.evalReportPath || "",
+    verifyReportPath: args.verifyReportPath || "",
     executionDir: args.executionDir || "",
   };
 }
@@ -121,8 +125,8 @@ export async function runLearningCapture(
     projectRoot: args.projectRoot,
     outputDir: csPath,
     coordinationLogPath: args.coordinationPath || undefined,
-    evalReportPath: args.reportPath || undefined,
-    verifyReportPath: args.reportPath || undefined,
+    evalReportPath: args.evalReportPath || args.reportPath || undefined,
+    verifyReportPath: args.verifyReportPath || args.reportPath || undefined,
     scopeContractPath: args.scopeContractPath || undefined,
     decayConfig,
     maxActive,
