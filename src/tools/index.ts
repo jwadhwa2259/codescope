@@ -39,7 +39,7 @@ export function registerTools(
   // Status tool always functional (no bootstrap required)
   registerStatusTool(server, projectRoot);
 
-  // All 10 real tools -- each checks isBootstrapped() internally
+  // All 11 real tools -- each checks isBootstrapped() internally
   registerRecallTool(server, projectRoot);
   registerGraphQueryTool(server, projectRoot);
   registerBlastRadiusTool(server, projectRoot);

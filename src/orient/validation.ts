@@ -36,14 +36,8 @@ export function validatePlan(
   plan: ExecutionPlan,
   scopeContract: ScopeContract,
 ): ValidationResult {
-  // Cast plan agents to wave-scheduler's local AgentAssignment type
-  // (identical structure, different import paths during parallel Plan 01/02 dev)
-  const agents = plan.agents as unknown as Parameters<
-    typeof validateFileOverlap
-  >[0];
-  const waves = plan.waves as unknown as Parameters<
-    typeof validateFileOverlap
-  >[1];
+  const agents = plan.agents;
+  const waves = plan.waves;
 
   const overlapChecks = validateFileOverlap(agents, waves);
   const orderingChecks = validateDependencyOrdering(agents, waves);
@@ -123,9 +117,7 @@ export function autoFixPlan(
     // Attempt fix: rebuild wave schedule via buildWaveSchedule
     try {
       const { waves: newWaves, strategy } = buildWaveSchedule(
-        currentPlan.agents as unknown as Parameters<
-          typeof buildWaveSchedule
-        >[0],
+        currentPlan.agents,
       );
 
       // Update agent wave assignments from the new schedule
@@ -199,12 +191,8 @@ function revalidate(
   plan: ExecutionPlan,
   prevResult: ValidationResult,
 ): ValidationResult {
-  const agents = plan.agents as unknown as Parameters<
-    typeof validateFileOverlap
-  >[0];
-  const waves = plan.waves as unknown as Parameters<
-    typeof validateFileOverlap
-  >[1];
+  const agents = plan.agents;
+  const waves = plan.waves;
 
   const overlapChecks = validateFileOverlap(agents, waves);
   const orderingChecks = validateDependencyOrdering(agents, waves);

@@ -3,41 +3,9 @@
 // Per EXEC-07 (hybrid dependency analysis) and EXEC-10 (file overlap gate).
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Local type definitions for AgentAssignment and ExecutionWave.
-// These mirror src/orient/types.ts (Plan 01). Once orient types are
-// available, replace with: import type { AgentAssignment, ExecutionWave }
-// from "../orient/types.js";
-// ---------------------------------------------------------------------------
+import type { AgentAssignment, ExecutionWave, ValidationCheck } from "../orient/types.js";
 
-export interface AgentAssignment {
-  name: string;
-  wave: number;
-  task: string;
-  exclusiveWriteFiles: string[];
-  readOnlyFiles: string[];
-  conventions: string[];
-  goldenFiles: Array<{ path: string; lines: string }>;
-  dependsOn: string[];
-  estimatedTokens: number;
-  timeoutSeconds: number;
-}
-
-export interface ExecutionWave {
-  waveNumber: number;
-  agents: string[];
-  mode: "parallel" | "sequential";
-}
-
-// ---------------------------------------------------------------------------
-// Validation check result (used by validateFileOverlap etc.)
-// ---------------------------------------------------------------------------
-
-export interface ValidationCheck {
-  name: string;
-  status: "PASS" | "FAIL" | "WARNING";
-  detail?: string;
-}
+export type { AgentAssignment, ExecutionWave, ValidationCheck };
 
 // ---------------------------------------------------------------------------
 // buildWaveSchedule

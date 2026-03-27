@@ -376,4 +376,28 @@ describe("writeVerifyReport", () => {
     expect(path.isAbsolute(reportPath)).toBe(true);
     expect(fs.existsSync(reportPath)).toBe(true);
   });
+
+  it("writes JSON sidecar alongside markdown report", () => {
+    const report = makeReport();
+
+    const reportPath = writeVerifyReport(projectRoot, report);
+    const jsonSidecarPath = reportPath.replace(/\.md$/, ".json");
+
+    // JSON sidecar file must exist
+    expect(fs.existsSync(jsonSidecarPath)).toBe(true);
+
+    // Parse and validate structure
+    const parsed = JSON.parse(fs.readFileSync(jsonSidecarPath, "utf-8"));
+    expect(parsed.static).toBeDefined();
+    expect(parsed.runtime).toBeDefined();
+
+    // Verify static structure
+    expect(Array.isArray(parsed.static.conventionViolations)).toBe(true);
+    expect(parsed.static.blastRadiusDiff).toBeDefined();
+    expect(parsed.static.codeReview).toBeDefined();
+
+    // Verify runtime structure
+    expect(parsed.runtime.build).toBeDefined();
+    expect(parsed.runtime.unitTests).toBeDefined();
+  });
 });

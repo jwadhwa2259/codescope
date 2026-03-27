@@ -56,6 +56,14 @@ export function writeVerifyReport(
   const content = sections.join("\n\n");
   fs.writeFileSync(reportPath, content, "utf-8");
 
+  // Write JSON sidecar for structured eval consumption (VRFY-08, EVAL-01, EVAL-03)
+  const jsonSidecarPath = reportPath.replace(/\.md$/, ".json");
+  fs.writeFileSync(
+    jsonSidecarPath,
+    JSON.stringify({ static: report.static, runtime: report.runtime }, null, 2),
+    "utf-8",
+  );
+
   return reportPath;
 }
 

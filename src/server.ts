@@ -5,14 +5,14 @@ import { registerTools } from "./tools/index.js";
 /**
  * CodeScope MCP Server
  *
- * Registers all 11 MCP tools and connects via StdioServerTransport.
+ * Registers all 12 MCP tools and connects via StdioServerTransport.
  * Claude Code spawns this process and communicates over stdin/stdout.
  *
  * Tools registered:
  *   codescope_status, codescope_recall, codescope_graph_query,
  *   codescope_blast_radius, codescope_conventions, codescope_orient,
  *   codescope_verify, codescope_search, codescope_readiness,
- *   codescope_detect_changes, codescope_service_map
+ *   codescope_detect_changes, codescope_service_map, codescope_eval
  *
  * Each tool handler checks bootstrap state internally and returns
  * structured errors with recovery hints when not bootstrapped.

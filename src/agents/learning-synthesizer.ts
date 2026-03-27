@@ -251,7 +251,6 @@ export async function runLearningSynthesizer(
   );
 
   // Compute cap status
-  const totalActive = addResult.added.length + (maxActive - addResult.evicted.length);
   const capStatus = `${addResult.added.length + (await countCurrentActive(options.projectRoot))}/${maxActive} active`;
 
   return {
