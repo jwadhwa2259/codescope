@@ -39,5 +39,9 @@
     "tsx": "^4.21.0",
     "typescript": "^5.7.0",
     "vitest": "^4.1.0"
+  },
+  "overrides": {
+    "picomatch": ">=4.0.4",
+    "brace-expansion": ">=1.1.13"
   }
 }

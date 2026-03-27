@@ -9,7 +9,8 @@
 import { execSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { Parser, Language } from "web-tree-sitter";
+import { Parser } from "web-tree-sitter";
+import type { Node as SyntaxNode } from "web-tree-sitter";
 import { detectLanguage, getGrammarDir, loadLanguage } from "../parser/languages.js";
 
 // ---- Types ----
@@ -47,13 +48,14 @@ const SERVER_OBJECTS = new Set(["app", "router", "server", "blueprint"]);
  * Looks for: app.get('/route', handler), router.post('/route', handler), etc.
  */
 function detectExpressEndpoints(
-  rootNode: any,
+  rootNode: SyntaxNode,
   filePath: string,
 ): DetectedEndpoint[] {
   const endpoints: DetectedEndpoint[] = [];
   const callNodes = rootNode.descendantsOfType("call_expression");
 
   for (const node of callNodes) {
+    if (!node) continue;
     const callee = node.childForFieldName("function");
     if (!callee || callee.type !== "member_expression") continue;
 
@@ -71,7 +73,7 @@ function detectExpressEndpoints(
     if (!args) continue;
 
     const firstStringArg = args.children?.find(
-      (c: any) => c.type === "string" || c.type === "template_string",
+      (c: SyntaxNode | null): c is SyntaxNode => c != null && (c.type === "string" || c.type === "template_string"),
     );
     if (!firstStringArg) continue;
 
@@ -92,7 +94,7 @@ function detectExpressEndpoints(
  * Looks for: export function GET/POST/PUT/DELETE/PATCH in route.ts files.
  */
 function detectNextJsAppRouterEndpoints(
-  rootNode: any,
+  rootNode: SyntaxNode,
   filePath: string,
 ): DetectedEndpoint[] {
   // Only applies to route.ts/route.js files
@@ -112,8 +114,9 @@ function detectNextJsAppRouterEndpoints(
   }
 
   for (const node of exportNodes) {
+    if (!node) continue;
     const funcDecl = node.children?.find(
-      (c: any) => c.type === "function_declaration",
+      (c: SyntaxNode | null): c is SyntaxNode => c != null && c.type === "function_declaration",
     );
     if (!funcDecl) continue;
 
@@ -139,7 +142,7 @@ function detectNextJsAppRouterEndpoints(
  * Looks for: export default in files under pages/api/.
  */
 function detectNextJsPagesRouterEndpoints(
-  rootNode: any,
+  rootNode: SyntaxNode,
   filePath: string,
 ): DetectedEndpoint[] {
   // Only applies to pages/api/ files
@@ -148,7 +151,7 @@ function detectNextJsPagesRouterEndpoints(
   }
 
   const endpoints: DetectedEndpoint[] = [];
-  const exportNodes = rootNode.descendantsOfType("export_statement");
+  const pagesExportNodes = rootNode.descendantsOfType("export_statement");
 
   // Infer route from file path: pages/api/users.ts -> /api/users
   const pagesIndex = filePath.indexOf("pages/");
@@ -162,7 +165,8 @@ function detectNextJsPagesRouterEndpoints(
         .replace(/\/index$/, "");
   }
 
-  for (const node of exportNodes) {
+  for (const node of pagesExportNodes) {
+    if (!node) continue;
     // Check if this is a default export
     if (node.text?.includes("default")) {
       endpoints.push({
@@ -183,17 +187,18 @@ function detectNextJsPagesRouterEndpoints(
  * Looks for: @app.route('/path'), @app.get('/path'), @router.post('/path'), etc.
  */
 function detectFlaskEndpoints(
-  rootNode: any,
+  rootNode: SyntaxNode,
   filePath: string,
 ): DetectedEndpoint[] {
   const endpoints: DetectedEndpoint[] = [];
   const decoratedNodes = rootNode.descendantsOfType("decorated_definition");
 
   for (const node of decoratedNodes) {
-    const decorator = node.children?.find((c: any) => c.type === "decorator");
+    if (!node) continue;
+    const decorator = node.children?.find((c: SyntaxNode | null): c is SyntaxNode => c != null && c.type === "decorator");
     if (!decorator) continue;
 
-    const callNode = decorator.children?.find((c: any) => c.type === "call");
+    const callNode = decorator.children?.find((c: SyntaxNode | null): c is SyntaxNode => c != null && c.type === "call");
     if (!callNode) continue;
 
     const funcNode = callNode.childForFieldName("function");
@@ -214,7 +219,7 @@ function detectFlaskEndpoints(
     if (!args) continue;
 
     const firstStringArg = args.children?.find(
-      (c: any) => c.type === "string" || c.type === "concatenated_string",
+      (c: SyntaxNode | null): c is SyntaxNode => c != null && (c.type === "string" || c.type === "concatenated_string"),
     );
     if (!firstStringArg) continue;
 
@@ -223,7 +228,7 @@ function detectFlaskEndpoints(
 
     // Get the function definition text
     const funcDef = node.children?.find(
-      (c: any) => c.type === "function_definition",
+      (c: SyntaxNode | null): c is SyntaxNode => c != null && c.type === "function_definition",
     );
 
     endpoints.push({
@@ -293,6 +298,10 @@ export async function detectNewEndpoints(
     const parser = new Parser();
     parser.setLanguage(language);
     const tree = parser.parse(content);
+    if (!tree) {
+      parser.delete();
+      continue;
+    }
 
     try {
       const rootNode = tree.rootNode;
