@@ -189,9 +189,10 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260327-fvp | Fix all 6 audit findings: command injection, type safety, dependency vulnerabilities | 2026-03-27 | 443ddd5 | [260327-fvp-fix-all-6-audit-findings-command-injecti](./quick/260327-fvp-fix-all-6-audit-findings-command-injecti/) |
+| 260327-i7k | Create run-bootstrap.ts CLI entry point | 2026-03-27 | 336a354 | [260327-i7k-create-run-bootstrap-ts-cli-entry-point](./quick/260327-i7k-create-run-bootstrap-ts-cli-entry-point/) |
 
 ## Session Continuity
 
-Last session: 2026-03-27T19:37:04.975Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-03-27
+Stopped at: Completed quick task 260327-i7k: Create run-bootstrap.ts CLI entry point
 Resume file: None
