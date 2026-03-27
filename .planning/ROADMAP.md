@@ -152,7 +152,7 @@ Plans:
 Plans:
 - [x] 07-01-PLAN.md -- Learning lifecycle engine (types, parser, decay, contradiction, cap, manager, global enrichment)
 - [ ] 07-02-PLAN.md -- Learning synthesizer agent upgrade + global memory extension + CLI entry point
-- [ ] 07-03-PLAN.md -- Settings skill body (interactive menus, --set, convention rollback, resets)
+- [x] 07-03-PLAN.md -- Settings skill body (interactive menus, --set, convention rollback, resets)
 - [ ] 07-04-PLAN.md -- Review-learnings skill body + orient Step 7 learning capture integration
 
 ## Progress
@@ -168,4 +168,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 4. Orient and Execution Engine | 0/6 | Planned | - |
 | 5. Verification | 0/4 | Planned | - |
 | 6. Eval, User Gate, and Debug | 0/4 | Planned    |  |
-| 7. Learning System and Settings | 0/4 | Planned | - |
+| 7. Learning System and Settings | 1/4 | In Progress|  |
