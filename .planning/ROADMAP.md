@@ -19,6 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5: Verification** - Static convention compliance, blast radius diff, runtime build/test verification, E2E auto-detection, and auto-smoke generation
 - [ ] **Phase 6: Eval, User Gate, and Debug** - LLM-as-judge scoring, interactive finding selection, and self-correcting debug cycles with escalation
 - [ ] **Phase 7: Learning System and Settings** - Persistent project memory with decay and contradiction detection, global memory, and management skills
+- [ ] **Phase 8: Tech Debt Cleanup** - Verify→eval JSON sidecar, type consolidation, doc updates, dead code removal, and ROADMAP corrections
 
 ## Phase Details
 
@@ -155,17 +156,36 @@ Plans:
 - [x] 07-03-PLAN.md -- Settings skill body (interactive menus, --set, convention rollback, resets)
 - [x] 07-04-PLAN.md -- Review-learnings skill body + orient Step 7 learning capture integration
 
+### Phase 8: Tech Debt Cleanup
+**Goal**: Close all integration gaps, flow gaps, and tech debt items identified by the v1.0 milestone audit — verify→eval JSON sidecar, wave-scheduler type consolidation, stale documentation, dead code, and ROADMAP corrections
+**Depends on**: Phase 7
+**Requirements**: EVAL-01, EVAL-03, VRFY-08, EXEC-07, ORNT-10, MCP-01
+**Gap Closure:** Closes all gaps from v1.0-MILESTONE-AUDIT.md
+**Success Criteria** (what must be TRUE):
+  1. run-verify.ts serializes StaticVerifyResult + RuntimeVerifyResult to a JSON sidecar file alongside the markdown report
+  2. run-eval.ts consumes the JSON sidecar for structured scoring data (no more empty fallback)
+  3. wave-scheduler.ts imports AgentAssignment/ExecutionWave from orient/types.ts with no local type copies or `as unknown` casts
+  4. server.ts JSDoc accurately lists all 12 MCP tools
+  5. No dead variables in learning-synthesizer.ts
+  6. run-learning-capture.ts passes separate paths for evalReportPath and verifyReportPath
+  7. ROADMAP.md progress table reflects actual completion status for all phases
+**Plans**: TBD
+
+Plans:
+- [ ] 08-01-PLAN.md -- Verify→eval JSON sidecar, type consolidation, doc updates, dead code removal
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Plugin Foundation and Infrastructure | 5/5 | Complete | - |
 | 2. Scout and Analysis Squad | 4/4 | Complete    |  |
 | 3. Bootstrap Synthesis and MCP Server | 5/5 | Complete    |  |
-| 4. Orient and Execution Engine | 0/6 | Planned | - |
-| 5. Verification | 0/4 | Planned | - |
-| 6. Eval, User Gate, and Debug | 0/4 | Planned    |  |
-| 7. Learning System and Settings | 1/4 | In Progress|  |
+| 4. Orient and Execution Engine | 6/6 | Complete | - |
+| 5. Verification | 4/4 | Complete | - |
+| 6. Eval, User Gate, and Debug | 4/4 | Complete |  |
+| 7. Learning System and Settings | 4/4 | Complete |  |
+| 8. Tech Debt Cleanup | 0/1 | Planned |  |

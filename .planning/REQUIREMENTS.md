@@ -244,7 +244,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GRPH-04 | Phase 2 | Complete |
 | GRPH-05 | Phase 3 | Complete |
 | GRPH-06 | Phase 3 | Complete |
-| MCP-01 | Phase 3 | Complete |
+| MCP-01 | Phase 3, 8 | Pending |
 | MCP-02 | Phase 3 | Complete |
 | MCP-03 | Phase 3 | Complete |
 | MCP-04 | Phase 3 | Complete |
@@ -266,7 +266,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ORNT-07 | Phase 4 | Complete |
 | ORNT-08 | Phase 4 | Complete |
 | ORNT-09 | Phase 4 | Complete |
-| ORNT-10 | Phase 4 | Complete |
+| ORNT-10 | Phase 4, 8 | Pending |
 | ORNT-11 | Phase 4 | Complete |
 | EXEC-01 | Phase 4 | Complete |
 | EXEC-02 | Phase 4 | Complete |
@@ -274,7 +274,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXEC-04 | Phase 4 | Complete |
 | EXEC-05 | Phase 4 | Complete |
 | EXEC-06 | Phase 4 | Complete |
-| EXEC-07 | Phase 4 | Complete |
+| EXEC-07 | Phase 4, 8 | Pending |
 | EXEC-08 | Phase 4 | Complete |
 | EXEC-09 | Phase 4 | Complete |
 | EXEC-10 | Phase 4 | Complete |
@@ -285,10 +285,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VRFY-05 | Phase 5 | Complete |
 | VRFY-06 | Phase 5 | Complete |
 | VRFY-07 | Phase 5 | Complete |
-| VRFY-08 | Phase 5 | Complete |
-| EVAL-01 | Phase 6 | Complete |
+| VRFY-08 | Phase 5, 8 | Pending |
+| EVAL-01 | Phase 6, 8 | Pending |
 | EVAL-02 | Phase 6 | Complete |
-| EVAL-03 | Phase 6 | Complete |
+| EVAL-03 | Phase 6, 8 | Pending |
 | EVAL-04 | Phase 6 | Complete |
 | GATE-01 | Phase 6 | Complete |
 | GATE-02 | Phase 6 | Complete |
