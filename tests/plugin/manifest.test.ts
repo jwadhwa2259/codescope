@@ -163,20 +163,22 @@ describe("Plugin Manifest", () => {
       expect(content).toContain("run-execution.ts");
     });
 
-    it("skills/settings/SKILL.md body contains phase 7 message", () => {
+    it("skills/settings/SKILL.md body contains full settings skill", () => {
       const content = fs.readFileSync(
         path.join(PROJECT_ROOT, "skills", "settings", "SKILL.md"),
         "utf-8"
       );
-      expect(content).toContain("This skill will be available after Phase 7");
+      expect(content).toContain("name: settings");
+      expect(content).toContain("loadConfig");
     });
 
-    it("skills/review-learnings/SKILL.md body contains phase 7 message", () => {
+    it("skills/review-learnings/SKILL.md body contains full review skill", () => {
       const content = fs.readFileSync(
         path.join(PROJECT_ROOT, "skills", "review-learnings", "SKILL.md"),
         "utf-8"
       );
-      expect(content).toContain("This skill will be available after Phase 7");
+      expect(content).toContain("name: review-learnings");
+      expect(content).toContain("loadLearnings");
     });
   });
 });
