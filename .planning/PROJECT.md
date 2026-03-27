@@ -59,9 +59,9 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - [x] User gate — interactive finding selection (debug selected / ignore all / defer to TODO) — *Validated in Phase 6*
 - [x] Auto-debug and auto-skip-minor modes — *Validated in Phase 6*
 - [x] Debug agent — targeted fix plans, re-execute, re-verify, re-eval (max 3 cycles), design decision escalation — *Validated in Phase 6*
-- [ ] Learning system — project memory (learnings.md, max 50, UNVERIFIED default, confidence decay, contradiction detection) + global memory (~/.codescope/global-memory.md)
-- [ ] `/codescope:review-learnings` — review and confirm/reject accumulated learnings
-- [ ] `/codescope:settings` — interactive configuration changes
+- [x] Learning system — project memory (learnings.md, max 50, UNVERIFIED default, confidence decay, contradiction detection) + global memory (~/.codescope/global-memory.md) — *Validated in Phase 7: Learning System and Settings*
+- [x] `/codescope:review-learnings` — review and confirm/reject accumulated learnings — *Validated in Phase 7*
+- [x] `/codescope:settings` — interactive configuration changes — *Validated in Phase 7*
 - [x] SQLite knowledge graph (better-sqlite3) with nodes, edges, communities tables
 - [x] web-tree-sitter WASM parsing for TS/JS/Python
 - [x] Import resolution: enhanced-resolve + tsconfig-paths (TS/JS), filesystem-based (Python ~80%)
