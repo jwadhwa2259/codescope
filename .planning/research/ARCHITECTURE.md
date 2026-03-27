@@ -1,636 +1,1103 @@
-# Architecture Research
+# Architecture Research: CodeScope v2.0 Integration
 
-**Domain:** Claude Code plugin with MCP backend, multi-agent orchestration, and knowledge graph
-**Researched:** 2026-03-22
-**Confidence:** HIGH
+**Domain:** Claude Code plugin -- intelligence layer features integrating with existing v1.0 architecture
+**Researched:** 2026-03-27
+**Confidence:** HIGH (hooks, incremental graph, npx CLI), MEDIUM (visualization server, PR review, session handoff)
 
-## System Overview
+## Existing Architecture Summary
+
+Before detailing v2.0 integration, here is the v1.0 architecture that all new features must integrate with:
 
 ```
-                          Claude Code Host Process
- ............................................................................
- :                                                                          :
- :  ┌─────────────────────────────────────────────────────────────────────┐  :
- :  │                    PLUGIN ENTRY LAYER                              │  :
- :  │                                                                     │  :
- :  │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌───────────┐  │  :
- :  │  │  /codescope:  │ │  /codescope:  │ │  /codescope:  │ │ /codescope│  │  :
- :  │  │  onboard     │ │  bootstrap   │ │  orient      │ │ :settings │  │  :
- :  │  │  (SKILL.md)  │ │  (SKILL.md)  │ │  (SKILL.md)  │ │ :review   │  │  :
- :  │  └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ └─────┬─────┘  │  :
- :  └─────────┼────────────────┼────────────────┼────────────────┼────────┘  :
- :            │                │                │                │           :
- :            v                v                v                v           :
- :  ┌─────────────────────────────────────────────────────────────────────┐  :
- :  │                ORCHESTRATOR LAYER (<15K tokens)                     │  :
- :  │                                                                     │  :
- :  │  Reads disk state -> Routes to agents -> Reads results from disk   │  :
- :  │  Never does heavy work. Spawns via Task tool. Sequential default.  │  :
- :  └──────────┬──────────────┬──────────────┬──────────────┬────────────┘  :
- :             │              │              │              │                :
- :      ┌──────┘      ┌──────┘      ┌──────┘      ┌──────┘                 :
- :      v             v             v             v                         :
- :  ┌────────┐   ┌────────┐   ┌────────┐   ┌────────┐    SUB-AGENT        :
- :  │ Scout  │   │Research│   │ Conv.  │   │  Risk  │    CONTEXTS          :
- :  │ Agent  │   │ Agent  │   │Detect. │   │Analyze │    (200K tokens      :
- :  │(Haiku) │   │(Haiku) │   │(Inher.)│   │(Inher.)│     each, isolated) :
- :  └───┬────┘   └───┬────┘   └───┬────┘   └───┬────┘                     :
- :      │             │             │             │                         :
- :      │   ┌─────────┼─────────────┼─────────────┼──────────────┐         :
- :      │   │         │             │             │              │         :
- :      v   v         v             v             v              │         :
- :  ┌─────────────────────────────────────────────────────────┐  │         :
- :  │              FILESYSTEM COORDINATION                     │  │         :
- :  │              .claude/codescope/                           │  │         :
- :  │                                                          │  │         :
- :  │  config.md | overview.md | conventions.md | graph.db     │  │         :
- :  │  danger-zones.md | learnings.md | execution/coord.md     │  │         :
- :  │  plans/ | reports/ | services/ | orient/                 │  │         :
- :  └─────────────────────────────────────┬────────────────────┘  │         :
- :                                        │                       │         :
- :.........................................│.......................│..........:
-                                          │                       │
-              ┌───────────────────────────┘                       │
-              v                                                   v
- ┌────────────────────────────────────────────────────────────────────────┐
- │                    MCP SERVER (stdio transport)                        │
+                      Claude Code Host Process
+ ...........................................................................
+ :                                                                         :
+ :  ┌─────────────────────────────────────────────────────────────────┐    :
+ :  │                   PLUGIN ENTRY LAYER                            │    :
+ :  │  Skills: onboard, bootstrap, orient, settings, review-learnings │    :
+ :  │  Manifest: .claude-plugin/plugin.json                           │    :
+ :  └──────────────────────────┬──────────────────────────────────────┘    :
+ :                             │                                           :
+ :  ┌──────────────────────────v──────────────────────────────────────┐    :
+ :  │              ORCHESTRATOR LAYER (<15K tokens)                    │    :
+ :  │  Reads disk -> Routes to agents via Task tool -> Reads results  │    :
+ :  └──────────────────────────┬──────────────────────────────────────┘    :
+ :                             │                                           :
+ :  ┌──────────────────────────v──────────────────────────────────────┐    :
+ :  │              SUB-AGENT CONTEXTS (200K each, isolated)           │    :
+ :  │  Scout, Researcher, ConvDetector, RiskAnalyzer, LearningSync   │    :
+ :  │  Execution agents, Verify agents, Eval, Debug                  │    :
+ :  └──────────────────────────┬──────────────────────────────────────┘    :
+ :                             │                                           :
+ :  ┌──────────────────────────v──────────────────────────────────────┐    :
+ :  │              FILESYSTEM COORDINATION                            │    :
+ :  │  .claude/codescope/ (config.yml, graph.db, overview.md,        │    :
+ :  │   conventions.md, danger-zones.md, learnings.md, plans/,       │    :
+ :  │   execution/, reports/, orient/, services/, bootstrap-meta.json)│    :
+ :  └──────────────────────────┬──────────────────────────────────────┘    :
+ :                             │                                           :
+ :.............................│...........................................:
+                               │
+ ┌─────────────────────────────v──────────────────────────────────────────┐
+ │                MCP SERVER (StdioServerTransport)                       │
+ │  12 tools: status, recall, graph_query, blast_radius, conventions,    │
+ │  orient, verify, search, readiness, detect_changes, service_map, eval │
  │                                                                        │
- │  ┌─────────────┐ ┌──────────────┐ ┌──────────────┐ ┌───────────────┐  │
- │  │ codescope_  │ │ codescope_   │ │ codescope_   │ │ codescope_    │  │
- │  │ recall      │ │ graph_query  │ │ blast_radius │ │ conventions   │  │
- │  └──────┬──────┘ └──────┬───────┘ └──────┬───────┘ └──────┬────────┘  │
- │         │               │                │                │           │
- │  ┌──────┴───────────────┴────────────────┴────────────────┴────────┐  │
- │  │                     CORE SERVICES                                │  │
- │  │                                                                  │  │
- │  │  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐ │  │
- │  │  │  Graph       │  │  Convention  │  │  Import Resolution     │ │  │
- │  │  │  Service     │  │  Service     │  │  Service               │ │  │
- │  │  │ (graphology) │  │ (ast-grep)   │  │ (enhanced-resolve)     │ │  │
- │  │  └──────┬───────┘  └──────┬───────┘  └──────────┬─────────────┘ │  │
- │  │         │                 │                      │              │  │
- │  │  ┌──────┴─────────────────┴──────────────────────┴────────────┐ │  │
- │  │  │                  AST PARSING LAYER                          │ │  │
- │  │  │            (web-tree-sitter WASM)                           │ │  │
- │  │  └──────────────────────┬──────────────────────────────────────┘ │  │
- │  │                         │                                       │  │
- │  │  ┌──────────────────────┴──────────────────────────────────────┐ │  │
- │  │  │                  STORAGE LAYER                               │ │  │
- │  │  │              (better-sqlite3)                                │ │  │
- │  │  │           graph.db — nodes, edges, communities               │ │  │
- │  │  └─────────────────────────────────────────────────────────────┘ │  │
- │  └──────────────────────────────────────────────────────────────────┘  │
+ │  Graph Cache (5-min TTL) ──> SQLite (WAL, 64MB) ──> Graphology        │
  └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Component Responsibilities
+**Key architectural constraints:**
+- MCP server uses StdioServerTransport (stdin/stdout) -- cannot share these channels with HTTP
+- All state lives on disk at `.claude/codescope/`, not in agent memory
+- Sub-agents communicate through filesystem, not return values (Issue #5812)
+- Build output: single `dist/server.js` via tsdown, `better-sqlite3` kept external
+- Graph cache is module-level singleton with `invalidateCache()` for forced refresh
 
-| Component | Responsibility | Implementation |
-|-----------|----------------|----------------|
-| **Plugin Entry (Skills)** | User-facing slash commands. Each skill is a SKILL.md that triggers orchestration. | `skills/onboard/SKILL.md`, `skills/bootstrap/SKILL.md`, `skills/orient/SKILL.md`, `skills/settings/SKILL.md`, `skills/review-learnings/SKILL.md` |
-| **Orchestrator** | Thin routing layer that reads disk state, spawns sub-agents via Task tool, reads their output from disk. Never does computation. Stays under 15K tokens. | Inline logic in SKILL.md body + agent definitions in `agents/` |
-| **Sub-Agents** | Isolated 200K-token contexts that do all heavy work. Cannot nest. Communicate via filesystem only. | `agents/*.md` definitions with frontmatter (model, tools, permissions) |
-| **Filesystem Coordination** | Append-only files that serve as the communication bus between agents. Source of truth for all state. | `.claude/codescope/**` directory tree |
-| **MCP Server** | Backend intelligence layer. Exposes 11 tools for graph queries, conventions, blast radius, verification. Agents call these tools; heavy data never enters context windows directly. | TypeScript MCP server via `@modelcontextprotocol/sdk`, stdio transport |
-| **Graph Service** | In-memory graph operations: centrality, community detection, BFS blast radius. | `graphology` + `graphology-communities-louvain` + `graphology-metrics` + `graphology-traversal` |
-| **Convention Service** | Structural pattern matching, frequency analysis, trend detection, golden file ranking. | `ast-grep` CLI (spawned via child_process), frequency counters |
-| **Import Resolution Service** | Resolves import/require statements to absolute file paths for graph edge construction. | `enhanced-resolve` + `tsconfig-paths` for TS/JS, ast-grep patterns for Python |
-| **AST Parsing Layer** | Parses source files into syntax trees for symbol extraction (functions, classes, exports, imports). | `web-tree-sitter` WASM with periodic `parser.delete()` for memory leak mitigation |
-| **Storage Layer** | Persistent knowledge graph with nodes (symbols), edges (relationships), and communities. | `better-sqlite3` with synchronous API, WAL mode |
+## v2.0 Feature Integration Map
 
-## Recommended Project Structure
+### Overview: New vs Modified Components
+
+| Feature | New Components | Modified Components | New Dependencies |
+|---------|---------------|---------------------|------------------|
+| Hooks system | `hooks/hooks.json`, `scripts/inject-context.ts`, `scripts/convention-check.ts` | `plugin.json` (add hooks ref) | None |
+| Visualization server | `src/dashboard/server.ts`, `src/dashboard/api.ts`, `dashboard/` (frontend), new skill | `tsdown.config.ts` (add entry), `package.json` (add sigma, ws) | `sigma`, `ws`, `open` |
+| Incremental graph | `src/graph/staleness.ts`, `src/graph/delta-reparse.ts` | `src/graph/cache.ts`, `src/graph/builder.ts`, `src/tools/helpers.ts` | None |
+| PR review | `src/review/diff-parser.ts`, `src/review/impact-analyzer.ts`, new skill + MCP tool | `src/tools/index.ts` (register tool) | None |
+| Pre-commit hooks | `scripts/pre-commit.sh`, `src/cli/install-hooks.ts` | `src/config/schema.ts` (add conventions.enforcement) | None |
+| Session handoff | `src/session/serializer.ts`, `src/session/handoff-writer.ts`, new skill | `src/utils/paths.ts` (add session dir) | None |
+| npx CLI | `src/cli/index.ts`, `src/cli/setup.ts`, `src/cli/commands/` | `package.json` (add bin field), `tsdown.config.ts` (add entry) | `commander` |
+
+---
+
+## Feature 1: Hooks System (Auto-Injection)
+
+### How Claude Code Hooks Work
+
+Claude Code fires hook events at lifecycle points. Plugins register hooks in `hooks/hooks.json`. Each hook receives JSON on stdin and returns JSON on stdout with exit code 0.
+
+**Relevant hook events for CodeScope:**
+
+| Event | Purpose | Output Contract |
+|-------|---------|-----------------|
+| `PreToolUse` (matcher: `Edit\|Write`) | Inject codebase context before file edits | `hookSpecificOutput.additionalContext` -- text injected into Claude's context |
+| `PostToolUse` (matcher: `Edit\|Write`) | Convention compliance check after edits | `hookSpecificOutput.additionalContext` -- feedback to Claude |
+| `SessionStart` | Load bootstrap summary into context | `hookSpecificOutput.additionalContext` -- project intelligence |
+| `SubagentStart` | Inject relevant context for spawned agents | `hookSpecificOutput.additionalContext` |
+| `PreCompact` | Preserve critical codebase intelligence before compaction | `hookSpecificOutput.additionalContext` |
+
+### Integration Architecture
+
+```
+hooks/
+├── hooks.json                    # Hook event registrations
+└── (no scripts here -- scripts go in scripts/)
+
+scripts/
+├── inject-context.ts             # SessionStart + PreToolUse handler
+├── convention-check.ts           # PostToolUse handler
+└── compact-preserve.ts           # PreCompact handler
+```
+
+**hooks/hooks.json:**
+```json
+{
+  "description": "CodeScope auto-injection and convention enforcement hooks",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/inject-context.js",
+            "timeout": 10,
+            "statusMessage": "Loading codebase intelligence..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/inject-context.js",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/convention-check.js",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/dist/hooks/compact-preserve.js",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Hook Script Pattern (inject-context.ts):**
+```typescript
+// Reads JSON from stdin, writes JSON to stdout, exits 0
+import { readFileSync } from "node:fs";
+
+// Read hook input from stdin
+const input = JSON.parse(readFileSync("/dev/stdin", "utf-8"));
+const projectDir = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
+
+// Determine what context to inject based on event + tool
+const hookEvent = input.hook_event_name;
+const toolName = input.tool_name; // undefined for SessionStart
+
+// Load relevant bootstrap artifacts
+let context = "";
+if (hookEvent === "SessionStart") {
+  // Load full project intelligence summary
+  context = loadProjectSummary(projectDir);
+} else if (hookEvent === "PreToolUse" && (toolName === "Edit" || toolName === "Write")) {
+  // Load file-specific conventions and blast radius
+  const filePath = input.tool_input?.file_path;
+  context = loadFileContext(projectDir, filePath);
+}
+
+// Output: additionalContext gets injected into Claude's context
+const output = {
+  hookSpecificOutput: {
+    hookEventName: hookEvent,
+    additionalContext: context
+  }
+};
+console.log(JSON.stringify(output));
+process.exit(0);
+```
+
+**Key design decisions:**
+- Hook scripts are **compiled TypeScript** (built to `dist/hooks/`) -- not raw .ts files, because `${CLAUDE_PLUGIN_ROOT}` points to the installed plugin which has only built artifacts
+- Scripts read from `.claude/codescope/` artifacts already on disk -- no SQLite or graphology needed in the hook process, keeping them fast (<5s timeout)
+- `additionalContext` is the mechanism for invisible context injection -- it appears in Claude's context but not in the user-visible transcript
+- Convention check in `PostToolUse` reads the conventions.md artifact and checks the edited file against patterns, returning feedback as `additionalContext`
+
+**Modified files:**
+- `plugin.json`: Add `"hooks": "./hooks/hooks.json"` to manifest
+- `tsdown.config.ts`: Add hook entry points to build (`src/hooks/inject-context.ts`, etc.)
+
+### Build Configuration Change
+
+```typescript
+// tsdown.config.ts (updated)
+import { defineConfig } from "tsdown";
+export default defineConfig({
+  entry: [
+    "src/server.ts",
+    "src/hooks/inject-context.ts",
+    "src/hooks/convention-check.ts",
+    "src/hooks/compact-preserve.ts",
+  ],
+  format: "esm",
+  outDir: "dist",
+  external: ["better-sqlite3"],
+  clean: true,
+});
+```
+
+---
+
+## Feature 2: Visualization Dashboard
+
+### Architecture Decision: Separate Process
+
+The MCP server uses `StdioServerTransport` -- stdin/stdout are its communication channel with Claude Code. An HTTP server **cannot** share this process because any HTTP-related stdout output would corrupt the MCP protocol.
+
+**Decision: Separate dashboard process, launched on demand.**
+
+```
+┌──────────────────────────────────────────────────┐
+│          Claude Code Host Process                 │
+│                                                   │
+│  MCP Server (stdio) ◄─── StdioServerTransport    │
+│       │                                           │
+│       │ (reads graph.db, writes artifacts)        │
+│       ▼                                           │
+│  .claude/codescope/graph.db                       │
+│  .claude/codescope/*.md artifacts                 │
+│       ▲                                           │
+│       │ (reads graph.db, reads artifacts)         │
+│       │                                           │
+│  Dashboard Server (HTTP + WebSocket)              │
+│  localhost:4173 (separate Node.js process)        │
+│       │                                           │
+│       ├── GET /api/graph      → graph JSON        │
+│       ├── GET /api/readiness  → readiness JSON    │
+│       ├── GET /api/conventions→ conventions JSON  │
+│       ├── GET /api/communities→ community data    │
+│       ├── WS  /ws/live        → file change push  │
+│       └── GET /*              → static SPA files  │
+└──────────────────────────────────────────────────┘
+```
+
+### Component Structure
+
+```
+src/
+├── dashboard/
+│   ├── server.ts              # HTTP + WebSocket server (Node.js built-in http + ws)
+│   ├── api.ts                 # REST endpoints reading graph.db + artifacts
+│   ├── watcher.ts             # fs.watch on graph.db + artifacts, pushes via WS
+│   └── graph-export.ts        # Converts graphology → sigma.js JSON format
+│
+dashboard/                     # Frontend SPA (pre-built, no React needed)
+├── index.html                 # Single HTML file with sigma.js
+├── app.js                     # Vanilla JS/TS -- sigma.js + graphology client-side
+├── styles.css                 # Dashboard styles
+└── (bundled sigma + graphology from CDN or vendor)
+```
+
+**Why vanilla JS instead of React:**
+- sigma.js works directly with graphology -- no React wrapper needed
+- Avoids adding React/Vite build pipeline to the project
+- Single `index.html` + `app.js` is trivially served by Node.js `http` module
+- Keeps the dashboard lightweight (no `node_modules` for frontend)
+
+**Dashboard server (server.ts) pattern:**
+```typescript
+import { createServer } from "node:http";
+import { WebSocketServer } from "ws";
+import { readFileSync, watch } from "node:fs";
+
+const PORT = 4173;
+const projectRoot = process.argv[2] || process.cwd();
+
+// HTTP server for REST API + static files
+const httpServer = createServer((req, res) => {
+  if (req.url?.startsWith("/api/")) {
+    handleApi(req, res, projectRoot);
+  } else {
+    serveStatic(req, res);  // Serve dashboard/ files
+  }
+});
+
+// WebSocket for live updates
+const wss = new WebSocketServer({ server: httpServer });
+watchForChanges(projectRoot, wss);  // fs.watch graph.db, push deltas
+
+httpServer.listen(PORT, () => {
+  console.log(`Dashboard: http://localhost:${PORT}`);
+});
+```
+
+**Launching the dashboard:**
+- New skill `/codescope:dashboard` spawns the server process and opens browser
+- Or new MCP tool `codescope_dashboard` returns the URL
+- Dashboard process auto-terminates when no WebSocket clients for 5 minutes
+
+**New dependencies:**
+- `ws` (WebSocket server -- the standard Node.js WebSocket library, 100M+ weekly downloads)
+- `sigma` (graph visualization, works with graphology which is already a dependency)
+- `open` (cross-platform browser opener, 50M+ weekly downloads)
+
+**Build impact:**
+- Dashboard server: new tsdown entry point `src/dashboard/server.ts`
+- Frontend: pre-built static files in `dashboard/` directory, copied to `dist/dashboard/` at build time
+- sigma.js + graphology loaded via CDN `<script>` tags in `index.html` (no frontend build step)
+
+---
+
+## Feature 3: Incremental Graph (On-Demand Staleness + Delta Reparse)
+
+### Current State vs. Target
+
+**Current (v1.0):**
+- Full bootstrap re-parses everything or uses 50% threshold for incremental mode
+- Graph cache has 5-min TTL, reloads everything from SQLite on expiry
+- No per-file staleness tracking
+
+**Target (v2.0):**
+- Per-file staleness detection via `git diff` + `last_modified` column in SQLite
+- Delta reparse: only re-parse changed files, update graph incrementally
+- MCP tools auto-trigger incremental update when staleness detected
+- No full re-bootstrap needed for small changes
+
+### Architecture
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ MCP Tool Handler (any tool)                               │
+│                                                           │
+│ 1. Check staleness: git diff --name-only HEAD vs meta     │
+│ 2. If stale files found:                                  │
+│    a. Delta reparse changed files (tree-sitter)           │
+│    b. Remove old nodes/edges for changed files from SQLite │
+│    c. Insert new nodes/edges for changed files             │
+│    d. Invalidate graph cache                               │
+│ 3. Proceed with normal tool query                         │
+└──────────────────────────────────────────────────────────┘
+```
+
+### New Module: `src/graph/staleness.ts`
+
+```typescript
+export interface StalenessResult {
+  isStale: boolean;
+  changedFiles: string[];     // Relative paths
+  deletedFiles: string[];     // Files removed since last check
+  lastChecked: string;        // ISO timestamp of the check
+}
+
+/**
+ * Detects files changed since the last bootstrap or last incremental update.
+ * Uses git diff --name-only against the stored timestamp in bootstrap-meta.json.
+ * Falls back to mtime comparison against nodes.last_modified column.
+ */
+export function detectStaleness(
+  projectRoot: string,
+  dbPath: string
+): StalenessResult { ... }
+```
+
+### New Module: `src/graph/delta-reparse.ts`
+
+```typescript
+export interface DeltaResult {
+  filesReparsed: number;
+  nodesAdded: number;
+  nodesRemoved: number;
+  edgesAdded: number;
+  edgesRemoved: number;
+  durationMs: number;
+}
+
+/**
+ * Incrementally updates the graph for a set of changed files.
+ *
+ * Algorithm:
+ * 1. DELETE FROM nodes WHERE file_path IN (changedFiles)
+ *    (CASCADE deletes edges via foreign key)
+ * 2. Re-parse each changed file with tree-sitter
+ * 3. INSERT new nodes/edges (reusing batch-writer pattern)
+ * 4. Invalidate graph cache
+ *
+ * For deleted files: just the DELETE step.
+ * Does NOT recompute communities (expensive) -- marks them as stale.
+ */
+export async function deltaReparse(
+  projectRoot: string,
+  dbPath: string,
+  changedFiles: string[],
+  deletedFiles: string[]
+): Promise<DeltaResult> { ... }
+```
+
+### Modified Files
+
+**`src/graph/cache.ts`** -- Add staleness-aware refresh:
+```typescript
+// New export: refresh only if stale
+export function refreshIfStale(projectRoot: string): CachedGraph {
+  const staleness = detectStaleness(projectRoot, getGraphDbPath(projectRoot));
+  if (staleness.isStale) {
+    await deltaReparse(projectRoot, getGraphDbPath(projectRoot),
+                       staleness.changedFiles, staleness.deletedFiles);
+    invalidateCache();  // Force reload from updated SQLite
+  }
+  return getGraph(projectRoot);
+}
+```
+
+**`src/graph/schema.ts`** -- Add index for incremental deletes:
+```sql
+CREATE INDEX IF NOT EXISTS idx_nodes_file_path ON nodes(file_path);
+-- Already exists, but verify it's used for DELETE WHERE file_path IN (...)
+```
+
+**`src/tools/helpers.ts`** -- Add staleness metadata to responses:
+- `buildMetadata()` already computes staleness from bootstrap timestamp
+- Extend to include per-file staleness count: `stale_files: number`
+
+**`src/bootstrap/meta.ts`** -- Track last incremental update:
+```typescript
+export interface BootstrapMeta {
+  last_bootstrap: string;
+  last_incremental_update: string;  // NEW: ISO timestamp of last delta reparse
+  duration_ms: number;
+  mode: "full" | "incremental";
+  version: string;
+}
+```
+
+### Performance Considerations
+
+- Delta reparse for 10 files: ~200ms (tree-sitter parse) + ~50ms (SQLite delete/insert) = ~250ms total
+- Community detection is NOT re-run on delta (too expensive at ~940ms for 50K nodes). Communities are recomputed only on full bootstrap or explicit request.
+- Graph cache invalidation after delta means next `getGraph()` reloads from SQLite (~200ms) but subsequent calls use cache
+
+---
+
+## Feature 4: PR Review (Graph-Aware Structural Impact)
+
+### Architecture
+
+PR review combines git diff parsing with the knowledge graph to provide structural impact analysis beyond line-level diffs.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ /codescope:review-pr skill                                    │
+│                                                               │
+│ 1. Parse PR diff (git diff base...head)                       │
+│ 2. Map changed files to graph nodes                           │
+│ 3. Compute blast radius for each changed file                 │
+│ 4. Identify cross-community impacts                           │
+│ 5. Check convention compliance of new/changed code            │
+│ 6. Generate structured review with risk assessment            │
+│                                                               │
+│ Output: .claude/codescope/reports/pr-review-{sha}.md          │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### New Components
+
+```
+src/
+├── review/
+│   ├── diff-parser.ts          # Parse unified diff → structured hunks
+│   ├── impact-analyzer.ts      # Map diff to graph, compute structural impact
+│   └── review-generator.ts     # Generate markdown review report
+│
+skills/
+├── review-pr/
+│   └── SKILL.md                # Skill definition for /codescope:review-pr
+│
+src/tools/
+├── review.ts                   # New MCP tool: codescope_review
+```
+
+**`src/review/diff-parser.ts`:**
+```typescript
+export interface DiffHunk {
+  filePath: string;
+  status: "added" | "modified" | "deleted" | "renamed";
+  additions: number;
+  deletions: number;
+  hunks: Array<{
+    startLine: number;
+    endLine: number;
+    content: string;
+  }>;
+}
+
+/**
+ * Parses unified diff output into structured hunks.
+ * Handles renames (diff --git a/old b/new with similarity %).
+ */
+export function parseDiff(diffOutput: string): DiffHunk[] { ... }
+```
+
+**`src/review/impact-analyzer.ts`:**
+```typescript
+export interface PRImpact {
+  changedFiles: Array<{
+    path: string;
+    risk: "HIGH" | "MEDIUM" | "LOW";
+    centrality: number;
+    blastRadiusCount: number;
+    affectedCommunities: string[];
+  }>;
+  crossCommunityImpacts: Array<{
+    sourceCommunity: string;
+    targetCommunity: string;
+    bridgeFiles: string[];
+  }>;
+  conventionViolations: Array<{
+    file: string;
+    convention: string;
+    detail: string;
+  }>;
+  overallRisk: "HIGH" | "MEDIUM" | "LOW";
+  summary: string;
+}
+```
+
+**Integration with existing code:**
+- Reuses `getGraph()` from `src/graph/cache.ts` for graph queries
+- Reuses `blastRadius()` from `src/graph/analytics.ts`
+- Reuses `classifyRisk()` pattern from `src/tools/detect-changes.ts`
+- Reuses convention runner from `src/conventions/runner.ts`
+- New MCP tool `codescope_review` registered in `src/tools/index.ts`
+
+### MCP Tool: `codescope_review`
+
+```typescript
+// Input: { ref?: string, diff?: string }
+// - ref: git ref like "origin/main...HEAD" or PR branch
+// - diff: raw diff text (alternative to ref)
+// Output: PRImpact JSON in ok/error envelope
+```
+
+---
+
+## Feature 5: Pre-Commit Hooks (Git Integration)
+
+### Architecture Decision: Standalone Script, No Husky
+
+CodeScope should not force Husky or any hook manager on user projects. Instead, provide a self-contained pre-commit script that:
+1. Chains with existing hooks (runs existing hook first, then CodeScope check)
+2. Is installed by a CodeScope CLI command, not automatically
+3. Can be removed cleanly
+
+### Installation Flow
+
+```
+/codescope:settings → "Install pre-commit hook"
+  │
+  ▼
+src/cli/install-hooks.ts
+  │
+  ├── Check if .git/hooks/pre-commit exists
+  │   ├── YES: Rename to .git/hooks/pre-commit.codescope-backup
+  │   │        Write new pre-commit that calls backup then CodeScope
+  │   └── NO:  Write new pre-commit directly
+  │
+  └── Write scripts/codescope-pre-commit.sh to .git/hooks/
+```
+
+**Pre-commit script pattern:**
+```bash
+#!/bin/bash
+# CodeScope pre-commit hook
+# Runs convention checks on staged files
+
+# Chain existing hook if present
+if [ -f ".git/hooks/pre-commit.codescope-backup" ]; then
+  .git/hooks/pre-commit.codescope-backup
+  EXISTING_EXIT=$?
+  if [ $EXISTING_EXIT -ne 0 ]; then
+    exit $EXISTING_EXIT
+  fi
+fi
+
+# Get staged files
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+# Run CodeScope convention check (uses built dist/server.js via Node)
+node "${0%/*}/../.claude/codescope/dist/hooks/pre-commit-check.js" $STAGED_FILES
+exit $?
+```
+
+**Pre-commit check module (`src/hooks/pre-commit-check.ts`):**
+- Reads conventions.md artifact
+- Runs ast-grep patterns against staged files
+- Reports violations to stderr
+- Exit 0 = pass, Exit 1 = fail (blocks commit)
+- Respects `conventions.strictness` config: "suggest-only" always exits 0, "warn" prints but exits 0, "block" exits 1 on violations
+
+### Config Schema Extension
+
+```typescript
+// Addition to ConfigSchema
+conventions: z.object({
+  // ... existing fields ...
+  enforcement: z.enum(["suggest-only", "warn", "block"]).default("suggest-only"),
+  pre_commit_installed: z.boolean().default(false),
+}),
+```
+
+---
+
+## Feature 6: Session Handoff
+
+### Architecture
+
+Session handoff serializes the current pipeline state to disk so a new Claude Code session can resume work. This is a lightweight alternative to full session management (which is out of scope per PROJECT.md).
+
+```
+┌────────────────────────────────┐     ┌────────────────────────────────┐
+│  Session 1 (ending)            │     │  Session 2 (starting)          │
+│                                │     │                                │
+│  /codescope:pause              │     │  /codescope:resume             │
+│     │                          │     │     │                          │
+│     ▼                          │     │     ▼                          │
+│  serializer.ts                 │     │  SessionStart hook             │
+│     │                          │     │     │                          │
+│     ▼                          │     │     ▼                          │
+│  .claude/codescope/            │────>│  Reads handoff.md              │
+│    handoff.md                  │     │  Injects via additionalContext │
+│    (task state, progress,      │     │                                │
+│     open questions, next steps)│     │                                │
+└────────────────────────────────┘     └────────────────────────────────┘
+```
+
+### New Components
+
+```
+src/
+├── session/
+│   ├── serializer.ts          # Collects pipeline state from disk artifacts
+│   └── handoff-writer.ts      # Writes handoff.md with resumption instructions
+│
+skills/
+├── pause/
+│   └── SKILL.md               # /codescope:pause skill
+├── resume/
+│   └── SKILL.md               # /codescope:resume skill
+```
+
+**`src/session/serializer.ts`:**
+```typescript
+export interface SessionState {
+  task: string;                    // From orient/task-brief.md
+  phase: "orient" | "execute" | "verify" | "eval" | "debug";
+  progress: string;                // Summary of what's done
+  pendingWork: string[];           // What remains
+  openQuestions: string[];         // Unresolved decisions
+  relevantFiles: string[];         // Files being worked on
+  lastCoordinationEntries: string; // Recent coordination log entries
+}
+
+/**
+ * Scans .claude/codescope/ artifacts to reconstruct current pipeline state.
+ * Reads: orient/*.md, execution/coordination.md, reports/, plans/
+ */
+export function serializeSessionState(projectRoot: string): SessionState { ... }
+```
+
+**Handoff document (`handoff.md`):**
+```markdown
+# Session Handoff
+
+**Task:** [from orient task brief]
+**Phase:** [current pipeline phase]
+**Created:** [ISO timestamp]
+
+## Progress
+[What's been completed]
+
+## Pending Work
+- [ ] [Remaining items]
+
+## Open Questions
+- [Decisions that need user input]
+
+## Context
+[Key files, conventions, blast radius info relevant to the task]
+
+## Next Steps
+1. [First thing the new session should do]
+2. [Second thing]
+```
+
+**Integration with hooks:**
+- The existing `SessionStart` hook handler (from Feature 1) checks for `handoff.md` and injects it as `additionalContext` when starting a new session
+- `/codescope:resume` skill reads handoff.md and provides structured instructions to Claude
+
+### Modified Files
+
+- `src/utils/paths.ts`: Add `getHandoffPath(projectRoot)` returning `.claude/codescope/handoff.md`
+
+---
+
+## Feature 7: npx CLI (Distribution + Auto-Setup)
+
+### Architecture
+
+The `npx codescope` command handles first-time setup: installing the plugin structure, configuring the MCP server, and running initial bootstrap. It is a separate entry point from the MCP server.
+
+```
+┌────────────────────────────────────────┐
+│  npx codescope                         │
+│                                        │
+│  CLI Entry Point (src/cli/index.ts)    │
+│     │                                  │
+│     ├── codescope init                 │
+│     │   ├── Copy .claude-plugin/       │
+│     │   ├── Copy skills/               │
+│     │   ├── Copy hooks/                │
+│     │   ├── Write .mcp.json            │
+│     │   ├── Write .claude/settings.json│
+│     │   └── Print next steps           │
+│     │                                  │
+│     ├── codescope bootstrap            │
+│     │   └── Run bootstrap pipeline     │
+│     │                                  │
+│     ├── codescope dashboard            │
+│     │   └── Launch visualization       │
+│     │                                  │
+│     └── codescope install-hooks        │
+│         └── Install pre-commit hook    │
+└────────────────────────────────────────┘
+```
+
+### package.json Changes
+
+```json
+{
+  "name": "codescope",
+  "version": "1.0.0",
+  "bin": {
+    "codescope": "./dist/cli/index.js"
+  }
+}
+```
+
+### CLI Entry Point (`src/cli/index.ts`)
+
+```typescript
+#!/usr/bin/env node
+import { Command } from "commander";
+
+const program = new Command();
+
+program
+  .name("codescope")
+  .description("CodeScope: AI-powered codebase intelligence for Claude Code")
+  .version("1.0.0");
+
+program
+  .command("init")
+  .description("Set up CodeScope in the current project")
+  .action(async () => {
+    // 1. Create .claude-plugin/ with plugin.json
+    // 2. Copy skills/ directory
+    // 3. Copy hooks/ directory
+    // 4. Write/merge .mcp.json
+    // 5. Enable plugin in .claude/settings.json
+    // 6. Print instructions
+  });
+
+program
+  .command("dashboard")
+  .description("Launch the visualization dashboard")
+  .action(async () => { /* spawn dashboard server, open browser */ });
+
+program
+  .command("install-hooks")
+  .description("Install git pre-commit hooks for convention enforcement")
+  .action(async () => { /* install pre-commit hook */ });
+
+program.parse();
+```
+
+### Build Configuration
+
+```typescript
+// tsdown.config.ts (updated for all entry points)
+import { defineConfig } from "tsdown";
+export default defineConfig({
+  entry: [
+    "src/server.ts",                      // MCP server
+    "src/cli/index.ts",                    // npx CLI
+    "src/hooks/inject-context.ts",         // Hook: context injection
+    "src/hooks/convention-check.ts",       // Hook: convention check
+    "src/hooks/compact-preserve.ts",       // Hook: compaction preservation
+    "src/hooks/pre-commit-check.ts",       // Hook: git pre-commit
+    "src/dashboard/server.ts",             // Dashboard server
+  ],
+  format: "esm",
+  outDir: "dist",
+  external: ["better-sqlite3"],
+  clean: true,
+});
+```
+
+### New Dependency
+
+- `commander` -- CLI framework. Standard choice (75M+ weekly downloads). Minimal footprint. TypeScript declarations built-in.
+
+---
+
+## Recommended Project Structure (v2.0)
 
 ```
 codescope/
 ├── .claude-plugin/
-│   └── plugin.json              # Plugin manifest (name, version, description)
-├── .mcp.json                    # MCP server configuration (stdio transport)
-├── skills/                      # User-facing slash commands
-│   ├── onboard/
-│   │   └── SKILL.md             # Interactive config creation
-│   ├── bootstrap/
-│   │   └── SKILL.md             # Full codebase analysis pipeline
-│   ├── orient/
-│   │   └── SKILL.md             # Research-plan-execute-verify pipeline
-│   ├── settings/
-│   │   └── SKILL.md             # Interactive config changes
-│   └── review-learnings/
-│       └── SKILL.md             # Review/confirm accumulated learnings
-├── agents/                      # Sub-agent definitions (YAML frontmatter + prompt)
-│   ├── scout.md                 # Haiku — map service boundaries
-│   ├── researcher.md            # Haiku — map structure, frameworks, entry points
-│   ├── convention-detector.md   # Inherited — ast-grep frequency analysis
-│   ├── risk-analyzer.md         # Inherited — graph construction, danger zones
-│   ├── learning-synthesizer.md  # Haiku — initialize/update learnings
-│   ├── synthesis.md             # Inherited — cross-service merge
-│   ├── research.md              # Inherited — Context7 + web search
-│   ├── planner.md               # Inherited — execution plan generation
-│   ├── executor.md              # Inherited — code changes per concern
-│   ├── static-verify.md         # Inherited — convention compliance, blast diff
-│   ├── runtime-verify.md        # Inherited — build, tests, E2E
-│   ├── eval.md                  # Inherited — LLM-as-judge scoring
-│   └── debug.md                 # Inherited — targeted fixes, broadest tool access
-├── src/                         # MCP server source (TypeScript)
-│   ├── index.ts                 # Server entry point, stdio transport
-│   ├── server.ts                # McpServer instantiation + tool registration
-│   ├── tools/                   # Tool handler modules (1 file per tool)
-│   │   ├── recall.ts            # codescope_recall
-│   │   ├── graph-query.ts       # codescope_graph_query
-│   │   ├── blast-radius.ts      # codescope_blast_radius
-│   │   ├── conventions.ts       # codescope_conventions
-│   │   ├── orient.ts            # codescope_orient
-│   │   ├── verify.ts            # codescope_verify
-│   │   ├── search.ts            # codescope_search
-│   │   ├── readiness.ts         # codescope_readiness
-│   │   ├── status.ts            # codescope_status
-│   │   ├── detect-changes.ts    # codescope_detect_changes
-│   │   └── service-map.ts       # codescope_service_map
-│   ├── services/                # Core business logic
-│   │   ├── graph.ts             # Graphology wrapper (centrality, BFS, Louvain)
-│   │   ├── conventions.ts       # Convention detection + frequency analysis
-│   │   ├── import-resolver.ts   # enhanced-resolve + tsconfig-paths wrapper
-│   │   ├── ast-parser.ts        # web-tree-sitter WASM lifecycle management
-│   │   ├── learning.ts          # Learning CRUD, decay, contradiction detection
-│   │   └── config.ts            # Config file reader/writer
-│   ├── db/                      # Database layer
-│   │   ├── schema.ts            # CREATE TABLE statements, migrations
-│   │   ├── connection.ts        # better-sqlite3 connection factory
-│   │   └── queries.ts           # Prepared statement library
-│   ├── parsers/                 # Language-specific AST extraction
-│   │   ├── typescript.ts        # TS/JS symbol + import extraction
-│   │   └── python.ts            # Python symbol + import extraction
-│   └── types/                   # Shared TypeScript interfaces
-│       ├── graph.ts             # Node, Edge, Community types
-│       ├── convention.ts        # Convention, GoldenFile, Conflict types
-│       ├── config.ts            # Config schema types
-│       └── tools.ts             # Tool input/output types
-├── grammars/                    # WASM grammar files (bundled, not from node_modules)
-│   ├── tree-sitter-typescript.wasm
-│   ├── tree-sitter-tsx.wasm
-│   ├── tree-sitter-javascript.wasm
-│   └── tree-sitter-python.wasm
-├── tests/                       # vitest test suite
-│   ├── services/                # Unit tests for services
-│   ├── tools/                   # Integration tests for MCP tools
-│   ├── db/                      # Database tests
-│   └── fixtures/                # Test codebases for E2E
-├── package.json
-├── tsconfig.json
-└── vitest.config.ts
+│   └── plugin.json                # Updated with hooks + new skills
+├── skills/
+│   ├── onboard/SKILL.md           # Existing
+│   ├── bootstrap/SKILL.md         # Existing
+│   ├── orient/SKILL.md            # Existing
+│   ├── settings/SKILL.md          # Existing
+│   ├── review-learnings/SKILL.md  # Existing
+│   ├── dashboard/SKILL.md         # NEW: launch visualization
+│   ├── review-pr/SKILL.md         # NEW: PR review
+│   ├── pause/SKILL.md             # NEW: session pause
+│   └── resume/SKILL.md            # NEW: session resume
+├── hooks/
+│   └── hooks.json                 # NEW: hook event registrations
+├── scripts/                       # NEW: hook implementation scripts
+│   └── codescope-pre-commit.sh    # Git pre-commit template
+├── dashboard/                     # NEW: frontend SPA files
+│   ├── index.html
+│   ├── app.js
+│   └── styles.css
+├── src/
+│   ├── server.ts                  # Existing MCP server entry
+│   ├── cli/                       # NEW: npx CLI
+│   │   ├── index.ts               # CLI entry point
+│   │   ├── setup.ts               # Plugin auto-setup logic
+│   │   └── commands/              # CLI subcommands
+│   ├── hooks/                     # NEW: hook handler scripts
+│   │   ├── inject-context.ts      # SessionStart + PreToolUse
+│   │   ├── convention-check.ts    # PostToolUse
+│   │   ├── compact-preserve.ts    # PreCompact
+│   │   └── pre-commit-check.ts    # Git pre-commit
+│   ├── dashboard/                 # NEW: dashboard server
+│   │   ├── server.ts              # HTTP + WebSocket
+│   │   ├── api.ts                 # REST endpoints
+│   │   ├── watcher.ts             # File change detection
+│   │   └── graph-export.ts        # Graphology → sigma.js JSON
+│   ├── review/                    # NEW: PR review
+│   │   ├── diff-parser.ts
+│   │   ├── impact-analyzer.ts
+│   │   └── review-generator.ts
+│   ├── session/                   # NEW: session handoff
+│   │   ├── serializer.ts
+│   │   └── handoff-writer.ts
+│   ├── graph/                     # MODIFIED
+│   │   ├── staleness.ts           # NEW: per-file staleness
+│   │   ├── delta-reparse.ts       # NEW: incremental updates
+│   │   ├── cache.ts               # MODIFIED: staleness-aware refresh
+│   │   ├── builder.ts             # Existing (minor refactor for reuse)
+│   │   ├── analytics.ts           # Existing
+│   │   ├── schema.ts              # Existing
+│   │   ├── batch-writer.ts        # Existing
+│   │   └── database.ts            # Existing
+│   ├── tools/                     # MODIFIED
+│   │   ├── index.ts               # MODIFIED: register new tool
+│   │   ├── review.ts              # NEW: codescope_review MCP tool
+│   │   └── ... (existing 12 tools)
+│   ├── config/
+│   │   └── schema.ts              # MODIFIED: add conventions.enforcement
+│   ├── utils/
+│   │   └── paths.ts               # MODIFIED: add new path helpers
+│   └── ... (existing modules unchanged)
+├── .mcp.json                      # Existing
+├── package.json                   # MODIFIED: add bin, new deps
+├── tsdown.config.ts               # MODIFIED: multiple entry points
+└── tsconfig.json                  # Unchanged
 ```
 
 ### Structure Rationale
 
-- **`skills/` at plugin root:** Claude Code requires skills in `skills/` directory at plugin root level (NOT inside `.claude-plugin/`). Each skill gets its own folder with a SKILL.md. This is the official plugin convention.
-- **`agents/` at plugin root:** Agent definitions are Markdown files with YAML frontmatter. Claude Code loads these automatically and the orchestrator invokes them by name via the Task/Agent tool.
-- **`src/` for MCP server:** The MCP server is a standalone TypeScript process spawned via stdio. It has its own module structure independent of the plugin entry layer. The `tools/` subdirectory maps 1:1 to the 11 MCP tools for clear ownership. The `services/` subdirectory contains reusable business logic shared across tools.
-- **`grammars/` at project root:** WASM grammar files must be accessible at runtime. They are bundled with the plugin rather than loaded from `node_modules` because `Parser.Language.load()` needs a direct file path or URL. This prevents runtime resolution failures.
-- **`src/db/` separate from `src/services/`:** The database layer (schema, connection, prepared statements) is isolated from the graph analysis logic. This prevents `better-sqlite3` from leaking into service interfaces and makes testing easier (mock the db layer).
+- **`src/hooks/`**: Hook handler scripts are compiled TypeScript that run as standalone Node.js processes. They are separate from MCP server code because they execute in a different process lifecycle (spawned per-event by Claude Code, not long-running like the MCP server).
+- **`src/cli/`**: CLI entry point is independent from MCP server. Shares utility code (`src/utils/`, `src/config/`) but has its own entry in tsdown.
+- **`src/dashboard/`**: Dashboard server runs as a separate process. Reads the same SQLite database and artifacts as the MCP server but never conflicts because SQLite WAL mode supports concurrent readers.
+- **`src/review/`**: PR review is a new domain module following the existing agent module pattern (Options + Result + async function + artifact output).
+- **`src/session/`**: Session handoff reads from existing artifacts -- it does not introduce new state, just serializes existing state into a human-readable handoff document.
+- **`hooks/`** (root level, not src): Contains `hooks.json` which is a plugin configuration file read directly by Claude Code, not compiled TypeScript.
 
-## Architectural Patterns
-
-### Pattern 1: Thin Orchestrator with Filesystem Bus
-
-**What:** The orchestrator (main context) never performs computation. It reads state from `.claude/codescope/` files, decides which agent to spawn next, spawns it via the Task tool, then reads the agent's output from disk. All inter-agent communication goes through the filesystem, never through the orchestrator's context window.
-
-**When to use:** Always. This is the foundational pattern for CodeScope. It solves two constraints simultaneously: the 15K orchestrator token budget and Issue #5812 (sub-agents cannot return file contents to parent).
-
-**Trade-offs:**
-- Pro: Orchestrator context never grows. Compaction is irrelevant.
-- Pro: Agent crash recovery is possible (state is on disk, not lost with context).
-- Pro: Any agent can read any previous agent's output without the orchestrator relaying it.
-- Con: Latency from filesystem I/O (negligible for markdown files).
-- Con: Agents must agree on file formats and locations (requires strict contracts).
-
-**Example pattern in SKILL.md:**
-```markdown
----
-description: Full codebase analysis pipeline
----
-# Bootstrap Orchestrator
-
-Read .claude/codescope/config.md to load project configuration.
-
-## Phase A: Scout
-Use the Task tool to delegate to the "scout" agent:
-"Scan the project root. Read package.json, docker-compose.yml, workspace
-configs. Identify service boundaries, entry points, primary languages.
-Write your findings to .claude/codescope/service-manifest.md."
-
-After the scout agent completes, read .claude/codescope/service-manifest.md.
-
-## Phase B: Squad Deployment
-For each service in the manifest, use the Task tool to delegate sequentially:
-
-1. Delegate to "researcher" agent: "Analyze [service-path]. Map structure,
-   frameworks, entry points. Write to .claude/codescope/services/[name]/overview.md."
-
-2. After researcher completes, read its output, then delegate to
-   "convention-detector" agent...
-
-[Continue for each squad member, reading disk between each spawn]
-```
-
-### Pattern 2: Agent Definition via Markdown Frontmatter
-
-**What:** Each sub-agent is defined as a `.md` file in `agents/` with YAML frontmatter specifying `name`, `description`, `model`, `tools`, and optionally `mcpServers`, `permissionMode`, `skills`, and `hooks`. The Markdown body is the agent's system prompt. The orchestrator invokes agents by name using the Task/Agent tool.
-
-**When to use:** For every sub-agent in the system. This is the Claude Code-native pattern for agent definitions.
-
-**Trade-offs:**
-- Pro: Declarative, version-controlled agent definitions.
-- Pro: Claude Code handles agent lifecycle (context creation, tool injection, cleanup).
-- Pro: Model selection per agent (Haiku for cheap read-only work, inherited for reasoning).
-- Con: Cannot dynamically compose agents at runtime (fixed definitions).
-- Con: Agent descriptions must be precise enough for Claude to match delegation correctly.
-
-**Example:**
-```yaml
----
-name: risk-analyzer
-description: Analyze codebase risk by building a knowledge graph. Use when
-  bootstrap needs to identify high-risk files and danger zones.
-model: inherit
-tools: Read, Grep, Glob
-mcpServers:
-  - codescope
-permissionMode: plan
 ---
 
-You are a risk analysis agent. Your job is to build a knowledge graph of the
-codebase and identify danger zones based on structural centrality.
+## Data Flow: How Features Interact
 
-## Your Tools
-- Use codescope_graph_query to query the knowledge graph
-- Use codescope_blast_radius to calculate impact of files
-- Use Read/Grep/Glob for direct file access
-
-## Output Contract
-Write your findings to .claude/codescope/danger-zones.md in this format:
-[format specification...]
-
-When complete, your final message MUST say:
-"Wrote danger zones to .claude/codescope/danger-zones.md - [N] danger zones identified"
-```
-
-### Pattern 3: MCP Server as Stateful Backend
-
-**What:** The MCP server is a long-running TypeScript process connected via stdio transport. It owns the SQLite database, the graphology in-memory graph, and the web-tree-sitter parser pool. Agents query it through MCP tool calls. The server process persists across agent lifecycles, maintaining state (db connections, cached graph) that individual agents cannot.
-
-**When to use:** For all data-intensive operations: graph queries, blast radius calculations, convention lookups, import resolution. The MCP server is the only component that touches better-sqlite3, graphology, web-tree-sitter, and enhanced-resolve directly.
-
-**Trade-offs:**
-- Pro: Heavy data stays out of agent context windows (queried on demand, <100ms).
-- Pro: Single process owns all state (no concurrent SQLite write conflicts).
-- Pro: Parser lifecycle management centralized (periodic `parser.delete()` in one place).
-- Con: MCP server process must be running before agents can use it.
-- Con: All 11 tools share one process (a crash takes down all tools).
-
-**Example:**
-```typescript
-// src/server.ts
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { z } from 'zod';
-import { GraphService } from './services/graph.js';
-import { getConnection } from './db/connection.js';
-
-const db = getConnection();  // better-sqlite3, synchronous
-const graphService = new GraphService(db);
-
-const server = new McpServer({
-  name: 'codescope',
-  version: '1.0.0'
-});
-
-server.registerTool(
-  'codescope_blast_radius',
-  {
-    description: 'Calculate blast radius for a file using BFS traversal',
-    inputSchema: z.object({
-      filePath: z.string(),
-      maxHops: z.number().default(3)
-    })
-  },
-  async ({ filePath, maxHops }) => {
-    const result = graphService.blastRadius(filePath, maxHops);
-    return {
-      content: [{ type: 'text', text: JSON.stringify(result) }]
-    };
-  }
-);
-
-// Register remaining 10 tools...
-
-const transport = new StdioServerTransport();
-await server.connect(transport);
-```
-
-### Pattern 4: Append-Only Coordination File
-
-**What:** During execution of a multi-agent task (orient/execute), all agents share an append-only coordination file at `.claude/codescope/execution/coordination.md`. Each agent reads it before starting, appends its status and summary when done. This replaces return-value communication (impossible per Issue #5812) and prevents write conflicts (append-only, agents run sequentially by default).
-
-**When to use:** During the execute phase when multiple agents work on different parts of a task. Also used during bootstrap when squad members need to see each other's findings.
-
-**Trade-offs:**
-- Pro: No write conflicts (append-only + sequential default).
-- Pro: Full audit trail of what happened and in what order.
-- Pro: Downstream agents get rich context about what upstream agents did.
-- Con: File grows unbounded during long tasks (mitigated by per-task scoping).
-- Con: Parallel agents need care (dependency ordering from the plan prevents conflicts).
-
-### Pattern 5: Layered Service Architecture in MCP Server
-
-**What:** The MCP server internals follow a strict layered architecture: Tool Handlers -> Services -> Database. Tool handlers in `src/tools/` are thin wrappers that validate input, call service methods, and format output. Services in `src/services/` contain reusable business logic. The database layer in `src/db/` handles SQLite operations with prepared statements. No tool handler touches the database directly. No service imports from the tool layer.
-
-**When to use:** Always. This separation makes the MCP server testable and maintainable.
-
-**Trade-offs:**
-- Pro: Services can be unit-tested without MCP infrastructure.
-- Pro: Multiple tools can share the same service (e.g., `blast_radius` and `graph_query` both use `GraphService`).
-- Pro: Database migrations/schema changes are isolated.
-- Con: More files and indirection for simple operations.
-
-## Data Flow
-
-### Bootstrap Data Flow
+### Write Path (File Edit)
 
 ```
-User: /codescope:bootstrap
-    |
-    v
-SKILL.md body (orchestrator)
-    |
-    ├──[1]──> Scout Agent
-    |           |── Reads: root configs (package.json, docker-compose, etc.)
-    |           └── Writes: .claude/codescope/service-manifest.md
-    |
-    ├──[2]──> Researcher Agent (per service)
-    |           |── Reads: service source files
-    |           └── Writes: .claude/codescope/[services/X/]overview.md
-    |
-    ├──[3]──> Convention Detector Agent (per service)
-    |           |── Reads: source files via ast-grep CLI
-    |           |── Calls: MCP tools for graph queries
-    |           └── Writes: conventions.md, golden-files.md
-    |
-    ├──[4]──> Risk Analyzer Agent (per service)
-    |           |── Reads: source files via web-tree-sitter (through MCP)
-    |           |── Calls: MCP tools to build graph, compute centrality
-    |           └── Writes: danger-zones.md, graph.db (via MCP)
-    |
-    ├──[5]──> Learning Synthesizer Agent
-    |           |── Reads: all generated artifacts
-    |           └── Writes: learnings.md (initial/empty)
-    |
-    └──[6]──> Synthesis Agent (monorepos only)
-                |── Reads: all per-service artifacts
-                └── Writes: top-level overview.md, readiness.md, merged conventions.md
+Claude decides to Edit a file
+    │
+    ▼
+PreToolUse hook fires
+    │ inject-context.ts reads:
+    │   - conventions.md (patterns for this file)
+    │   - danger-zones.md (risk level)
+    │   - blast radius for the file (from graph.db)
+    │ Returns: additionalContext with relevant conventions
+    │
+    ▼
+Claude performs the Edit (with convention context in mind)
+    │
+    ▼
+PostToolUse hook fires
+    │ convention-check.ts:
+    │   - Checks edited file against ast-grep patterns
+    │   - Reports any violations as additionalContext
+    │ Returns: feedback if violations found
+    │
+    ▼
+MCP tool query (e.g., codescope_detect_changes)
+    │ graph cache checks staleness
+    │   - If file changed, delta reparse triggers
+    │   - Graph updated, cache refreshed
+    │ Returns: updated risk classification
 ```
 
-**Key:** Each numbered step is a separate Task tool invocation. The orchestrator reads disk between each step. Agents 2-5 repeat per service for monorepos (sequentially by default, up to 3 concurrent on Max plans).
-
-### Orient-to-Debug Data Flow
+### Dashboard Live Updates
 
 ```
-User: /codescope:orient [task]
-    |
-    v
-SKILL.md body (orchestrator)
-    |
-    ├──[A: Clarify]──> Orchestrator reads disk artifacts, presents
-    |                  graph-informed questions to user.
-    |                  User answers -> Scope Contract written to disk.
-    |
-    ├──[B: Research]──> Research Agent
-    |                    |── Calls: Context7, web search
-    |                    └── Writes: execution/research.md
-    |
-    ├──[C: Analyze]──> Orchestrator calls MCP tools directly:
-    |                  codescope_graph_query, codescope_blast_radius,
-    |                  codescope_conventions, codescope_search
-    |                  Results: internal analysis written to orient brief
-    |
-    ├──[D: Plan]──> Planner Agent
-    |                |── Reads: scope contract, research, analysis
-    |                └── Writes: plans/[task-slug].md
-    |
-    ├──[E: Execute]──> Executor Agent(s) per plan
-    |                   |── Reads: plan, conventions, coordination.md
-    |                   |── Makes: code changes
-    |                   └── Appends: coordination.md, writes changes.md
-    |
-    ├──[F: Verify]──> Static Verify Agent + Runtime Verify Agent
-    |                  |── Reads: git diff, conventions-enforced.md
-    |                  |── Calls: ast-grep, build, tests, E2E
-    |                  └── Writes: reports/[task]-[date].md
-    |
-    ├──[G: Eval]──> Eval Agent
-    |                |── Reads: scope contract, plan, coordination, diff, report
-    |                └── Writes: eval findings appended to report
-    |
-    ├──[H: User Gate]──> Orchestrator presents findings, user selects
-    |
-    └──[I: Debug]──> Debug Agent (max 3 cycles)
-                      |── Reads: findings, code, research
-                      |── Makes: targeted fixes
-                      |── Triggers: re-verify, re-eval
-                      └── Writes: updated report, coordination entries
+Dashboard WebSocket connection
+    │
+    ▼
+watcher.ts: fs.watch on graph.db + artifacts
+    │
+    ├── graph.db modified (by delta reparse or bootstrap)
+    │   → Push "graph-updated" event
+    │   → Dashboard reloads graph via GET /api/graph
+    │
+    ├── conventions.md modified
+    │   → Push "conventions-updated" event
+    │   → Dashboard refreshes convention panel
+    │
+    └── readiness-score.json modified
+        → Push "readiness-updated" event
+        → Dashboard refreshes trend chart
 ```
 
-### MCP Server Internal Data Flow
+---
 
-```
-MCP Tool Call (from any agent)
-    |
-    v
-Tool Handler (src/tools/*.ts)
-    |── Validates input schema (zod)
-    |── Calls service method(s)
-    |── Formats response
-    v
-Service Layer (src/services/*.ts)
-    |
-    ├── GraphService
-    |     |── Loads graph from SQLite into graphology (cached)
-    |     |── BFS traversal for blast radius
-    |     |── Louvain community detection
-    |     └── In-degree centrality computation
-    |
-    ├── ConventionService
-    |     |── Spawns ast-grep CLI for pattern matching
-    |     |── Frequency analysis across files
-    |     └── Trend computation from git log
-    |
-    ├── ImportResolverService
-    |     |── enhanced-resolve for TS/JS (95-99% accuracy)
-    |     |── tsconfig-paths for path alias resolution
-    |     └── ast-grep patterns for Python (~80% accuracy)
-    |
-    └── ASTParserService
-          |── web-tree-sitter WASM parser pool
-          |── Symbol extraction (functions, classes, exports)
-          |── Periodic parser.delete() + recreate
-          v
-Database Layer (src/db/*.ts)
-    |── better-sqlite3 synchronous API
-    |── Prepared statements for all queries
-    |── Schema: nodes, edges, communities tables
-    └── WAL mode for concurrent reads
-```
+## Suggested Build Order
 
-### Key Data Flows
+Based on dependency analysis between features:
 
-1. **Graph Construction (bootstrap):** Source files -> AST Parser (web-tree-sitter) -> symbol extraction -> Import Resolver (enhanced-resolve) -> edges between symbols -> better-sqlite3 INSERT -> graphology load -> centrality/community computation -> danger-zones.md
-2. **Blast Radius Query (orient):** File path -> GraphService.blastRadius() -> BFS on graphology graph -> hop-distance classification (0-3) -> JSON response to agent -> formatted in orient brief
-3. **Convention Detection (bootstrap):** ast-grep CLI patterns -> frequency count per pattern -> cluster by module -> confidence scoring -> trend direction from git recency -> golden file ranking by modern pattern density -> conventions.md
-4. **Agent Communication (all phases):** Agent N writes to `.claude/codescope/[artifact].md` -> Agent N's final message says "Wrote to [path]" -> Orchestrator reads file -> Orchestrator spawns Agent N+1 with reference to file
+### Phase 1: Hooks System + Incremental Graph (Foundation)
 
-## Scaling Considerations
+**Why first:** Everything else depends on these two. Hooks are the delivery mechanism for auto-injection (the core v2.0 value prop). Incremental graph keeps the intelligence fresh without manual re-bootstrap.
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| Small codebase (<50K LOC) | Single squad, sequential agent spawning, graph fits in memory easily. No scaling concerns. |
-| Medium codebase (50K-200K LOC) | Single or multi-squad depending on service count. Graphology graph may use 50-200MB RAM. SQLite WAL mode handles concurrent tool reads. |
-| Large monorepo (200K-1M LOC) | Multi-squad with cap (default 10). Graphology graph could use 500MB+. Consider partial graph loading per service. ast-grep CLI may need file filtering. |
-| Very large monorepo (>1M LOC) | Squad cap becomes essential. Bootstrap may exceed 5-minute budget. Consider incremental indexing (detect_changes + partial re-index). Graph partitioning by service. |
+**Build order within phase:**
+1. Incremental graph (`staleness.ts`, `delta-reparse.ts`, cache modifications) -- enables always-fresh data
+2. Hook handler scripts (`inject-context.ts`, `convention-check.ts`) -- uses graph data
+3. `hooks.json` registration + plugin.json update
+4. `compact-preserve.ts` PreCompact handler
+5. Updated tsdown config with new entry points
 
-### Scaling Priorities
+**Dependencies satisfied:** None (these are foundational)
 
-1. **First bottleneck: Graphology memory on large codebases.** A codebase with 100K symbols and 500K edges will use substantial memory in the MCP server process. Mitigation: lazy graph loading per query scope rather than full graph materialization. For v1, full load is acceptable for codebases up to 200K LOC.
+### Phase 2: PR Review + Session Handoff
 
-2. **Second bottleneck: Bootstrap time scaling linearly with services.** Sequential agent spawning means bootstrap time = (number of services * 4 agents * agent runtime). Mitigation: parallel squad execution where rate limits allow. The 5-minute budget for 100K LOC is achievable with sequential spawning if each agent completes in ~15-30 seconds.
+**Why second:** Both consume the graph and artifact data that Phase 1 keeps fresh. PR review is the most visible new user-facing feature. Session handoff completes the hooks story (SessionStart reads handoff.md).
 
-3. **Third bottleneck: web-tree-sitter memory leaks over long sessions.** The MCP server process runs continuously. Without periodic `parser.delete()`, memory grows unboundedly. Mitigation: parser pool with usage counter; recreate after N files parsed (suggested: every 500 files).
+**Build order within phase:**
+1. `diff-parser.ts` -- pure function, no dependencies
+2. `impact-analyzer.ts` -- reuses existing graph analytics
+3. `review-generator.ts` + `codescope_review` MCP tool
+4. `/codescope:review-pr` skill
+5. `serializer.ts` + `handoff-writer.ts`
+6. `/codescope:pause` + `/codescope:resume` skills
+7. SessionStart hook handler updated to check for handoff.md
 
-## Anti-Patterns
+**Dependencies satisfied:** Phase 1 (fresh graph, hook infrastructure)
 
-### Anti-Pattern 1: Fat Orchestrator
+### Phase 3: Visualization Dashboard
 
-**What people do:** Put analysis logic, file processing, or data transformation in the orchestrator (SKILL.md body or main context).
-**Why it's wrong:** Orchestrator context grows past 15K tokens. Compaction becomes necessary. State that should be persistent ends up in ephemeral context. The orchestrator loses track of what happened after compaction.
-**Do this instead:** Every operation that produces or consumes data goes into a sub-agent. The orchestrator only reads paths and spawns agents.
+**Why third:** Dashboard is a consumer of all the data produced by Phases 1-2. Building it last means it can display PR reviews, readiness trends, live graph updates -- the full picture.
 
-### Anti-Pattern 2: Agent Nesting
+**Build order within phase:**
+1. `graph-export.ts` (graphology to sigma.js format conversion)
+2. `api.ts` (REST endpoints reading graph.db + artifacts)
+3. `server.ts` (HTTP + WebSocket)
+4. `watcher.ts` (fs.watch for live updates)
+5. Frontend SPA (index.html + app.js + styles.css)
+6. `/codescope:dashboard` skill
+7. `ws` + `sigma` + `open` dependency additions
 
-**What people do:** Have a sub-agent spawn another sub-agent to decompose its work.
-**Why it's wrong:** Claude Code explicitly prohibits sub-agent nesting. Sub-agents cannot spawn other sub-agents. The Task/Agent tool in a sub-agent's context does not work.
-**Do this instead:** All agent spawning happens from the orchestrator. If an agent's work is too large, break it into multiple agents that the orchestrator spawns sequentially.
+**Dependencies satisfied:** Phase 1-2 (all data sources available)
 
-### Anti-Pattern 3: Relying on Agent Return Values for File Contents
+### Phase 4: Pre-Commit Hooks + npx CLI
 
-**What people do:** Expect a sub-agent's response to contain file contents, data structures, or large results that the orchestrator parses.
-**Why it's wrong:** Issue #5812 -- sub-agents cannot return file contents to the parent. The return value is a short summary string, not structured data.
-**Do this instead:** Agent writes output to a well-known path on disk. Agent's final message says "Wrote to [path] -- [summary]". Orchestrator reads the file after agent completes.
+**Why last:** These are distribution and enforcement features. They need all the intelligence features working before distribution makes sense. Pre-commit hooks need the convention check logic from Phase 1. npx CLI needs to set up everything from Phases 1-3.
 
-### Anti-Pattern 4: Using `context: fork` in Skill Frontmatter
+**Build order within phase:**
+1. `pre-commit-check.ts` (reuses convention runner from Phase 1)
+2. `install-hooks.ts` (git hook installation)
+3. Config schema extension (`conventions.enforcement`)
+4. CLI `src/cli/index.ts` + `setup.ts`
+5. CLI subcommands (init, dashboard, install-hooks)
+6. `commander` dependency + package.json `bin` field
+7. npm publish preparation
 
-**What people do:** Add `context: fork` to SKILL.md frontmatter to run the skill in an isolated context.
-**Why it's wrong:** Issue #17283 -- `context: fork` is silently ignored on auto-invoked skills. The skill runs inline in the main context, consuming the orchestrator's token budget.
-**Do this instead:** Use explicit Task tool delegation in the SKILL.md body. The SKILL.md body tells the orchestrator to spawn agents, not to do the work itself.
+**Dependencies satisfied:** All previous phases
 
-### Anti-Pattern 5: Shared Mutable State Between Concurrent Agents
+---
 
-**What people do:** Have parallel agents read and write the same file.
-**Why it's wrong:** Race conditions are silent. Multiple agents writing to the same file concurrently produces garbage or lost writes.
-**Do this instead:** Each agent writes to its own output file (e.g., `execution/[agent-name]-changes.md`). The coordination file is append-only. The plan specifies dependency ordering so agents with file overlaps run sequentially.
+## Anti-Patterns to Avoid
 
-### Anti-Pattern 6: Bundling All Services Into One Module
+### Anti-Pattern 1: Sharing stdio with HTTP
 
-**What people do:** Put graph logic, convention detection, import resolution, and AST parsing in a single service file.
-**Why it's wrong:** These are independent concerns with different dependencies. A change to convention detection should not risk breaking graph queries. Testing becomes difficult. The file becomes unmaintainably large.
-**Do this instead:** One service per concern. GraphService owns graphology. ConventionService owns ast-grep. ImportResolverService owns enhanced-resolve. ASTParserService owns web-tree-sitter. They communicate through typed interfaces, not internal state.
+**What people do:** Try to serve HTTP endpoints from the same process that uses StdioServerTransport.
+**Why it is wrong:** Any stdout output from HTTP request logging corrupts the MCP JSON-RPC protocol. Claude Code will see malformed messages and disconnect.
+**Do this instead:** Run the dashboard as a separate Node.js process. The MCP server and dashboard share data through SQLite (WAL mode supports concurrent readers) and filesystem artifacts.
 
-## Integration Points
+### Anti-Pattern 2: Hook Scripts That Import the Full MCP Server
 
-### External Services
+**What people do:** Import graph cache, SQLite modules, and graphology into hook scripts.
+**Why it is wrong:** Hook scripts must start fast (5-10s timeout). Loading better-sqlite3, graphology, and web-tree-sitter adds 200-500ms startup. Worse, they may conflict with the MCP server's database connections.
+**Do this instead:** Hook scripts read pre-computed artifacts from disk (conventions.md, danger-zones.md, overview.md). These are text files, not database queries. The MCP server keeps artifacts fresh; hooks consume them.
 
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Claude Code Host | Plugin manifest + SKILL.md + agents/*.md loaded at startup | Skills namespaced as `/codescope:*`. Agents loaded into `/agents` list. |
-| Claude Code Task Tool | Orchestrator calls Task tool with agent name and prompt | Agent name must match `name` field in agents/*.md frontmatter. |
-| MCP Protocol (stdio) | `.mcp.json` defines server command; Claude Code spawns process | Server stays alive for the session. Agents call tools by name. |
-| ast-grep CLI | `child_process.execSync()` from ConventionService | CLI must be installed globally (`@ast-grep/cli`). Called synchronously. |
-| git CLI | `child_process.execSync()` from agents and MCP tools | Used for trend analysis (git log), change detection (git diff), blast radius diff. |
+### Anti-Pattern 3: Full Graph Recomputation on Every Delta
+
+**What people do:** Re-run Louvain community detection after every incremental graph update.
+**Why it is wrong:** Louvain on 50K nodes takes ~940ms. Running it on every file save destroys the <100ms query target.
+**Do this instead:** Mark communities as "stale" after delta updates. Recompute only on explicit request (full bootstrap, or new MCP tool call). Per-file staleness and delta reparse are O(changed files), not O(all nodes).
+
+### Anti-Pattern 4: Frontend Build Pipeline for Dashboard
+
+**What people do:** Add React, Vite, and a full frontend build chain for the dashboard.
+**Why it is wrong:** Doubles the build complexity. Adds 100+ MB of dev dependencies. Forces users to have frontend tooling installed. The dashboard is a read-only visualization -- it does not need a component framework.
+**Do this instead:** Vanilla JS with sigma.js loaded from CDN. Single index.html + app.js. Served as static files by the Node.js HTTP server. No build step for frontend.
+
+### Anti-Pattern 5: npx CLI That Requires Global Installation
+
+**What people do:** Document `npm install -g codescope` as the installation method.
+**Why it is wrong:** Global installs conflict between projects, require sudo on some systems, and are harder to version.
+**Do this instead:** `npx codescope init` runs without installation. The `bin` field in package.json makes this work automatically. Users never need to globally install.
+
+---
+
+## Integration Points Summary
 
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| Skill -> Orchestrator | SKILL.md body IS the orchestrator. No boundary. | The skill body contains the routing logic inline. |
-| Orchestrator -> Sub-Agent | Task tool invocation with agent name + task prompt | One-way: orchestrator sends task, reads output from disk after completion. |
-| Sub-Agent -> Filesystem | Direct file write/read to `.claude/codescope/` | Agents have Write/Edit/Read tools as specified in their frontmatter. |
-| Sub-Agent -> MCP Server | MCP tool calls (codescope_*) | Only agents with `mcpServers: [codescope]` in frontmatter can call these. |
-| MCP Tool -> Service | Direct function call within same process | Synchronous for db operations, async for file I/O. |
-| Service -> Database | `better-sqlite3` prepared statements | Synchronous API. Single connection. WAL mode for read concurrency. |
-| Service -> AST Parser | `web-tree-sitter` API calls | Parser pool managed by ASTParserService with periodic cleanup. |
-| Service -> Import Resolver | `enhanced-resolve` API calls | Synchronous resolution with tsconfig-paths plugin. |
+| MCP Server <-> Dashboard | SQLite reads (shared graph.db, WAL mode) | Dashboard is read-only. No writes to graph.db. |
+| MCP Server <-> Hook Scripts | Filesystem artifacts (.claude/codescope/*.md) | Hooks read artifacts; MCP server writes them. One-directional. |
+| CLI <-> Plugin | File copy + settings.json merge | CLI copies plugin files into project, then exits. |
+| Pre-commit <-> Convention Runner | Compiled convention check module | Pre-commit runs the same ast-grep logic as PostToolUse hook. |
+| SessionStart Hook <-> Session Handoff | handoff.md file | Handoff writes it; SessionStart reads it. |
+| Delta Reparse <-> Graph Cache | `invalidateCache()` call | After delta update, cache is forced to reload from SQLite. |
 
-## Build Order (Dependencies Between Components)
+### External Services
 
-The components have clear dependency chains that dictate build order. This directly informs the roadmap phase structure.
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| Claude Code (host) | StdioServerTransport (MCP), hooks.json (hooks), plugin.json (manifest) | All communication is through documented Claude Code APIs |
+| Git | `execSync("git diff ...")` | Used by staleness detection, PR review, pre-commit hooks |
+| Browser | `open` package | Dashboard opens browser automatically |
+| npm Registry | package.json `bin` field | `npx codescope` downloads and runs from npm |
 
-```
-LAYER 0 (no dependencies — build first):
-  ├── Plugin skeleton (manifest, .mcp.json, directory structure)
-  ├── Database layer (schema, connection, queries)
-  └── Type definitions (shared interfaces)
-
-LAYER 1 (depends on Layer 0):
-  ├── AST Parser Service (web-tree-sitter WASM setup + symbol extraction)
-  ├── Import Resolver Service (enhanced-resolve + tsconfig-paths)
-  └── MCP Server shell (McpServer + StdioTransport, no tools yet)
-
-LAYER 2 (depends on Layer 1):
-  ├── Graph Service (graphology, centrality, BFS — needs db + parser + resolver)
-  ├── Convention Service (ast-grep CLI, frequency — needs parser)
-  └── Config Service (read/write config.md)
-
-LAYER 3 (depends on Layer 2):
-  ├── MCP Tools (all 11 tools — thin wrappers around services)
-  ├── Onboard Skill (needs Config Service)
-  └── Scout Agent + Researcher Agent (needs Read/Grep, writes to disk)
-
-LAYER 4 (depends on Layer 3):
-  ├── Convention Detector Agent (needs MCP tools + ast-grep)
-  ├── Risk Analyzer Agent (needs MCP tools + graph)
-  ├── Learning Synthesizer Agent (reads other agents' output)
-  └── Bootstrap Skill (orchestrates Layer 3-4 agents)
-
-LAYER 5 (depends on Layer 4):
-  ├── Orient Skill — Clarify phase (reads bootstrap artifacts + MCP tools)
-  ├── Research Agent (Context7 + web search)
-  ├── Planner Agent (reads all orient phases)
-  └── Executor Agent(s) (makes code changes)
-
-LAYER 6 (depends on Layer 5):
-  ├── Static Verify Agent (ast-grep + blast radius diff)
-  ├── Runtime Verify Agent (build + tests + E2E)
-  └── Synthesis Agent (cross-service merge for monorepos)
-
-LAYER 7 (depends on Layer 6):
-  ├── Eval Agent (LLM-as-judge)
-  ├── User Gate (interactive finding selection)
-  ├── Debug Agent (broadest tool access)
-  ├── Learning capture (post-completion)
-  ├── Settings Skill
-  └── Review-Learnings Skill
-```
-
-**Implication for roadmap:** Build bottom-up. Phase 1a should deliver Layers 0-3 (infrastructure + first agents). Phase 1b adds Layers 3-4 (full bootstrap). Phase 1c adds Layers 5-6 (orient through verify). Phase 1d adds Layer 7 (eval, debug, learning). This matches the spec's phasing exactly, which is encouraging -- the architecture naturally supports it.
+---
 
 ## Sources
 
-- [Claude Code Plugin Documentation](https://code.claude.com/docs/en/plugins) -- Official plugin structure, manifest format, skills, hooks, agents (HIGH confidence)
-- [Claude Code Sub-Agent Documentation](https://code.claude.com/docs/en/sub-agents) -- Task tool delegation, agent frontmatter, nesting constraints, filesystem coordination (HIGH confidence)
-- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) -- McpServer API, tool registration, stdio transport (HIGH confidence)
-- [Graphology Documentation](https://graphology.github.io/) -- Graph API, BFS traversal, Louvain community detection (HIGH confidence)
-- [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) -- Reference architecture for SQLite graph + MCP tools (MEDIUM confidence -- closed source binary, architecture inferred)
-- [Anthropic feature-dev Plugin](https://deepwiki.com/anthropics/claude-plugins-official/7.2.3-feature-dev-and-agent-sdk-dev) -- Reference for 7-phase agent workflow, agent definitions (MEDIUM confidence -- third-party analysis)
-- [web-tree-sitter](https://github.com/tree-sitter/tree-sitter/blob/master/lib/binding_web/README.md) -- WASM parser API, memory management (HIGH confidence)
-- [enhanced-resolve](https://github.com/webpack/enhanced-resolve) -- Module resolution API, TypeScript integration (HIGH confidence)
-- [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) -- Synchronous SQLite API, prepared statements (HIGH confidence)
+- [Claude Code Hooks Reference](https://code.claude.com/docs/en/hooks) -- Official hooks documentation, all event types and response formats (HIGH confidence)
+- [Claude Code Hooks Guide](https://code.claude.com/docs/en/hooks-guide) -- Practical hooks usage guide (HIGH confidence)
+- [Claude Code Plugins Reference](https://code.claude.com/docs/en/plugins-reference) -- Plugin manifest schema, directory structure, distribution (HIGH confidence)
+- [Claude Code Hook Development Skill](https://github.com/anthropics/claude-code/blob/main/plugins/plugin-dev/skills/hook-development/SKILL.md) -- Plugin hook development patterns (HIGH confidence)
+- [sigma.js Documentation](https://www.sigmajs.org/docs/) -- Graph visualization library built on graphology (HIGH confidence)
+- [ws npm Package](https://github.com/websockets/ws) -- WebSocket server for Node.js (HIGH confidence)
+- [Husky Documentation](https://typicode.github.io/husky/) -- Git hooks patterns, studied to inform our approach (MEDIUM confidence -- we chose not to depend on it)
+- [Claude Code Plugin Marketplace](https://code.claude.com/docs/en/discover-plugins) -- Plugin distribution and installation (HIGH confidence)
+- [Claude Code Dashboard](https://github.com/Stargx/claude-code-dashboard) -- Community example of localhost dashboard pattern (MEDIUM confidence)
 
 ---
-*Architecture research for: Claude Code plugin with MCP backend, multi-agent orchestration, and knowledge graph*
-*Researched: 2026-03-22*
+*Architecture research for: CodeScope v2.0 integration with existing v1.0 architecture*
+*Researched: 2026-03-27*

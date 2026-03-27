@@ -1,258 +1,210 @@
 # Project Research Summary
 
-**Project:** CodeScope — Claude Code Plugin with Codebase Intelligence & Autonomous Code Change Pipeline
-**Domain:** Claude Code plugin, MCP server, multi-agent orchestration, knowledge graph
-**Researched:** 2026-03-22
+**Project:** CodeScope v2.0
+**Domain:** Claude Code plugin — always-on codebase intelligence layer with auto-injection, interactive visualization, convention enforcement, and npx distribution
+**Researched:** 2026-03-27
 **Confidence:** HIGH
 
 ## Executive Summary
 
-CodeScope is a Claude Code plugin that solves a fundamental problem with AI coding agents: they have no persistent understanding of the codebase they are changing. Every session starts from zero, conventions are unknown, blast radius is unquantified, and there is no institutional memory. The research confirms this is a genuine gap — no existing tool combines persistent codebase intelligence (graph, conventions, memory) with an autonomous orient-to-ship pipeline (clarify, research, plan, execute, verify, eval, debug). The closest competitors each own one dimension: codebase-context owns convention detection, codebase-memory-mcp owns knowledge graphs, feature-dev owns structured workflow pipelines — but nobody has integrated all three with a self-correcting eval and debug loop.
+CodeScope v2.0 is a Claude Code plugin that turns the existing v1.0 MCP knowledge graph into an invisible intelligence layer. The central insight from research is that v2 is an _integration and automation_ project, not a greenfield build: every major v2 feature (auto-injection, PR review, convention enforcement, session continuity, visualization) has a direct, buildable dependency in the v1.0 codebase. The recommended approach is to ship features in dependency order — incremental graph updates and session continuity first (everything else breaks without fresh data), then auto-injection (the flagship feature), then review and enforcement, and finally the visualization dashboard (the most engineering-intensive but least blocking).
 
-The recommended approach is a Claude Code-native plugin using the platform's skill, agent, and MCP conventions directly. The MCP server (TypeScript, @modelcontextprotocol/sdk v1.x) provides stateful codebase intelligence via 11 tools. The orchestrator layer (SKILL.md bodies, <15K tokens) delegates all heavy work to sub-agents via the Task tool, with all inter-agent communication going through the filesystem rather than through context return values. The storage layer uses better-sqlite3 for the knowledge graph (synchronous API critical for MCP handlers) and web-tree-sitter WASM for AST parsing. This is a bottom-up build: infrastructure first, bootstrap pipeline second, orient-to-debug pipeline third.
+The stack additions for v2 are well-justified and low-risk. sigma.js + graphology is the only credible graph visualization pairing in the JS ecosystem that handles real codebase scale (1,000–10,000+ nodes). Hono + @hono/node-ws is the right-weight HTTP/WebSocket server for 5 routes and a dashboard. @napi-rs/canvas handles server-side heatmap rendering without the system-dependency nightmares of node-canvas. Claude Code's hooks API (25 event types, `additionalContext` injection) is the mechanism that makes auto-injection invisible. None of these require replacing anything in v1's validated stack.
 
-The top risks are platform-level constraints that must be addressed in Phase 1: sub-agents cannot return file contents to the parent (Issue #5812, closed as NOT_PLANNED), context:fork is silently ignored on auto-invoked skills (Issue #17283), and sub-agent Write tool operations can fail silently (Issue #9458). All three require the same solution — filesystem-first coordination from day one. Secondary risks include web-tree-sitter WASM memory leaks, SQLite concurrent write contention from multiple agents, and LLM-as-judge scoring inconsistency. None of these are showstoppers; all have clear prevention strategies documented in research.
+The dominant risk in v2 is context bloat: PreToolUse hooks firing on every Write/Edit tool call can inject 25K–200K tokens per session, accelerating auto-compaction and causing agents to lose task context mid-execution. This must be designed out from day one with a 500-token injection budget cap, deduplication by file path, and a long-running hook daemon (or MCP server endpoint) to avoid cold-start latency per invocation. A secondary risk cluster covers graph state corruption during incremental updates (requiring CASCADE deletes and reverse dependency re-resolution) and better-sqlite3 native addon failures on `npx` installs (requiring prebundled platform binaries). All critical pitfalls have known mitigations and must be addressed in the phase that introduces them, not retrofitted.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The stack is entirely TypeScript on Node.js 22.x, tightly constrained by the Claude Code ecosystem. The MCP SDK (@modelcontextprotocol/sdk@^1.27.1) is the mandatory interface layer — v2 is pre-alpha and must not be used yet. Graph storage uses better-sqlite3@^12.8.0 for its synchronous API (critical: MCP tool handlers are synchronous and cannot wait on async SQLite). In-memory graph analysis uses graphology@^0.26.0 with its standard library (Louvain community detection, BFS traversal, centrality metrics). AST parsing uses web-tree-sitter@^0.25.10 — pinned to 0.25.x explicitly because 0.26.x breaks WASM ABI compatibility with grammar files. Structural pattern matching uses @ast-grep/cli@^0.40.5 (CLI for batch bootstrap, optional @ast-grep/napi for hot paths). Import resolution uses enhanced-resolve@^5.20.1 + tsconfig-paths@^4.2.0. Build tooling is tsdown@^0.20.3 (tsup's successor, Rolldown-powered) with vitest@^4.1.0 for tests.
+The v1.0 stack (TypeScript 5.7, Node.js 22.x, @modelcontextprotocol/sdk 1.27.1, better-sqlite3, graphology, web-tree-sitter, enhanced-resolve, ast-grep, vitest, tsdown, zod) is unchanged. v2.0 adds 11 packages across 4 concerns. See [STACK.md](STACK.md) for full version pinning and alternatives analysis.
 
-**Core technologies:**
-- `@modelcontextprotocol/sdk@^1.27.1`: MCP server framework — only stable production version; v2 is pre-alpha
-- `better-sqlite3@^12.8.0`: Knowledge graph storage — synchronous API is a feature, not a limitation, for MCP handlers targeting <100ms
-- `web-tree-sitter@^0.25.10`: AST parsing via WASM — pinned to 0.25.x; 0.26.x has confirmed ABI break (issue #5171)
-- `graphology@^0.26.0` + ecosystem: In-memory graph analysis — Louvain, BFS, centrality all via standard library
-- `@ast-grep/cli@^0.40.5`: Structural convention detection — 27 language support, pattern syntax is isomorphic to code
-- `enhanced-resolve@^5.20.1` + `tsconfig-paths@^4.2.0`: TypeScript/JS import resolution — handles path aliases, monorepo tsconfigs
-- `zod@^3.25` (import from `zod/v4`): Schema validation — required peer dependency of MCP SDK
-- `tsdown@^0.20.3`: Build — tsup successor, Rolldown-powered, ESM-first
-- `vitest@^4.1.0`: Testing — native TypeScript, ESM-first, replaces Jest
+**Core v2 additions:**
+- `sigma@^3.0.2` + `@sigma/edge-curve`, `@sigma/node-image`, `@sigma/export-image`: WebGL graph visualization — the only JS library that natively reads graphology and renders 10K+ nodes without DOM thrashing
+- `graphology-layout-forceatlas2@^0.10.1` + `graphology-layout@^0.6.1` + `graphology-layout-noverlap@^0.4.2`: Force-directed layout (ForceAtlas2 is the Gephi-heritage standard for knowledge graphs); `circular.assign()` must run before FA2 or layout diverges
+- `hono@^4.12.9` + `@hono/node-server@^1.19.11` + `@hono/node-ws@^1.3.0`: 14KB HTTP + WebSocket server for the dashboard; right weight for 5 routes + static files (Express is legacy, Fastify is overkill, socket.io adds 100KB of unneeded features)
+- `@napi-rs/canvas@^0.1.97`: Skia-backed server-side canvas for heatmap/gauge PNGs; zero system dependencies vs. node-canvas's Cairo/Pango requirement
+- `commander`: CLI framework for npx entry point (75M+ weekly downloads, built-in TypeScript types)
+- Claude Code Hooks API (built-in): 25 event types; `additionalContext` is the injection mechanism; hooks compiled to `dist/hooks/` and referenced from `hooks/hooks.json` in the plugin manifest
+- Git `core.hooksPath` (built-in git): opt-in pre-commit enforcement without husky/lint-staged modifying user infrastructure
 
-**Critical version constraints:**
-- web-tree-sitter and tree-sitter-cli MUST match ABI version (pin both to 0.25.x)
-- WASM grammar files must be built from source with matching tree-sitter-cli, not from pre-built packages
-- @modelcontextprotocol/sdk v2.x is NOT production-ready; stay on v1.x until v2 stabilizes
+**Critical version notes:**
+- `@hono/node-ws@^1.3.0` is MEDIUM confidence (3 months old) but bundles battle-tested `ws@^8.17.0` as a direct dependency
+- `@napi-rs/canvas@^0.1.97` is pre-1.0 but actively maintained; fallback is SVG string generation + sharp for PNG conversion
+- sigma.js is browser-only (WebGL + DOM required); server-side graph images must use @napi-rs/canvas
+- ForceAtlas2 Web Worker requires `circular.assign()` first — nodes at (0,0) cause divergence or hang
 
 ### Expected Features
 
-The research produced a clear three-tier feature model across FEATURES.md.
+Research identifies a clear 5-phase delivery order based on hard dependency chains. See [FEATURES.md](FEATURES.md) for full competitor analysis, detailed specifications, and dependency graph.
 
-**Must have (table stakes — launch blockers):**
-- Codebase structure analysis (tree-sitter parsing) — expected by every user
-- Dependency/import graph — required by blast radius and convention analysis
-- Convention detection with adoption percentages — the codebase-context benchmark to match
-- Golden file identification — exemplars for AI agents writing new code
-- Knowledge graph (SQLite + graphology) — persistent cross-session intelligence
-- Blast radius/impact analysis — BFS from changed nodes with risk classification
-- Danger zone mapping — persistent danger-zones.md consulted before high-risk changes
-- MCP server with 11 tools — MCP is table stakes in 2026
-- Project memory (learnings.md) — the core problem CodeScope solves
-- /codescope:onboard — interactive setup, nobody reads docs
-- /codescope:bootstrap — the full analysis pipeline
-- /codescope:orient — the full autonomous pipeline (clarify -> research -> plan -> execute -> verify -> eval -> debug)
-- Multi-agent execution engine — parallel agents with filesystem coordination
-- Static verify agent — convention compliance + blast radius diff
-- Runtime verify agent — build, unit tests, integration tests
-- Eval agent (LLM-as-judge) — 4-dimension scoring before user sees results
-- User gate — interactive finding selection
-- Debug agent — max 3 cycles with escalation
+**Must have — P1 (define the "always-on" narrative):**
+- Incremental graph updates — hash-based, on-demand, sub-2s latency; required by auto-injection, enforcement, and visualization freshness
+- Auto-injection hooks — PreToolUse/PostToolUse on Write/Edit; invisible context injection; the flagship v2 feature; requires fresh graph data
+- Context budget awareness — 500-token cap per injection, priority queue, deduplication by file path; required for auto-injection to not destroy the 15K-token orchestrator budget
+- Change impact prediction — proactive pre-change blast radius extending v1's reactive analysis
+- Session continuity — handoff documents at PreCompact, resume skill, commit SHA tracking for stale-detection on resume
+- npx install experience — independent of all other features; easy win; enables marketplace discoverability
 
-**Should have (differentiators to build next):**
-- /codescope:review-learnings — curation workflow for accumulated learnings
-- /codescope:settings — interactive config without manual file editing
-- Global memory (~/.codescope/global-memory.md) — cross-project personal preferences
-- Squad scaling (per-service squads above 100K LOC)
-- Auto-smoke test generation for untested codebases
-- Convention trend analysis (rising/declining over time)
+**Should have — P2 (significant value, v2 viable without them):**
+- Graph-aware PR review — diff parsing + BFS blast radius + convention check + danger zone flagging; requires incremental updates and impact prediction
+- Convention enforcement hooks — opt-in pre-commit via git `core.hooksPath`, VERIFIED conventions only, warn-only default
+- Technical debt tracking — `readiness_history` SQLite table, trend computation; trivial extension of existing `ReadinessScore`
+- Interactive visualization dashboard — sigma.js + graphology, convention heatmaps, readiness trends; requires tech debt tracking for the trends panel
+- Pipeline evolution — qualification, diagnostic routing, reconciliation (P2, informed by v2 usage patterns)
 
-**Defer (v2+):**
-- Visual knowledge graph dashboard (sigma + React Flow) — impressive in demos, rarely used daily
-- Semantic/vector search (@lancedb + Ollama) — structural search covers 90% of v1 needs
-- CI/CD integration (GitHub Actions hooks) — different deployment model
-- Cross-project learning / pattern library — conflation risk without curation
-- ADR auto-generation — learnings.md is the v1 alternative
-- Additional languages beyond TS/JS/Python — import resolution quality varies too much
-
-**Deliberate anti-features:**
-- No real-time continuous re-indexing (WASM memory leak risk, no tool has nailed incremental real-time updates)
-- No blocking convention enforcement (suggestion-only; blocking on probabilistic analysis destroys trust)
-- No all-language support on launch day (honest accuracy matters more than breadth)
+**Explicit anti-features (do not build in v2):**
+- Real-time filesystem watchers — web-tree-sitter memory leaks with persistent parsing
+- Blocking all conventions by default — destroys the trust-building model
+- Full IDE extension (VS Code/JetBrains) — fragmentation; MCP is the universal adapter
+- Cross-repository analysis — deferred to v3
+- Semantic/embedding search — requires Ollama or cloud API; deferred to v3
 
 ### Architecture Approach
 
-The architecture is a strict 5-layer system: Plugin Entry (SKILL.md slash commands) -> Orchestrator (thin routing, <15K tokens) -> Sub-Agents (isolated 200K-token contexts, all heavy work) -> Filesystem Coordination (.claude/codescope/ as communication bus and state store) -> MCP Server (stateful TypeScript process, stdio transport, owns SQLite + graphology + WASM parser pool). The defining constraint is that the orchestrator never does computation and never relies on agent return values — all state flows through well-known filesystem paths. This solves the three critical platform constraints (Issues #5812, #17283, #9458) at the architectural level. The MCP server's layered internal structure (Tool Handlers -> Services -> Database) ensures testability and prevents tight coupling between the 11 tools and the storage layer.
+v2.0 adds capabilities to the existing layered architecture without restructuring it. The MCP server (StdioServerTransport) is the only process that writes to `graph.db`; the dashboard is a separate Node.js process that reads from it. Hook scripts are compiled TypeScript in `dist/hooks/` because the installed plugin only has built artifacts. The npx CLI is a separate tsdown entry point. All new features reuse existing v1 modules (`getGraph()`, `blastRadius()`, `conventions/runner.ts`, `classifyRisk()`) rather than building parallel implementations. See [ARCHITECTURE.md](ARCHITECTURE.md) for complete component diagrams, module signatures, and modified file lists per feature.
 
-**Major components:**
-1. **Plugin Entry Layer** — SKILL.md files at `skills/*/SKILL.md`; user-facing slash commands that bootstrap the orchestrator
-2. **Orchestrator** — Inline logic in SKILL.md bodies; reads disk state, spawns agents via Task tool, reads results from disk; stays under 15K tokens by never inlining data
-3. **Sub-Agents** — `agents/*.md` definitions with YAML frontmatter (model, tools, permissions); Scout/Researcher on Haiku, others inherited; cannot nest; cannot return file contents to parent
-4. **Filesystem Coordination** — `.claude/codescope/` tree; append-only coordination.md during execution; pipeline-state.json for orchestrator state persistence; per-agent output files at well-known paths
-5. **MCP Server** — Long-running TypeScript process (stdio); owns better-sqlite3, graphology, web-tree-sitter, enhanced-resolve; exposes 11 tools; single writer for graph.db preventing SQLITE_BUSY
-6. **Storage Layer** — `graph.db` (nodes, edges, communities) via better-sqlite3 + WAL mode; markdown artifacts (overview.md, conventions.md, danger-zones.md, learnings.md) for human-readable state
+**Major new components:**
+1. `hooks/hooks.json` + `src/hooks/` (inject-context.ts, convention-check.ts, compact-preserve.ts, pre-commit-check.ts) — Claude Code lifecycle integration; hook scripts read disk artifacts only, no SQLite in the hook process
+2. `src/graph/staleness.ts` + `src/graph/delta-reparse.ts` — incremental graph engine; algorithm: `git diff --name-status` for renames, delete old nodes (CASCADE removes edges), re-parse with tree-sitter, insert new nodes/edges in a single `db.transaction()`; community detection NOT recomputed on delta (940ms, too expensive)
+3. `src/dashboard/server.ts` + `dashboard/` (frontend SPA) — separate Node.js process; vanilla HTML/JS (no React); Hono + @hono/node-ws; sigma.js from CDN in `index.html`; pre-built static files; WebSocket pushes incremental events
+4. `src/review/` (diff-parser.ts, impact-analyzer.ts, review-generator.ts) + `src/tools/review.ts` — PR review pipeline; composes existing `getGraph()`, `blastRadius()`, `classifyRisk()`, `conventions/runner.ts`; adds rename detection via `git diff --diff-filter=R`
+5. `src/session/` (serializer.ts, handoff-writer.ts) — session continuity; writes `handoff.md` to `.claude/codescope/`; SessionStart hook injects it as `additionalContext`
+6. `src/cli/index.ts` — commander-based CLI; subcommands: `init`, `bootstrap`, `dashboard`, `install-hooks`
 
-**Architectural build order (dependency layers):**
-- Layer 0: Plugin skeleton, database schema, type definitions (no dependencies)
-- Layer 1: AST Parser Service, Import Resolver Service, MCP Server shell
-- Layer 2: Graph Service, Convention Service, Config Service
-- Layer 3: All 11 MCP tools, Onboard skill, Scout + Researcher agents
-- Layer 4: Convention Detector, Risk Analyzer, Learning Synthesizer, Bootstrap skill
-- Layer 5: Orient clarify, Research agent, Planner agent, Executor agents
-- Layer 6: Static Verify, Runtime Verify, Synthesis agent
-- Layer 7: Eval agent, User Gate, Debug agent, Settings skill, Review-Learnings skill
+**Non-negotiable architectural constraints:**
+- MCP server uses StdioServerTransport — any HTTP stdout from the same process corrupts the MCP protocol; dashboard MUST be a separate process
+- Sub-agents communicate through filesystem (Issue #5812); all handoff state must be on disk, not in agent return values
+- Graph cache is a module-level singleton — cache invalidation after delta must come after `db.transaction()` commits, not before
+- better-sqlite3 has no busy timeout by default — `db.pragma("busy_timeout = 5000")` must be in `openDatabase()` before shipping incremental updates
 
 ### Critical Pitfalls
 
-The top pitfalls are architectural, not implementation details. Getting these wrong requires rewrites, not patches.
+Full analysis with warning signs, recovery paths, and a "looks done but isn't" checklist in [PITFALLS.md](PITFALLS.md).
 
-1. **Sub-Agent File Content Blindness (Issue #5812, NOT_PLANNED)** — Sub-agents write files but parent agents have zero knowledge of contents, only completion. Prevention: filesystem coordination exclusively; every output to well-known path; orchestrator reads files directly after task completion; never rely on return values for file data.
+1. **Context bloat destroying token budget** — PreToolUse hooks injecting 500–2000 tokens per call accumulate to 25K–200K tokens per session, triggering auto-compaction that discards task context mid-execution. Fix: 500-token hard cap per injection, deduplication by file path, graduated injection (full on first touch, nothing on repeat), long-running hook daemon or MCP server HTTP endpoint to avoid cold-start latency. Must be implemented from day one in Phase 2, not retrofitted.
 
-2. **context:fork Silently Ignored (Issue #17283)** — `context: fork` in SKILL.md frontmatter is ignored when skills are auto-invoked, so exploration-heavy skills pollute main context. Prevention: never rely on context:fork; have skills explicitly delegate to sub-agents via Task tool from within their body; skills are thin dispatchers, not executors.
+2. **Incremental graph producing partial/corrupt state** — File renames delete old nodes but leave dangling edges from unchanged files that imported the old path, causing silent BFS truncation and corrupted community detection. Fix: `ON DELETE CASCADE` on edges foreign keys, reverse dependency re-resolution before delete, single `db.transaction()` for the full update cycle, cache invalidation only after commit succeeds.
 
-3. **Sub-Agent Write Operations Silently Failing (Issue #9458)** — Sub-agents report successful Write tool calls but files do not persist to filesystem. Prevention: use Bash tool `cat <<'EOF' > file.txt` as fallback; orchestrator verifies file existence after every sub-agent completes; test Write persistence in sub-agents in Phase 1 prototype.
+3. **SQLite SQLITE_BUSY during concurrent MCP tool + incremental update** — better-sqlite3 throws immediately on contention by default. Fix: `db.pragma("busy_timeout = 5000")` in `openDatabase()`, `BEGIN IMMEDIATE` for write transactions, single-writer mutex flag, periodic WAL checkpointing. One-line fix that must be in place before incremental updates ship.
 
-4. **SQLite Concurrent Write Contention** — Multiple agents attempting simultaneous writes to graph.db produce SQLITE_BUSY errors or corrupted data. Prevention: designate a single writer process; sub-agents write graph data to per-agent JSONL files; orchestrator or Graph Builder agent batch-inserts sequentially; set `PRAGMA busy_timeout = 5000` as safety net.
+4. **better-sqlite3 native addon failing on `npx` install** — prebuild-install fails in npx's temp directory; falls back to node-gyp which requires Python + C++ toolchain; documented failure on Apple Silicon. Fix: bundle platform prebuilt binaries in the npm package, include grammar `.wasm` files in `package.json#files`, test `npx --yes codescope` on all 5 target platform/Node combinations in CI.
 
-5. **web-tree-sitter WASM Memory Leaks** — WASM operates outside JavaScript GC; `tree.delete()` must be called after every parse; parser must be recreated periodically (every ~500 files). Prevention: strict resource lifecycle with try/finally; monitor WASM heap; consider worker thread isolation for long bootstrap sessions.
+5. **PreToolUse hook cold-start latency blocking the agent loop** — ~200ms cold start per invocation (Node.js start + SQLite open + query); 50 tool calls = 10s cumulative lag. Fix: long-running HTTP daemon (hook script becomes a thin `curl` call) or add an HTTP endpoint to the MCP server process. Exit-code-only (no `additionalContext`) for files not in known danger zones. Prefetch danger zone list to disk on SessionStart.
 
-6. **LLM-as-Judge Scoring Inconsistency** — Eval agent produces hallucinated findings, unstable scores, and unverifiable references. Prevention: binary or 3-point scale (not 1-10); chain-of-thought before score; every finding must cite verifiable file + line evidence; split evaluation by dimension; low temperature; validate against golden dataset before production use.
+6. **sigma.js memory leak on destroy/recreate cycles** — WebGL contexts not fully released by `.kill()`; 5–10 dashboard refreshes can consume 500MB+ and lose the WebGL context. Fix: single sigma instance, swap data with `graph.clear()` + `graph.import()`, use `sigma.scheduleRefresh()` (not `.refresh()`), `nodeReducer` to hide off-screen nodes.
 
-7. **Orchestrator Context Exhaustion** — Even a thin orchestrator accumulates context through coordination reads, status checks, and error handling; compaction loses pipeline state. Prevention: persist ALL orchestrator state to disk (pipeline-state.json); reconstruct state from disk if compaction occurs; keep orchestrator prompts under 5K tokens by referencing paths, not inlining content.
+7. **Pre-commit hook false positives blocking developer commits** — framework-required patterns (Next.js `export default` in `pages/`) conflict with detected conventions; one false block destroys trust permanently. Fix: opt-in only, warn-only default, HIGH-CONF threshold only (>80% adoption, >10 files), framework-aware exception lists, `.codescope-ignore` support, staleness degradation to warn-only after 7 days.
 
 ## Implications for Roadmap
 
-Based on the architectural build-order dependency layers and the feature prioritization matrix, the research strongly suggests a 5-phase roadmap that builds bottom-up.
+Based on feature dependencies, architectural constraints, and pitfall ordering requirements, the recommended phase structure is 5 phases:
 
-### Phase 1: Foundation — Plugin Skeleton + MCP Infrastructure
+### Phase 1: Foundation — Incremental Graph + Session Continuity + npx Distribution
+**Rationale:** Incremental graph updates are the hard prerequisite for every other v2 feature — auto-injection (Phase 2), convention enforcement (Phase 3), and visualization freshness (Phase 4) all break without fresh graph data. Session continuity depends only on existing v1 filesystem coordination and is low-effort. npx distribution is fully independent and establishes the packaging pipeline early; subsequent phases just add sub-commands.
+**Delivers:** Always-fresh graph data triggered on demand, session pause/resume, single-command install from npm
+**Addresses:** Incremental graph updates, session continuity, npx install experience
+**Must implement in this phase:** `ON DELETE CASCADE` on edges foreign keys, reverse dependency re-resolution, `busy_timeout` pragma, `--name-status` git diff (not `--name-only`) for rename awareness, platform-bundled prebuilt binaries in npm package, grammar `.wasm` files in `package.json#files`
+**Avoids:** Pitfalls 2 (graph corruption), 3 (SQLITE_BUSY), 4 (npx install failure), and 11 (stale session handoff)
 
-**Rationale:** Layers 0-2 must exist before any other component can function. This phase establishes the filesystem-first coordination pattern, validates the three platform constraints (Issues #5812, #17283, #9458) with a working prototype, and builds the MCP server infrastructure that all subsequent phases depend on. Getting the orchestrator state persistence and sub-agent coordination patterns right here prevents rewrites later. This phase has the highest architectural risk and must be done first.
+### Phase 2: Intelligence Layer — Auto-Injection + Impact Prediction
+**Rationale:** Auto-injection is the flagship v2 feature but requires fresh graph data (Phase 1) and must have context budget controls built in architecturally — not added as an afterthought. Impact prediction extends v1's blast radius to proactive pre-change mode and directly feeds the Phase 3 PR review skill.
+**Delivers:** Invisible codebase context on every file edit, pre-change risk assessment, context budget management
+**Addresses:** Auto-injection hooks, context budget awareness, change impact prediction
+**Uses:** Claude Code Hooks API, compiled hook scripts in `dist/hooks/`, SessionStart/PreToolUse/PostToolUse/PreCompact events
+**Must implement in this phase:** 500-token injection cap, file-path deduplication set, hook daemon or MCP server HTTP endpoint (not cold-start per invocation), graduated injection decay, danger zone prefetch on SessionStart
+**Avoids:** Pitfalls 1 (context bloat), 6 (hook cold-start latency)
 
-**Delivers:** Working plugin that loads in Claude Code, MCP server responding to tool calls, database schema with indexes, AST parser with WASM memory lifecycle management, import resolver with path alias support, onboarding skill (/codescope:onboard), validated sub-agent write patterns.
+### Phase 3: Review + Enforcement — PR Review + Convention Hooks
+**Rationale:** Both features compose Phase 1/2 capabilities with v1 modules. PR review needs incremental graph and impact prediction. Convention enforcement needs fresh conventions and benefits from auto-injection's hook infrastructure. They ship as a natural pair and are lower engineering effort than the dashboard.
+**Delivers:** Structural PR impact analysis with danger zone flagging, opt-in commit-blocking convention enforcement
+**Addresses:** Graph-aware PR review, convention enforcement hooks
+**Uses:** `src/review/` components, `git diff --diff-filter=R` for rename detection, git `core.hooksPath`
+**Must implement in this phase:** Rename detection as first step before any graph queries, HIGH-CONF-only enforcement, warn-only default with explicit opt-in to block mode, framework-aware exception lists (Next.js, Remix, Nuxt routes exempted), `.codescope-ignore` support
+**Avoids:** Pitfalls 7 (pre-commit false positives), 10 (PR review false positives on renames), 12 (framework-specific pattern conflicts)
 
-**Addresses features:** Plugin skeleton, interactive onboarding, MCP server shell, database foundation.
+### Phase 4: Visualization + Technical Debt Tracking
+**Rationale:** Dashboard is the most engineering-intensive feature (separate server process, sigma.js lifecycle, 5 views, WebSocket reconnection). Technical debt tracking (a single SQLite table) is a prerequisite for the trends panel but trivial to implement. Grouping them together is natural. Deferring to Phase 4 means the graph data will have had time to accumulate history.
+**Delivers:** Interactive dependency graph explorer, convention heatmap, readiness trends over time, blast radius explorer, persistent debt history
+**Addresses:** Interactive visualization dashboard, technical debt tracking
+**Uses:** sigma@^3.0.2, graphology-layout-forceatlas2@^0.10.1, hono@^4.12.9, @hono/node-ws@^1.3.0, @napi-rs/canvas@^0.1.97
+**Architecture constraint:** Dashboard process is isolated from MCP server (StdioServerTransport constraint — shared process would corrupt MCP protocol); reads `graph.db` and artifact files directly
+**Must implement in this phase:** Single sigma instance with data-swap pattern (not destroy/recreate), `scheduleRefresh()` not `refresh()`, pre-computed FA2 layout stored in SQLite, WebSocket bound to 127.0.0.1 only, full graph snapshot on reconnect (not event replay), node label threshold (`labelRenderedSizeThreshold`) to prevent label rendering at full scale
+**Avoids:** Pitfalls 5 (sigma memory leak), 8 (WebSocket listener leak), 9 (layout thrashing on live updates)
 
-**Must avoid:** Fat orchestrator anti-pattern, relying on context:fork, missing tree.delete() in parser loops, shared mutable state between agents.
-
-**Needs research during planning:** MCP Inspector debugging workflow, sub-agent frontmatter validation, exact plugin.json manifest schema.
-
-### Phase 2: Codebase Intelligence — AST Parsing + Convention Detection + Graph Construction
-
-**Rationale:** Layer 1-2 services translate to the full bootstrap analysis pipeline. Convention detection (ast-grep frequency analysis), import graph construction (enhanced-resolve), and knowledge graph building (graphology + SQLite) are the core intelligence layer. These are complex, have clear pitfalls (WASM ABI mismatch, SQLite write contention, convention false positives), and are prerequisites for all downstream features. This phase delivers the persistent codebase understanding that CodeScope promises.
-
-**Delivers:** /codescope:bootstrap skill, Scout + Researcher + Convention Detector + Risk Analyzer agents, conventions.md, golden-files.md, danger-zones.md, graph.db with full symbol graph, community detection, danger zone classification, learnings.md initialization, AI readiness score.
-
-**Uses:** web-tree-sitter@^0.25.10 + tree-sitter-cli@^0.25.x (pinned together), @ast-grep/cli for convention detection, graphology-communities-louvain for Louvain detection, enhanced-resolve + tsconfig-paths for import resolution.
-
-**Must avoid:** WASM version mismatch (grammar WASM must be built with matching tree-sitter-cli), parser memory leaks (tree.delete() in every loop), SQLite concurrent writes (single-writer pattern via JSONL batch insert), convention false positives (frequency threshold: >60% adoption, >5 file sample), Louvain communities without tuning resolution parameter.
-
-**Needs research during planning:** Convention detection frequency thresholds, ast-grep rule YAML syntax for the target languages, graphology Louvain resolution parameter tuning.
-
-### Phase 3: MCP Tool Surface — All 11 Tools Operational
-
-**Rationale:** With services built, wrapping them in MCP tool handlers is the prerequisite for agents using graph intelligence during execution. This phase is relatively straightforward (Layer 3: thin wrappers around Layer 2 services) but must be complete before the orient pipeline can use graph data. Completing this phase also provides the first integration test of the full stack.
-
-**Delivers:** All 11 MCP tools operational (codescope_recall, codescope_graph_query, codescope_blast_radius, codescope_conventions, codescope_orient, codescope_verify, codescope_search, codescope_readiness, codescope_status, codescope_detect_changes, codescope_service_map). Tool input validation via Zod schemas. Structured error responses (isError: true with human-readable messages, no stack traces). Graph query performance under 100ms on 10K+ node graphs (requires SQLite indexes).
-
-**Avoids:** MCP tools returning raw error objects, tools returning full file contents (return summaries + paths only), missing Zod input validation, unindexed graph queries.
-
-**Standard patterns:** MCP tool registration follows @modelcontextprotocol/sdk documented patterns — skip deep research-phase for this phase.
-
-### Phase 4: Orient Pipeline — Research, Plan, Execute, Verify
-
-**Rationale:** Layers 5-6, the orient pipeline is the product's core differentiator. It depends on all previous phases. The pipeline phases (Clarify -> Research -> Analyze -> Plan -> Execute -> Verify) must be built and integrated as a unit because they form a DAG with validation gates between every stage. This is the highest complexity phase — multi-agent coordination, filesystem IPC, blast radius-informed planning, parallel execution with dependency ordering. Validation gates between stages are not optional; they prevent the 17x error amplification trap.
-
-**Delivers:** /codescope:orient skill, graph-informed clarification (Phase A with scope contract), Research agent (Context7 + web search), Planner agent (dependency-ordered execution plan), Executor agents (parallel where safe, sequential where overlapping), Static Verify agent (convention compliance, blast radius diff), Runtime Verify agent (build + tests + E2E auto-detection). Append-only coordination.md for execution audit trail. Pipeline-state.json for compaction recovery.
-
-**Must avoid:** Missing validation gates between pipeline stages, agent nesting (sub-agents cannot spawn sub-agents), parallel agents writing to the same files (dependency ordering from plan prevents this), rate limit exhaustion from concurrent agents (default to 3 max concurrent, sequential on Pro plans), orchestrator context exceeding 100K tokens (pipeline-state.json recovery).
-
-**Needs research during planning:** Execution plan schema design (how to express agent dependencies), rate limit detection and backoff strategy, test auto-detection heuristics for Runtime Verify.
-
-### Phase 5: Quality Loop — Eval Agent, User Gate, Debug Agent + Learning Capture
-
-**Rationale:** Layer 7 closes the feedback loop. The Eval agent (LLM-as-judge), User Gate (interactive finding selection), and Debug agent (max 3 cycles, escalation) are what separate CodeScope from "another code intelligence tool that stops at execution." This phase also adds the persistent learning system (confidence decay, contradiction detection, UNVERIFIED default) that makes the project memory meaningful over time. The eval agent must be calibrated against a golden dataset before user-facing release — building it in binary scoring mode first is non-negotiable.
-
-**Delivers:** Eval agent with 4-dimension scoring (scope compliance, convention adherence, completeness, correctness) using binary/3-point scale + chain-of-thought + cited evidence. User gate with auto-skip-minor mode. Debug agent with 3-cycle max + design decision escalation. Learning capture post-completion (decision type, gotcha type with 90d/180d decay, UNVERIFIED default, max 50 active learnings, contradiction detection). /codescope:review-learnings skill.
-
-**Must avoid:** 1-10 scoring scale (high variance, inconsistent), eval findings without verifiable evidence citations, debug cycles without cycle limit, learning accumulation without decay and contradiction detection.
-
-**Needs research during planning:** Eval agent golden dataset creation strategy, binary scoring rubric calibration, debug agent fix plan structure.
+### Phase 5: Pipeline Maturity — Qualification, Diagnostics, Reconciliation
+**Rationale:** Pipeline evolution improves every execution but nothing strictly requires it — v1 pipeline is functional without qualification scoring or failure routing. This phase is best informed by v2 usage patterns from Phases 1–4 (what tasks fail, at what confidence levels, and why). Deferring it produces better thresholds and routing rules.
+**Delivers:** Higher autonomous execution reliability, self-correcting pipeline that classifies failures and routes to appropriate debug strategy, plan-vs-actual drift detection
+**Addresses:** Pipeline evolution (FEATURES.md P2)
+**Uses:** Existing orient pipeline, orchestrator, eval/debug agents; adds qualification scoring and reconciliation modules
 
 ### Phase Ordering Rationale
 
-- **Bottom-up dependency chain:** Every phase directly depends on all prior phases. There is no reordering opportunity — the ARCHITECTURE.md build-order layers dictate the sequence.
-- **Platform constraint validation early:** The three Claude Code platform constraints (Issues #5812, #17283, #9458) must be validated in Phase 1. Discovering them in Phase 4 would require architectural rewrites.
-- **Bootstrap before orient:** The orient pipeline reads bootstrap artifacts (conventions.md, danger-zones.md, graph.db). Bootstrap must be complete and tested before orient is built.
-- **Tools before pipeline:** Agents in the orient pipeline call MCP tools. All 11 tools must be operational before the orient pipeline agents can be built.
-- **Eval last:** The eval agent scores the output of execution and verification. It cannot be built or tested meaningfully until execution and verification are working.
+- **Dependency chain is the primary driver:** Incremental graph is a hard prerequisite for 4 of the 5 remaining features. Shipping it in Phase 1 eliminates a silent failure mode from every downstream phase.
+- **Risk is front-loaded:** The two highest-impact pitfalls (context bloat from auto-injection, graph corruption from incremental updates) are addressed in Phases 1–2 where they would otherwise silently degrade every session from day one.
+- **Dashboard isolated late:** The separate-process architecture requirement (StdioServerTransport constraint) means the dashboard has no integration shortcuts. Placing it in Phase 4 gives the team time to implement earlier phases cleanly before taking on the largest frontend engineering effort.
+- **Pipeline evolution last by design:** Usage data from v2 beta informs threshold calibration better than any upfront spec. Deferring to Phase 5 produces a better feature.
+- **npx bundled in Phase 1 not because it depends on Phase 1 features** (it is independent) **but because establishing the packaging pipeline early** means all subsequent phases simply add sub-commands rather than re-engineering distribution.
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase 1:** Sub-agent frontmatter validation (exact schema for model, tools, permissionMode fields). MCP Inspector workflow for debugging tool call responses. Plugin manifest exact format (hooks placement in hooks/hooks.json, NOT plugin.json).
-- **Phase 2:** Optimal ast-grep rule YAML structure for convention frequency detection. Graphology Louvain resolution parameter values for typical software module structures (default may produce poor communities). Incremental re-parse strategy (mtime + content hash comparison).
-- **Phase 4:** Execution plan schema — how to express parallelism and dependency constraints in a file that agents can parse. Context7 integration for Research agent (exact tool call patterns). Rate limit detection and exponential backoff for multi-agent execution.
-- **Phase 5:** Eval agent calibration strategy — what constitutes a golden dataset for a code intelligence eval agent. Evidence citation format (how to structure "cite the file and line" requirement in the eval prompt).
+Phases likely needing `/gsd:research-phase` deeper analysis during planning:
 
-Phases with standard/well-documented patterns (can skip research-phase or abbreviate):
-- **Phase 3 (MCP Tools):** @modelcontextprotocol/sdk tool registration, Zod schema validation, and error response format are thoroughly documented. Standard patterns, no novel integration required.
-- **Phase 5 (Learning system):** learnings.md structure (UNVERIFIED default, decay timers, contradiction detection, max 50 entries) is fully specified in the project research. No additional pattern research needed.
+- **Phase 2 (hook daemon architecture):** The choice between a long-running HTTP daemon vs. an HTTP endpoint added to the MCP server process needs a concrete design decision before implementation. The MCP server approach is cleaner but requires proving no HTTP output contaminates stdout. A focused design session and prototype are recommended before Phase 2 tasks are created.
+- **Phase 4 (FA2 Web Worker + tsdown bundling):** graphology-layout-forceatlas2's Web Worker uses inline blob workers. ESM bundlers (tsdown/Rolldown) may need special configuration. Build a small standalone proof-of-concept before committing to the full dashboard implementation plan.
+- **Phase 5 (qualification thresholds):** Cannot fully specify qualification thresholds and diagnostic routing logic until v2 beta generates empirical failure data. Phase 5 planning should be deferred until after Phase 3–4 are in use.
+
+Phases with standard patterns (skip research-phase):
+
+- **Phase 1 (incremental graph):** SQLite CASCADE deletes, reverse dependency tracking, WAL busy_timeout, and `--name-status` git diff parsing are fully specified in ARCHITECTURE.md and PITFALLS.md.
+- **Phase 1 (npx distribution):** npm packaging, commander CLI, and prebuild binary bundling are standard and well-documented.
+- **Phase 3 (convention enforcement):** git `core.hooksPath` pattern, ast-grep YAML scan, opt-in install flow are fully specified in ARCHITECTURE.md with shell script examples.
+- **Phase 3 (PR review):** Unified diff parsing and graph query composition directly reuse existing modules; architecture is fully specified.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All core packages verified against official npm, GitHub releases, and documented issues. Version constraints (web-tree-sitter 0.25.x, MCP SDK v1.x, zod 3.25+) verified against real issues and changelogs. |
-| Features | HIGH | Competitor analysis based on actual GitHub repos (codebase-context, codebase-memory-mcp, GitNexus, feature-dev, Understand Anything). Feature prioritization grounded in observed competitor gaps. |
-| Architecture | HIGH | Directly grounded in Claude Code official documentation for plugins, sub-agents, Task tool constraints. Platform constraints (Issues #5812, #17283, #9458) are documented GitHub issues. Layered build order is a direct output of dependency analysis. |
-| Pitfalls | HIGH | Issues #5812 and #9458 are closed GitHub issues (NOT_PLANNED, permanent constraints). LLM-as-judge biases documented across multiple independent research sources (CodeJudgeBench, Evidently AI, Monte Carlo Data). SQLite concurrency behavior is canonical. |
+| Stack | HIGH | All 11 new packages verified via npm registry with version pins and full compatibility matrix. Two MEDIUM items (@hono/node-ws, @napi-rs/canvas) have documented fallbacks. No version conflicts with v1 stack. |
+| Features | HIGH | Dependency graph is internally consistent. Competitor analysis confirms differentiators. Anti-features have clear rationale. Phase ordering follows hard dependency chain. |
+| Architecture | HIGH (hooks, incremental, session, CLI, PR review) / MEDIUM (dashboard server process, hook daemon) | Hook scripts, incremental graph modules, CLI structure, and session serializer are specified to code-module level. Dashboard separate-process requirement verified by StdioServerTransport constraint. Hook daemon architecture is a design decision not yet made. |
+| Pitfalls | HIGH | 12 pitfalls with specific warning signs, prevention steps, recovery strategies, and phase tagging. Critical cluster (context bloat, graph corruption, SQLITE_BUSY, native addon install failure) verified against GitHub issues and v1.0 codebase analysis. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Louvain community quality:** Research confirms Louvain works (50K nodes + 1M edges in ~940ms) but does not specify optimal resolution parameter values for typical software module structures. Needs empirical tuning during Phase 2. Default resolution often produces sparse communities on codebases with clear module separation. Recommendation: start with resolution=1.0, adjust based on community sizes relative to known service boundaries.
-
-- **Rate limit handling on Pro plans:** Research flags that >3 concurrent agents causes 429 errors on Pro plans but does not provide exact retry timing or backoff intervals. Recommendation: implement exponential backoff starting at 1s with max 32s, detect 429 at the orchestrator level, reduce concurrency to 1 when rate limiting is detected.
-
-- **Sub-agent Write tool persistence:** Issue #9458 confirms this is a real problem in affected versions but does not specify which Claude Code versions are affected. Recommendation: validate Write tool persistence in Phase 1 prototype (write file in sub-agent, parent verifies content). If failing, implement Bash tool cat-heredoc fallback as documented in PITFALLS.md.
-
-- **Import resolution accuracy targets:** Research targets 95-99% for TS/JS and ~80% for Python, but actual accuracy depends heavily on tsconfig path alias complexity and monorepo structure. Recommendation: measure against a real test fixture with known imports during Phase 2, adjust approach if accuracy falls below targets.
-
-- **Convention detection thresholds:** Research recommends >60% adoption + >5 file sample size before flagging a pattern as a convention, but these thresholds are based on general static analysis practices, not CodeScope-specific tuning. Recommendation: validate with <5% false positive rate target on a known test codebase during Phase 2, adjust thresholds empirically.
+- **Hook daemon vs. MCP server HTTP endpoint:** Both prevent cold-start latency. MCP server endpoint approach is architecturally cleaner but requires proving no HTTP output reaches stdout. Needs a concrete decision in Phase 2 planning before any implementation starts.
+- **FA2 Web Worker + tsdown/Rolldown bundling:** Web Worker inline blob behavior with ESM bundlers is documented to cause issues. Build a minimal proof-of-concept (`circular.assign()` + FA2 Web Worker + sigma render) with the tsdown config during Phase 4 architecture before committing to implementation tasks.
+- **@napi-rs/canvas 0.x API stability:** Pre-1.0 versioning means minor API changes are possible. Keep the SVG-to-sharp fallback path active until the package hits 1.0 or a long-running stable 0.x tag is confirmed.
+- **Session handoff edge cases:** Force-push scenarios (commit SHA in handoff no longer exists in git history) and detached HEAD states need explicit handling. The commit SHA check on resume should gracefully degrade (warn, offer re-orient) rather than error, since these states occur on legitimate branches.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Claude Code Plugins Documentation](https://code.claude.com/docs/en/plugins) — plugin structure, manifest, skills, hooks, agents
-- [Claude Code Sub-Agent Documentation](https://code.claude.com/docs/en/sub-agents) — Task tool, agent frontmatter, nesting constraints
-- [Issue #5812: Sub-agent file content blindness](https://github.com/anthropics/claude-code/issues/5812) — closed NOT_PLANNED, permanent platform constraint
-- [Issue #17283: context:fork ignored on auto-invoked skills](https://github.com/anthropics/claude-code/issues/17283) — confirmed behavior
-- [Issue #9458: Sub-agent Write tool operations don't persist](https://github.com/anthropics/claude-code/issues/9458) — confirmed failure mode
-- [Issue #5171: web-tree-sitter 0.26.x WASM ABI incompatibility](https://github.com/tree-sitter/tree-sitter/issues/5171) — confirmed version constraint
-- [@modelcontextprotocol/sdk npm](https://www.npmjs.com/package/@modelcontextprotocol/sdk) — v1.27.1 production stable
-- [MCP TypeScript SDK GitHub](https://github.com/modelcontextprotocol/typescript-sdk) — v2 pre-alpha status confirmed
-- [better-sqlite3 npm](https://www.npmjs.com/package/better-sqlite3) — v12.8.0, March 2026
-- [graphology standard library](https://graphology.github.io/standard-library/) — ecosystem packages, benchmarks
-- [web-tree-sitter npm](https://www.npmjs.com/package/web-tree-sitter) — v0.25.10 recommended
+
+- Claude Code Hooks Reference (code.claude.com/docs/en/hooks) — 25 event types, additionalContext, exit codes, matcher regex, PreToolUse/PostToolUse/SessionStart/PreCompact behavior, hookSpecificOutput schema
+- sigma.js npm (npmjs.com/package/sigma) + GitHub (github.com/jacomyal/sigma.js) — v3.0.2, WebGL instanced rendering, @sigma package ecosystem, peer dependencies
+- graphology-layout-forceatlas2 docs (graphology.github.io/standard-library/layout-forceatlas2.html) — Web Worker mode, Barnes-Hut optimization, inferSettings, peer dependencies
+- hono npm (npmjs.com/package/hono) + @hono/node-server npm + @hono/node-ws npm — v4.12.9, v1.19.11, v1.3.0, Node.js adapter setup, serveStatic, upgradeWebSocket API
+- @napi-rs/canvas npm + GitHub (github.com/Brooooooklyn/canvas) — v0.1.97, Skia backend, zero system deps, prebuilt platform matrix
+- web-tree-sitter GitHub issue #5171 — confirmed 0.26.x WASM ABI break; rationale for 0.25.x pin
+- @modelcontextprotocol/sdk npm + GitHub TypeScript SDK — v1.27.1 stable; v2.x pre-alpha confirmed; zod@^3.25 compatibility
+- better-sqlite3 npm (v12.8.0) + discussions re: node:sqlite — synchronous API, WAL mode, busy_timeout, prebuild-install behavior
 
 ### Secondary (MEDIUM confidence)
-- [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) — reference architecture for SQLite graph + 14 MCP tools
-- [codebase-context](https://github.com/PatrickSys/codebase-context) — convention detection, golden files, memory system
-- [feature-dev plugin](https://deepwiki.com/anthropics/claude-plugins-official/7.2.3-feature-dev-and-agent-sdk-dev) — 7-phase agent workflow reference
-- [GitNexus](https://github.com/abhigyanpatwari/GitNexus) — zero-config graph intelligence with Claude Code hooks
-- [Understand Anything](https://github.com/Lum1104/Understand-Anything) — 5-agent analysis pipeline, onboarding
-- [CodeJudgeBench](https://arxiv.org/abs/2507.10535) — LLM-as-judge point-wise vs pair-wise comparison for code
-- [LLM-as-a-Judge for Software Engineering](https://arxiv.org/pdf/2510.24367) — agent-as-judge evaluation patterns
-- [Why Multi-Agent Systems Fail: The 17x Error Trap](https://towardsdatascience.com/why-your-multi-agent-system-is-failing-escaping-the-17x-error-trap-of-the-bag-of-agents/) — validation gates rationale
-- [Anthropic 2026 Agentic Coding Trends Report](https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf) — repository intelligence, multi-agent patterns
-- [Mike Mason: AI Coding Agents in 2026](https://mikemason.ca/writing/ai-coding-agents-jan-2026/) — Planner/Worker/Judge pattern
 
-### Tertiary (LOW confidence — needs validation during implementation)
-- Convention detection frequency thresholds (>60%, >5 files) — derived from static analysis best practices, not CodeScope-specific data
-- Louvain resolution parameter defaults — community sizes for typical software graphs need empirical tuning
-- Rate limit backoff intervals for Pro plans — exact timing not documented
+- code-review-graph GitHub (github.com/tirth8205/code-review-graph) — 6.8x token reduction, structural graph for PR review, SHA-256 incremental update pattern
+- boidolr/ast-grep-pre-commit — ast-grep structural lint pre-commit integration pattern
+- Session Context Management MCP (mcp.aibase.com) — /start and /handoff command patterns for session continuity
+- Claude Code hooks community guides (gend.co, pixelmojo.io, smartscope.blog) — practical hook configuration patterns and common mistakes
+- graphology-communities-louvain npm — Louvain benchmarks (50K nodes + 1M edges in ~940ms); community recomputation cost
+
+### Tertiary (LOW confidence)
+
+- ruvnet/claude-flow#360 — better-sqlite3 Apple Silicon npx failure report; pattern applies, specific Node.js version details may differ
+- jacomyal/sigma.js#795, #1321, #1516 — sigma memory leak and batch update patterns; closed issues in older versions; behavior may have improved in v3.0.2 but pattern guidance remains valid
 
 ---
-*Research completed: 2026-03-22*
+*Research completed: 2026-03-27*
 *Ready for roadmap: yes*

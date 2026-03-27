@@ -1,375 +1,442 @@
 # Pitfalls Research
 
-**Domain:** Claude Code plugin with codebase intelligence (CodeScope)
-**Researched:** 2026-03-22
-**Confidence:** HIGH (verified across official docs, GitHub issues, and multiple independent sources)
+**Domain:** CodeScope v2.0 -- Intelligence Layer, Interactive Dashboard, npx Distribution
+**Researched:** 2026-03-27
+**Confidence:** HIGH (verified against Claude Code hooks docs, sigma.js GitHub issues, better-sqlite3 distribution reports, existing v1.0 codebase analysis)
+
+**Scope:** Pitfalls specific to adding auto-injection hooks, graph visualization (sigma.js), pre-commit enforcement, incremental graph updates, WebSocket communication, npx distribution, session handoff, and PR review to the existing CodeScope v1.0 MCP plugin.
+
+**Note:** v1.0 pitfalls (sub-agent file content blindness Issue #5812, context:fork silently ignored Issue #17283, sub-agent write sandboxing Issue #9458, web-tree-sitter memory leaks, better-sqlite3 WAL basics) remain valid. This document covers NEW pitfalls for v2.0 features.
+
+---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Sub-Agent File Content Blindness (Issue #5812)
+### Pitfall 1: Auto-Injection Context Bloat Destroying Token Budget
 
 **What goes wrong:**
-Parent agents delegate file creation to sub-agents via the Task tool. The sub-agent writes files successfully, but the parent agent has zero knowledge of file contents -- only that the task "completed." The parent cannot proceed with integration steps (adding imports, wiring components) because the new file's content is not in its context window. Issue #5812 was closed as NOT_PLANNED, meaning this is a permanent platform constraint, not a temporary bug.
+PreToolUse hooks inject codebase context (conventions, blast radius, danger zones) before every matched tool call. Each injection adds 500-2000 tokens via `additionalContext`. On a typical orient-execute session with 50-100 tool calls, this adds 25K-200K tokens of injected context. Claude Code's auto-compaction triggers at ~83.5% of the context window. With a 200K context Sonnet session, 33K is already reserved as buffer. Injected context accelerates compaction, which discards earlier conversation turns -- including the user's original task description, clarification answers, and plan details. The agent loses its mission mid-execution.
 
 **Why it happens:**
-Sub-agents operate in isolated context windows. When a sub-agent creates a file via the Write tool, the content exists on disk but is never propagated back to the parent's context. The Task tool returns a completion summary, not file contents.
+The temptation is to inject everything useful -- conventions for the current file, blast radius of the target, danger zone warnings, recent learnings. Each individual injection seems small and helpful. But PreToolUse fires on every Write, Edit, Bash, and Read call. The cumulative cost is invisible until compaction destroys critical context. Claude Code Issue #29971 documents this exact pattern: MCP tools loaded unconditionally, context cost hidden from users, duplication wasting 3K-5K tokens per session.
 
 **How to avoid:**
-Use filesystem coordination exclusively. Every sub-agent must write its outputs to well-known paths (e.g., `.claude/codescope/execution/{agent-id}/output.md`). The orchestrator reads these files after task completion rather than expecting return values. Design the entire coordination protocol around append-only files and polling, never around return values.
+1. **Budget cap**: Hard limit of 500 tokens per injection. Measure with a token estimator (4 chars per token heuristic) before returning `additionalContext`.
+2. **Selective triggering**: Only inject on Write and Edit tool calls, not Read/Glob/Grep/Bash. Use the `if` matcher field to narrow scope: only fire for files in known danger zones or files touching conventions.
+3. **Deduplication**: Track what has already been injected this session via a Set of file paths. Never re-inject the same convention guidance for the same file. Store injection history in a session-scoped file at `.claude/codescope/session-injections.json`.
+4. **Graduated injection**: First edit to a file gets full context (conventions + blast radius). Subsequent edits to the same file get nothing or a one-line reminder. Decay injection detail over repeated touches.
+5. **Staleness check**: If bootstrap data is >7 days old, inject a one-line warning instead of full context. Stale data injected confidently is worse than no data.
 
 **Warning signs:**
-- Sub-agent tasks complete but orchestrator asks "what was created?"
-- Orchestrator re-reads files it just delegated creation of
-- Extra conversational turns spent discovering filesystem state
+- Auto-compaction triggering during execution (visible in Claude Code UI as "Compacting conversation...")
+- Agent asking "what was the original task?" or re-reading the plan file mid-execution
+- Sessions consuming 2-3x expected tokens for the same task complexity
+- `/context` showing >40% of tokens consumed by non-conversation content
 
 **Phase to address:**
-Phase 1 (Plugin Skeleton / Orchestrator) -- this must be the foundational coordination pattern from day one. Retrofitting filesystem coordination onto a return-value architecture requires a rewrite.
+Auto-injection hooks phase -- must implement budget cap and selective triggering from day one. Adding budget controls after launch means existing users already experience degraded sessions.
 
 ---
 
-### Pitfall 2: context:fork Silently Ignored on Auto-Invoked Skills (Issue #17283)
+### Pitfall 2: Incremental Graph Update Producing Partial/Corrupt State
 
 **What goes wrong:**
-Skills that specify `context: fork` and `agent: Explore` in their frontmatter execute in the main conversation context instead of spawning a separate agent. This means exploration-heavy skills (codebase scanning, graph traversal) consume main context tokens and pollute the primary conversation with thousands of tokens of intermediate output.
+When a file is renamed or moved, the incremental updater deletes old nodes and inserts new ones. But edges from OTHER files that pointed to the old node IDs now reference nonexistent nodes. The graph becomes internally inconsistent: queries return partial results, blast radius BFS terminates early at dangling edges, community detection produces fragmented clusters. The cached graphology instance (5-min TTL in `src/graph/cache.ts`) serves the corrupt graph to all MCP tool handlers until TTL expires.
 
 **Why it happens:**
-The Skill tool does not honor `context: fork` or `agent:` frontmatter fields when skills are invoked programmatically or via auto-invocation. Only manual slash-command invocation respects some of these settings.
+The v1.0 graph builder uses a two-pass batch insert (nodes first, then edges resolved by name+file_path lookup in `src/graph/batch-writer.ts`). Incremental updates that only re-process changed files miss the edge resolution step for unchanged files that import the changed file. The `processBatchFiles` function deletes processed JSONL files after insert but does not cascade-delete edges referencing removed nodes. SQLite foreign keys are ON but the schema uses `REFERENCES` without `ON DELETE CASCADE`.
 
 **How to avoid:**
-Never rely on `context: fork` for any skill that will be auto-invoked. Instead, have skills explicitly delegate to sub-agents via the Task tool within their execution logic. Structure skills as thin dispatchers that immediately spawn a Task tool call with the appropriate agent configuration.
+1. **Cascade deletes**: Add `ON DELETE CASCADE` to the edges table foreign keys (`source_id REFERENCES nodes(id) ON DELETE CASCADE`, same for `target_id`). This ensures removing a node automatically removes all edges pointing to/from it.
+2. **Reverse dependency tracking**: Before deleting nodes for a changed file, query all edges where the file's nodes are targets (`SELECT DISTINCT source_id FROM edges WHERE target_id IN (SELECT id FROM nodes WHERE file_path = ?)`). Re-process those source files' edges in the same transaction.
+3. **Transaction isolation**: Wrap the entire incremental update (delete old nodes + insert new nodes + re-resolve affected edges + invalidate cache) in a single `db.transaction()`. If any step fails, the entire update rolls back and the old graph remains valid.
+4. **Cache invalidation timing**: Call `invalidateCache()` AFTER the transaction commits, not before. The current v1.0 pattern in `src/graph/cache.ts` uses a module-level `cached` variable -- add a version counter that increments on every successful graph write, so stale reads are detected even within the TTL window.
 
 **Warning signs:**
-- Main context growing rapidly during skill execution
-- Compaction triggering during what should be isolated operations
-- Skills that work correctly when manually invoked but misbehave when auto-invoked
+- `codescope_blast_radius` returning fewer nodes than expected for high-centrality files
+- `codescope_graph_query` returning edges with `null` target names
+- Community detection producing many single-node communities after an incremental update
+- Errors in batch-writer: "Edge skipped: source or target not found" appearing for files that were NOT changed
 
 **Phase to address:**
-Phase 1 (Plugin Skeleton) -- skill architecture must use Task tool delegation from the start. Skills should be thin wrappers that delegate, not monoliths that execute.
+Incremental graph update phase -- must fix the schema (CASCADE) and implement reverse dependency tracking before shipping incremental updates. A corrupt graph silently degrades every downstream tool.
 
 ---
 
-### Pitfall 3: Sub-Agent Write Operations Silently Fail (Issue #9458)
+### Pitfall 3: SQLite SQLITE_BUSY During Concurrent MCP Tool + Incremental Update
 
 **What goes wrong:**
-Sub-agents spawned via the Task tool report successful Write/Edit operations, but files do not persist to the filesystem. Directory creation (mkdir -p) succeeds, but file content writes fail silently. This creates a "partial sandboxing" scenario with 100% failure rate on Task tool Write operations in affected versions.
+The MCP server handles tool calls synchronously (better-sqlite3's synchronous API). An incremental graph update writes to graph.db while an MCP tool handler reads from it. In WAL mode, concurrent reads are fine, but if the tool handler opens a read transaction and the updater attempts a write, or vice versa, SQLITE_BUSY errors occur. With better-sqlite3's default configuration (no busy timeout), these throw immediately and crash the tool handler.
 
 **Why it happens:**
-Sub-agents may operate in temporary/sandboxed execution contexts. File operations appear to succeed from the sub-agent's perspective because the sandbox accepts them, but changes are discarded when the sub-agent session terminates.
+The v1.0 code opens a new database connection per operation (`getGraph()` opens, reads, closes in `src/graph/cache.ts`). The incremental updater will also open its own connection. WAL mode allows concurrent readers with a single writer, but: (a) if a reader tries to upgrade to a writer mid-transaction, SQLITE_BUSY is thrown; (b) checkpoint operations can briefly block readers; (c) better-sqlite3 does not set a busy timeout by default.
 
 **How to avoid:**
-Have sub-agents write content to their output coordination files (which the main session reads and writes to disk), OR have sub-agents use Bash tool `cat <<'EOF' > file.txt` instead of the Write tool (Bash file operations may bypass sandbox restrictions). Test Write tool persistence in sub-agents early and establish a verified pattern. Have the orchestrator verify file existence after each sub-agent completes.
+1. **Set busy timeout**: Add `db.pragma("busy_timeout = 5000")` to `openDatabase()` in `src/graph/database.ts`. This makes SQLite retry for 5 seconds before throwing SQLITE_BUSY. This is a one-line fix that prevents 90% of concurrent access errors.
+2. **Use BEGIN IMMEDIATE for writes**: Never let a read transaction upgrade to write. The incremental updater should use `BEGIN IMMEDIATE` (better-sqlite3's `db.transaction()` does this by default for write transactions, but verify).
+3. **Single writer pattern**: Ensure only one process writes to graph.db at a time. Since the MCP server is a single Node.js process, use a mutex/semaphore for graph writes. A simple boolean flag (`isUpdating`) checked before tool handlers open the database is sufficient.
+4. **Periodic checkpointing**: Call `db.pragma("wal_checkpoint(TRUNCATE)")` after large batch writes to prevent WAL file growth. Without checkpointing, the WAL file grows unbounded during sustained incremental updates, degrading read performance.
 
 **Warning signs:**
-- Sub-agent reports "file created successfully" but file does not exist
-- Directory structure exists but files are empty or missing
-- Inconsistent behavior between main session and sub-agent file operations
+- MCP tool handlers returning "SQLITE_BUSY" errors intermittently
+- WAL file (graph.db-wal) growing to multiple MB
+- Graph queries taking >100ms (the GRPH-05 constraint) after incremental updates
+- Tool responses alternating between success and error for the same query
 
 **Phase to address:**
-Phase 1 (Plugin Skeleton) -- must be validated in the first prototype. If Write tool fails in sub-agents, the entire filesystem coordination pattern needs the Bash-tool workaround baked in.
+Incremental graph update phase -- the busy_timeout pragma should be added to `openDatabase()` immediately. The single-writer mutex should be implemented alongside the incremental update feature.
 
 ---
 
-### Pitfall 4: web-tree-sitter WASM Version/ABI Incompatibility
+### Pitfall 4: better-sqlite3 Native Addon Failing on npx Install
 
 **What goes wrong:**
-WASM grammar files built with one version of tree-sitter-cli fail to load in a different version of web-tree-sitter. The ABI changed between major versions (e.g., grammars built with tree-sitter-cli 0.20.x are incompatible with web-tree-sitter 0.26.x). Language.load() silently fails or throws cryptic "incompatible language version" errors. The Emscripten toolchain version must also match precisely.
+Running `npx codescope` on a fresh machine fails because better-sqlite3 requires native binaries compiled for the target platform (darwin-arm64, linux-x64, win32-x64). npx creates a temporary install directory where prebuild-install may not find or download the correct prebuilt binary. The postinstall script falls back to node-gyp compilation, which requires Python and a C++ toolchain that many users do not have. On macOS ARM64 (Apple Silicon), this is a documented failure mode (GitHub: ruvnet/claude-flow#360).
 
 **Why it happens:**
-Tree-sitter's WASM ABI has no backward compatibility guarantees across major versions. Pre-built WASM grammar packages (like tree-sitter-wasms) may lag behind web-tree-sitter releases. There is no compatibility matrix in the official docs.
+better-sqlite3 uses prebuild-install to download prebuilt binaries from GitHub releases. But: (a) npx installs to a temporary cache directory with non-standard paths, confusing prebuild-install's path resolution; (b) prebuilt binaries may not exist for all Node.js version + platform combinations (Node.js 24 + ARM64 has reported issues); (c) the postinstall script adds 30+ seconds to install time even when prebuilts work.
 
 **How to avoid:**
-Pin web-tree-sitter and all grammar WASM files to the same ABI version. Build grammars from source using the same tree-sitter-cli version that matches your web-tree-sitter. Create a version lockfile documenting the exact versions. Test grammar loading for all supported languages in CI. Never upgrade web-tree-sitter without rebuilding all grammar files.
+1. **Provide a fallback SQLite strategy**: Detect at startup whether better-sqlite3 loaded successfully. If not, fall back to `node:sqlite` (available in Node.js 22+ with `--experimental-sqlite` flag) or emit a clear error with installation instructions. Do NOT silently degrade to in-memory-only.
+2. **Pre-bundle the native addon**: Use `@aspect-build/napi-pack` or similar tool to bundle prebuilt binaries for common platforms (darwin-arm64, darwin-x64, linux-x64, linux-arm64, win32-x64) directly in the npm package. This eliminates the prebuild-install download step.
+3. **WASM file distribution**: The grammar `.wasm` files (tree-sitter-typescript.wasm, etc.) must be included in the npm package `files` field, not generated at install time. The `build:grammars` script requires tree-sitter-cli which requires Emscripten -- this cannot be a postinstall requirement.
+4. **Test the npx path**: CI must test `npx codescope` on all target platforms. Test with a clean npm cache (`npm cache clean --force && npx codescope`). This is the only way to catch prebuild resolution failures.
+5. **Declare engines and os fields**: In package.json, declare `"engines": { "node": ">=22.0.0" }` and `"os": ["darwin", "linux", "win32"]` to fail fast on unsupported environments.
 
 **Warning signs:**
-- `Language.load()` throws with "incompatible language version N"
-- Parsing works for some languages but not others (inconsistent grammar versions)
-- Upgrading web-tree-sitter breaks previously working parsers
+- postinstall script taking >10 seconds (prebuilds are <2s)
+- node-gyp output appearing during `npx codescope` install
+- User reports of "Cannot find module better-sqlite3" after npx install
+- npm pack producing a tarball missing `.wasm` files
 
 **Phase to address:**
-Phase 2 (Convention Detection / AST Parsing) -- lock versions in the first commit and create a grammar build script.
+npx distribution phase -- must be the primary testing surface. Every CI run should include a `npx --yes` install test. This is the first thing a new user experiences and a single failure means they never return.
 
 ---
 
-### Pitfall 5: web-tree-sitter WASM Memory Leaks Over Long Sessions
+### Pitfall 5: sigma.js Memory Leak on Instance Lifecycle
 
 **What goes wrong:**
-WASM operates outside JavaScript's garbage collector. Tree objects, parser instances, and language objects accumulate in WASM memory and are never freed unless explicitly deleted. Over a bootstrap session analyzing thousands of files, memory grows unbounded until the process crashes or slows to a crawl.
+The visualization dashboard creates sigma.js instances for graph rendering. When the user navigates away and returns, or when the graph data refreshes, the old sigma instance is destroyed (`.kill()`) and a new one created. Each destroy-create cycle leaks memory because sigma.js does not fully clean up WebGL contexts, GPU buffers, and internal event listeners (GitHub: jacomyal/sigma.js#795, closed as wontfix). After 5-10 refreshes, the browser tab consumes 500MB+ and eventually the WebGL context is lost (Issue #1321).
 
 **Why it happens:**
-Developers accustomed to JavaScript's GC assume objects are cleaned up automatically. web-tree-sitter allocates in WASM linear memory, which requires explicit `tree.delete()` and `parser.delete()` calls. Forgetting even one `delete()` in a hot loop causes linear memory growth.
+WebGL contexts are finite per browser tab (typically max 8-16 contexts). sigma.js's `.kill()` method removes DOM elements and detaches some listeners but does not fully release WebGL resources. The garbage collector cannot reclaim GPU-side memory that was allocated through the WebGL API -- it must be explicitly freed via `gl.deleteBuffer()`, `gl.deleteTexture()`, etc. sigma.js v3.0 improved this but the issue persists for repeated create/destroy cycles.
 
 **How to avoid:**
-Implement a strict resource lifecycle: call `tree.delete()` after extracting data from every parsed file. Periodically call `parser.delete()` and recreate the parser (e.g., every 500 files) to reclaim fragmented WASM memory. Wrap parsing in a try/finally to guarantee cleanup. Monitor WASM memory usage (via `Module.HEAPU8.length` or similar) and log warnings when it exceeds thresholds. Consider running the parser in a worker thread that can be terminated and restarted.
+1. **Single instance, data swap**: Never destroy and recreate sigma instances. Instead, create ONE sigma instance at dashboard mount and swap the underlying graphology instance's data using `graph.clear()` followed by `graph.import()`. This avoids WebGL context churn entirely.
+2. **Batch graph mutations**: When updating graph data, use graphology's `updateEachNodeAttributes` and `updateEachEdgeAttributes` for bulk updates that fire only a single consolidated event, avoiding per-node re-render thrashing (see sigma.js Issue #1516).
+3. **Schedule refresh, not refresh**: Always use `sigma.scheduleRefresh()` (debounced via `requestAnimationFrame`) instead of `sigma.refresh()` (synchronous). Multiple rapid data changes will coalesce into a single render frame.
+4. **Limit visible nodes**: For graphs with 10K+ nodes, use sigma.js's `nodeReducer` to return `{ hidden: true }` for nodes outside the current viewport or filter. Rendering 10K nodes is fine; rendering 10K nodes with labels and hover effects is not.
 
 **Warning signs:**
-- Node.js process memory growing linearly during bootstrap
-- Parsing speed degrading over time (WASM heap fragmentation)
-- OOM crashes during large codebase analysis (50K+ files)
+- Browser DevTools Memory tab showing sawtooth pattern that never returns to baseline
+- "WebGL context lost" errors in console
+- Dashboard becoming unresponsive after multiple graph refreshes
+- Node.js process memory growing (if rendering server-side with headless GL)
 
 **Phase to address:**
-Phase 2 (Convention Detection / AST Parsing) -- implement resource lifecycle management alongside the first parser integration.
+Visualization dashboard phase -- the single-instance pattern must be the architectural foundation. Retrofitting from destroy-recreate to data-swap requires rewriting the entire rendering lifecycle.
 
 ---
 
-### Pitfall 6: SQLite Concurrent Write Contention From Multiple Agents
+### Pitfall 6: PreToolUse Hook Latency Blocking Claude Code's Agent Loop
 
 **What goes wrong:**
-Multiple sub-agents attempt to write to graph.db simultaneously during bootstrap. SQLite allows only one writer at a time, even in WAL mode. Agents receive SQLITE_BUSY errors, causing graph construction to fail or produce incomplete data. Worse, without a busy_timeout, writes fail immediately rather than retrying.
+PreToolUse hooks fire before every matched tool call. The hook script must start a Node.js process, read the graph database, compute blast radius or convention matches, format the response, and write JSON to stdout. If this takes >500ms, every Write/Edit tool call in the session is perceptibly slower. With 50+ tool calls per execution, even 200ms overhead adds 10+ seconds of cumulative delay. Users perceive Claude Code as "laggy" and disable the plugin.
 
 **Why it happens:**
-The bootstrap phase spawns multiple squads (Scout, Researcher, Convention Detector, Risk Analyzer) that may all attempt graph writes concurrently. SQLite's file-level write lock blocks all concurrent writers. WAL mode helps reads during writes but does not enable parallel writes.
+Each PreToolUse hook invocation is a cold-start: a new Node.js process spawns, requires modules, opens the SQLite database, reads data, closes, and exits. Node.js cold start is ~100ms. SQLite open + query is ~50-100ms. JSON serialization and stdout flush adds ~10ms. Total: 160-210ms per invocation even for simple queries. For convention checking that runs ast-grep, add 500ms+ for the CLI subprocess.
 
 **How to avoid:**
-Designate a single writer process for graph.db. Have sub-agents write graph data to per-agent output files (JSONL), and have the orchestrator or a dedicated Graph Builder agent batch-insert all data sequentially. Set `PRAGMA busy_timeout = 5000` as a safety net. Set `PRAGMA journal_mode = WAL` for concurrent read/write. Keep write transactions as small as possible. Monitor for checkpoint starvation (WAL file growing without bound due to long-running reads).
+1. **Long-running hook daemon**: Instead of spawning a new process per hook invocation, run a persistent HTTP server (on localhost) that the hook script curls. The hook shell script is a thin `curl -s http://localhost:PORT/pre-tool-use -d "$INPUT"` wrapper. The daemon keeps the SQLite connection open and graph cached. Response time drops from 200ms to <20ms.
+2. **Reuse the MCP server**: The MCP server process is already running. Add a lightweight HTTP endpoint to it that handles hook requests. This eliminates the extra daemon process. The MCP server already has the graph cache, database connection, and all analysis logic.
+3. **Exit-code-only for most calls**: For the common case (file not in danger zone, no convention violations), return exit code 0 with empty JSON. Only compute and inject `additionalContext` when the file actually needs guidance. Check the file path against a precomputed danger-zone set (in memory) before doing any expensive work.
+4. **Prefetch on session start**: On SessionStart hook, precompute and cache the full danger zone list, convention summary, and high-centrality file set. Write to a session-scoped JSON file. PreToolUse hooks read this cached file instead of querying SQLite.
 
 **Warning signs:**
-- "database is locked" errors during bootstrap
-- Graph data missing nodes/edges that were logged by sub-agents
-- WAL file growing much larger than the main database file
+- Consistent 200ms+ delay between Claude's tool call decision and execution
+- `time` measurements on hook scripts showing >100ms consistently
+- Users reporting "Claude Code feels slow after installing CodeScope"
+- Claude Code logs showing hook timeout warnings
 
 **Phase to address:**
-Phase 3 (Knowledge Graph) -- design single-writer architecture from the start. The batch-insert-from-JSONL pattern avoids the problem entirely.
+Auto-injection hooks phase -- the daemon/HTTP pattern or MCP server integration must be the implementation from the start. Cold-start hooks that query SQLite are DOA for performance.
 
 ---
 
-### Pitfall 7: LLM-as-Judge Inconsistent Scoring and Hallucinated Findings
+### Pitfall 7: Pre-Commit Hook Blocking Developer Workflow with False Positives
 
 **What goes wrong:**
-The eval agent reports false findings -- claiming convention violations that do not exist, or scoring changes as incomplete when they are not. Scores vary across identical inputs (one run scores 8/10, the next scores 5/10). The judge hallucinates specific line numbers or file references that do not correspond to actual code.
+CodeScope's convention enforcement pre-commit hook runs ast-grep on staged files to detect convention violations. A false positive (flagging correct code as a violation) blocks the commit. The developer must either: (a) understand and fix the "violation" (impossible if it's false), (b) run `git commit --no-verify` to bypass, or (c) disable the hook. Options (b) and (c) destroy trust in the tool permanently. Once a developer bypasses once, they bypass forever.
 
 **Why it happens:**
-LLM judges suffer from well-documented biases: position bias (favoring first/last items), verbosity bias (preferring longer output), self-enhancement bias (favoring AI-generated code), and vagueness in rubric interpretation. High-precision numeric scales (1-10) without clear definitions produce unreliable results. Overly long evaluation prompts introduce confusion and hallucination.
+ast-grep pattern matching is structural but not semantic. A pattern like "detect-default-export" matches `export default` syntax but cannot know whether the project INTENDS default exports in this specific module (e.g., Next.js pages require default exports). Convention adoption percentages from bootstrap may be stale -- a convention at 85% adoption during bootstrap may have intentionally shifted to 70% by the time the pre-commit hook runs. The `<5% false positive rate` constraint from v1.0 applies to HIGH-CONF conventions, but the pre-commit hook may enforce MEDIUM-CONF conventions too.
 
 **How to avoid:**
-Use binary or low-precision scoring (PASS/FAIL, 3-point scale) instead of 1-10 scales. Require chain-of-thought reasoning before the score -- the model must explain its judgment before rating. Create a golden dataset of pre-scored examples for calibration. Validate every finding against actual file contents (the eval agent must cite specific evidence that can be mechanically verified). Set low temperature for consistency. Split evaluation into separate dimensions (convention compliance, scope adherence, completeness) with independent prompts rather than evaluating everything at once.
+1. **Opt-in only, default off**: Pre-commit hooks must NEVER install automatically. Require explicit `codescope hooks install` command. Document that this is experimental.
+2. **HIGH-CONF only**: Only enforce conventions with >80% adoption AND >10 applicable files (the existing HIGH-CONF threshold). MEDIUM-CONF and LOW-CONF conventions are suggestions only, never blocking.
+3. **Allowlist/denylist per path**: Support `.codescope-ignore` file (like `.gitignore` syntax) for paths that should skip convention checking. Next.js `pages/` and `app/` directories, test files, and generated code should be ignorable.
+4. **Warn mode default, block mode opt-in**: Default behavior is to PRINT warnings but exit 0 (non-blocking). Blocking mode requires explicit config: `conventionEnforcement: block` in config.yml. This follows v1.0's "suggestion-only conventions" decision.
+5. **Freshness check**: If bootstrap data is >7 days old, degrade to warn-only regardless of config. Stale data should never block.
+6. **Performance budget**: The hook must complete in <3 seconds for typical changesets (1-10 files). Use `lint-staged`-style filtering to only scan staged files, not the entire codebase.
 
 **Warning signs:**
-- Eval findings reference files or line numbers that do not exist
-- Scores fluctuate more than 1 point across identical inputs
-- Eval consistently flags the same false patterns across different changes
-- Eval agent produces very long reports (verbosity bias indicator)
+- Developers running `git commit --no-verify` regularly
+- GitHub issues titled "false positive on [convention] in [framework-specific file]"
+- Convention adoption percentages drifting significantly from bootstrap values
+- Pre-commit hook taking >5 seconds on small changesets
 
 **Phase to address:**
-Phase 5 (Eval Agent) -- implement with binary scoring first, add granularity only after calibrating against golden datasets.
+Convention enforcement phase -- the opt-in + warn-only default must be baked in from the start. Shipping a blocking hook that produces even ONE false positive on a common framework (Next.js, Remix, etc.) will kill adoption.
 
 ---
 
-### Pitfall 8: Skill Auto-Invocation Overfiring on Vague Descriptions
+## Moderate Pitfalls
+
+### Pitfall 8: WebSocket Connection Lifecycle Creating Memory Leaks
 
 **What goes wrong:**
-Auto-invocable skills with vague descriptions fire on nearly every user message. A skill described as "helps with code" triggers on every coding task, consuming tokens and confusing the workflow. Skills that should only activate for specific file types or actions activate indiscriminately.
-
-**Why it happens:**
-Skill descriptions are the targeting instructions for auto-invocation. The LLM uses the description to decide relevance. Broad descriptions match broadly. The LLM errs on the side of invoking rather than skipping.
+The visualization dashboard uses WebSocket to receive live graph updates from the MCP server. On reconnection (network hiccup, laptop sleep/wake, server restart), event listeners are re-registered without removing the old ones. Each reconnection adds another `onmessage` handler. After 10 reconnections, every graph update triggers 10 identical handler executions. Node.js warns at 11 listeners per emitter by default.
 
 **How to avoid:**
-Write extremely specific skill descriptions that include: exact file types, specific directory paths, precise action contexts, and negative conditions. Example: "Analyzes TypeScript convention compliance in .ts/.tsx files under src/ when the user asks about code patterns or conventions. Do NOT use for general coding questions." Use `disable-model-invocation: true` for skills that should only be manually triggered (deployment, destructive operations).
+1. **One listener, swap reference**: Register a single `onmessage` handler that delegates to a mutable `currentHandler` reference. On reconnection, only update the reference, never add a new listener.
+2. **Use `once()` for transient handlers**: For connection-specific handlers (initial state sync), use `ws.once("message", handler)` instead of `ws.on("message", handler)`.
+3. **Cleanup on close**: In the `onclose` handler, call `ws.removeAllListeners()` before creating the new WebSocket instance.
+4. **Exponential backoff with jitter**: Reconnection delays should be 1s, 2s, 4s, 8s, up to 30s cap, with random jitter of 0-1s. Without jitter, all dashboard tabs reconnect simultaneously (thundering herd).
+5. **State reconciliation on reconnect**: The server should send a full graph snapshot on reconnection, not attempt to replay missed events. The graph state fits in a single message (<1MB for 10K nodes) and avoids the complexity of event replay with sequence numbers.
 
 **Warning signs:**
-- Skills firing on unrelated user messages
-- Token usage spiking from unexpected skill invocations
-- Users complaining that Claude "does extra stuff" they did not ask for
+- "possible EventEmitter memory leak detected. 11 listeners added" warning in console
+- Graph update callbacks firing multiple times for a single event
+- Dashboard performance degrading over time without page refresh
+- Network tab showing increasing WebSocket frame frequency
 
 **Phase to address:**
-Phase 1 (Plugin Skeleton) -- get skill descriptions right in the first iteration. Over-broad descriptions create noise from the start.
+Visualization dashboard phase -- WebSocket lifecycle must be designed with reconnection as the primary case, not an afterthought.
 
 ---
 
-### Pitfall 9: Multi-Agent Error Amplification (The 17x Error Trap)
+### Pitfall 9: Graph Visualization Layout Thrashing on Live Updates
 
 **What goes wrong:**
-Errors in one sub-agent propagate to dependent agents, compounding at each stage. A small mistake in the Scout's service boundary detection cascades into wrong convention scoping, incorrect danger zones, and a fundamentally flawed execution plan. With N sequential agents, a 10% error rate per agent becomes a ~65% chance of at least one error in the chain.
-
-**Why it happens:**
-Multi-agent systems without validation gates pass outputs directly between agents. Each agent trusts its inputs completely. There is no closed-loop feedback or error suppression between stages. Adding more agents amplifies errors rather than improving quality.
+When the graph receives incremental updates (node added, node removed, edge changed), the force-directed layout algorithm restarts, causing all nodes to rearrange. Users lose their spatial memory of the graph. A node they were looking at "in the upper right" suddenly jumps to the lower left. This makes the visualization disorienting rather than informative.
 
 **How to avoid:**
-Implement validation gates between every pipeline stage. Each agent's output must pass a structural check before the next agent consumes it. Use schema validation (JSON Schema or Zod) on all inter-agent coordination files. Build the pipeline as a DAG with explicit dependency edges, not a linear chain. The orchestrator must verify each stage's output before proceeding. Implement early termination -- if a foundational agent (Scout, Researcher) produces clearly broken output, halt the pipeline rather than propagating garbage.
+1. **Pin existing nodes**: When adding new nodes, set `fixed: true` on all existing nodes before running the layout. Only new nodes should be positioned by the layout algorithm. Then selectively unpin nodes that are directly connected to new nodes.
+2. **Pre-compute layouts server-side**: Use graphology-layout-forceatlas2 (or similar) during bootstrap/incremental update to compute x,y coordinates and store them in SQLite. The dashboard receives pre-laid-out graph data and only runs layout on new nodes.
+3. **Animate transitions**: When node positions change, use sigma.js's camera animation to smoothly transition rather than jump-cutting. `sigma.getCamera().animatedState()` provides smooth viewport transitions.
+4. **Layout budget**: Run layout for a fixed number of iterations (e.g., 100) rather than until convergence. On a 10K-node graph, convergence can take 5-10 seconds. Fixed iterations complete in <500ms and produce "good enough" layouts.
 
 **Warning signs:**
-- Downstream agents producing nonsensical output despite correct instructions
-- Execution plans referencing files or modules that do not exist
-- Convention reports contradicting the service manifest
-- Each pipeline run producing wildly different results
+- Users reporting the graph "jumps around" when data refreshes
+- Layout computation blocking the main thread (dashboard freezes)
+- CPU usage spiking on graph updates (layout is compute-intensive)
 
 **Phase to address:**
-Phase 4 (Orient Pipeline) -- validation gates must be part of the pipeline architecture, not bolted on later.
+Visualization dashboard phase -- layout strategy must be decided during architecture, not during implementation.
 
 ---
 
-### Pitfall 10: Orchestrator Context Exhaustion Despite Thin Design
+### Pitfall 10: PR Review Producing False Positives on Renamed/Moved Files
 
 **What goes wrong:**
-Even a "thin" orchestrator gradually accumulates context through coordination file reads, status checks, error handling, and retry logic. After coordinating 6+ sub-agents, the orchestrator hits ~167K usable tokens and triggers compaction. Post-compaction, the orchestrator loses track of which agents have completed, what their outputs were, and what stage the pipeline is in.
-
-**Why it happens:**
-Each sub-agent coordination cycle requires: reading the agent's output file, validating it, logging status, and deciding the next step. With 6-8 agents in bootstrap and 3-5 in orient, the accumulated reads and decisions fill context. Auto-compaction at 83.5% usage summarizes away critical state.
+CodeScope's graph-aware PR review analyzes structural impact by mapping changed files to graph nodes. When a file is renamed or moved, `git diff` shows it as one file deleted and one file added. The graph still has nodes pointing to the OLD file path. The review incorrectly reports: (a) a high-centrality file was "deleted" (danger zone alert), (b) a new file has "no graph connections" (appears orphaned), and (c) blast radius is computed against the wrong node. The PR review produces alarming false positives that cry wolf on routine refactors.
 
 **How to avoid:**
-Persist ALL orchestrator state to disk, never in context. Maintain a machine-readable state file (e.g., `pipeline-state.json`) that tracks: which agents completed, which files were produced, current stage, and next actions. After each sub-agent completes, write state to disk. If compaction occurs, the orchestrator can reconstruct its state by reading the state file. Keep orchestrator prompts under 5K tokens by referencing file paths rather than inlining content. Use the 1M context window (`opus[1m]` or `sonnet[1m]`) for the orchestrator if available.
+1. **Detect renames via git**: Use `git diff --diff-filter=R --find-renames` to detect renamed files and their old-to-new path mapping. Apply this mapping before graph queries.
+2. **Path normalization layer**: Before any graph lookup, check if the file path has a rename mapping in the current diff. If yes, query the graph using the old path but report using the new path.
+3. **Confidence degradation for renames**: When a rename is detected, lower the confidence of structural impact findings to "INFO" rather than "WARN" or "ERROR". The structural relationship is likely preserved even though the path changed.
+4. **Handle merge commits**: For PRs with merge commits, the diff includes changes from the merge target. Filter to only analyze the PR's own commits (`git diff base...HEAD`, not `git diff base HEAD`) to avoid analyzing unrelated changes from the base branch.
 
 **Warning signs:**
-- Orchestrator re-asking "what stage are we at?"
-- Duplicate sub-agent spawns (orchestrator forgot one already ran)
-- Pipeline stalling after compaction with no clear next step
-- Orchestrator context exceeding 100K tokens mid-pipeline
+- PR reviews flagging "DELETED: high-centrality file" on routine rename refactors
+- Blast radius reports showing 0 affected nodes for files that clearly have many dependents
+- Review comments mentioning "orphaned file with no graph connections" for moved files
 
 **Phase to address:**
-Phase 1 (Plugin Skeleton / Orchestrator) -- state persistence is the core orchestrator design principle. Must be there from the first prototype.
+PR review phase -- rename detection must be the first step in the review pipeline, before any graph queries.
+
+---
+
+### Pitfall 11: Session Handoff Documents Becoming Stale Mid-Execution
+
+**What goes wrong:**
+CodeScope's session continuity feature writes handoff documents when a session pauses. The handoff captures current state: which agents completed, which files were modified, what the plan was. But between pause and resume, the user (or another session) makes code changes. The resumed session reads the handoff, which references files at their old content, assumptions about code state that no longer hold, and an execution plan that targeted code structures that have been refactored.
+
+**How to avoid:**
+1. **Diff check on resume**: When resuming from a handoff, run `git diff` against the commit SHA recorded in the handoff. If >0 files in the handoff's scope have changed, warn the user and offer to re-orient.
+2. **Record commit SHA, not timestamp**: The handoff document must record the exact git commit SHA at pause time, not just a timestamp. This enables precise change detection on resume.
+3. **Scope contract validation**: Compare the handoff's scope contract (in-scope files) against current file state. If any in-scope file has been modified, mark the handoff as "stale" and require re-planning.
+4. **Partial resume**: Allow resuming from the last completed agent rather than replaying from the beginning. Completed agents' outputs are on disk and valid. Only re-run agents whose target files have changed.
+
+**Warning signs:**
+- Resumed sessions applying edits to files that have been restructured
+- Agent errors like "expected function X at line 42 but found something else"
+- Handoff documents referencing branch names or commits that no longer exist (force-push scenarios)
+
+**Phase to address:**
+Session continuity phase -- the commit SHA recording and diff-on-resume must be part of the handoff protocol design, not added later.
+
+---
+
+### Pitfall 12: Convention Enforcement Conflicting with Framework-Specific Patterns
+
+**What goes wrong:**
+CodeScope detects "prefer-named-exports" as a HIGH-CONF convention (85% adoption) and enforces it in pre-commit hooks. But Next.js pages/app router requires `export default` for route components. Remix requires `export default` for route modules plus named exports for `loader`/`action`. The pre-commit hook blocks valid, framework-required code, creating an irreconcilable conflict between detected conventions and framework requirements.
+
+**How to avoid:**
+1. **Framework-aware exception lists**: During bootstrap, detect the framework (Next.js, Remix, Nuxt, SvelteKit, etc.) from package.json dependencies. Automatically add framework-specific exception paths to the convention ruleset. Next.js: `app/**`, `pages/**` exempt from export style conventions. Remix: `routes/**` exempt.
+2. **Convention scoping by directory**: Allow conventions to have directory-scoped adoption metrics. "Named exports" at 95% in `src/lib/` but 10% in `app/routes/` means the convention applies to `src/lib/` only.
+3. **Leverage v1.0's conflict detection**: The existing `detectConflicts()` in `src/conventions/runner.ts` already detects competing patterns (named vs default exports at >20% each). Extend this to detect path-scoped conflicts -- if default exports are >50% in specific directories, those directories should be exempted.
+
+**Warning signs:**
+- Convention conflicts detected during bootstrap but ignored during enforcement
+- Users reporting "CodeScope tells me to use named exports but Next.js requires default exports"
+- High false positive rates specifically in framework route/page directories
+
+**Phase to address:**
+Convention enforcement phase -- framework detection should feed into the exception list during the same phase that implements pre-commit hooks.
 
 ---
 
 ## Technical Debt Patterns
 
+Shortcuts that seem reasonable but create long-term problems.
+
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Inlining file contents in orchestrator context instead of reading from disk | Simpler orchestrator logic | Context exhaustion, compaction data loss, unreliable multi-agent coordination | Never -- this violates the core architecture |
-| Skipping `tree.delete()` in parsing loops | Faster initial dev, simpler code | OOM on large codebases, unreliable bootstrap | Only in tests with <10 files |
-| Using Write tool in sub-agents without verification | Simpler coordination code | Silent file loss (Issue #9458), broken outputs | Never -- always verify or use Bash workaround |
-| 1-10 scale for eval scoring | Appears more granular/precise | Inconsistent, unreproducible scores, false confidence | Never in v1 -- start with binary, add granularity after calibration |
-| Single ast-grep pattern per convention without frequency threshold | Quick convention detection | False positives on rare patterns, noise in reports | MVP only -- add frequency thresholds before user-facing release |
-| Global graph.db writes from multiple agents | Simpler agent design, no coordination files | SQLITE_BUSY errors, data loss, corrupted graph | Never -- use single-writer pattern |
-| Hardcoded grammar WASM paths | Works on dev machine | Breaks in different environments, version mismatches | Only during initial prototyping |
-| Skipping validation gates between pipeline stages | Faster pipeline, fewer tokens per run | Error amplification, cascading failures, unreliable output | Never -- gates are cheap insurance |
+| Polling for graph updates instead of event-driven | Simple to implement, no WebSocket complexity | Wastes CPU, stale data between polls, does not scale to dashboard with multiple views | During initial development, replace with WebSocket before beta |
+| Storing sigma.js layout coordinates only in memory | No schema migration needed | Layout lost on page refresh, expensive recomputation every time dashboard opens | Never -- layout coordinates belong in SQLite alongside node data |
+| Using `git diff --name-only` for incremental updates instead of `--name-status` | Simpler parsing | Cannot detect renames (R), copies (C), or type changes. Renames appear as delete+add, causing false graph corruption | Never -- always use `--name-status` or `--diff-filter` to detect renames |
+| Global pre-commit hook install (`husky install` in postinstall) | Users get convention enforcement automatically | Violates opt-in principle, blocks developers who never asked for it, breaks `--no-verify` trust contract | Never for this project -- v1.0 decision is suggestion-only conventions |
+| Single SQLite connection shared across all operations | Simpler code, no connection pooling | Cannot do concurrent read + write (even in WAL mode, sharing one connection object across async operations can corrupt state) | Acceptable for v1.0 synchronous MCP handlers, but must use separate connections for incremental updater |
+| Inlining WASM grammar files as base64 in the JS bundle | No file distribution problems | Doubles bundle size (~2MB for 4 grammars), base64 decode adds startup latency | Never -- keep .wasm as separate files, include in package `files` array |
 
 ## Integration Gotchas
 
+Common mistakes when connecting to external services and platform APIs.
+
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| web-tree-sitter + Grammar WASM | Using pre-built WASM packages (tree-sitter-wasms) that lag behind web-tree-sitter ABI version | Build grammars from source with matching tree-sitter-cli version, pin all versions together |
-| better-sqlite3 + WAL mode | Assuming WAL enables parallel writes | WAL enables concurrent reads with a single writer; batch writes through one process |
-| enhanced-resolve + tsconfig-paths | Assuming path aliases resolve identically across all tsconfig contexts in a monorepo | Each package may have its own tsconfig with different path aliases; resolve relative to the declaring package's tsconfig, not the root |
-| ast-grep CLI + convention detection | Treating every pattern match as a convention | Require minimum frequency threshold (e.g., pattern appears in >60% of relevant files) and minimum sample size (>5 files) before flagging as a convention |
-| graphology + Louvain community detection | Expecting dense, meaningful communities by default | Louvain with default resolution produces sparse communities; tune resolution parameter and validate community quality against known service boundaries |
-| MCP SDK + Claude Code | Returning raw error objects/stack traces from tool calls | Return human-readable error strings with isError: true and include suggested next steps for the AI to recover |
-| Claude Code hooks + plugin hooks | Declaring hooks in plugin.json manifest | Plugin hooks go in hooks/hooks.json only; declaring in plugin.json causes duplicate detection errors |
-| Task tool + sub-agent file operations | Expecting sub-agent to write files and parent to see them | Sub-agent writes to coordination file; parent reads coordination file and performs final writes if needed |
+| Claude Code PreToolUse hooks | Returning `exit 1` expecting it to block the tool call | Use `exit 2` to block. `exit 1` only shows a warning in verbose mode. Use `hookSpecificOutput.permissionDecision: "deny"` for proper blocking. |
+| Claude Code PostToolUse hooks | Trying to prevent tool execution with `decision: "block"` | PostToolUse fires AFTER execution. `decision: "block"` only provides corrective feedback to Claude, it cannot undo the action. Use PreToolUse for prevention. |
+| Claude Code hook JSON output | Shell startup messages (`.bashrc` welcome text) corrupting JSON on stdout | Redirect shell startup output: `exec 3>&1 1>/dev/null; source ~/.bashrc; exec 1>&3 3>&-` before emitting JSON. Or use a compiled binary instead of a shell script. |
+| sigma.js + graphology | Calling `sigma.refresh()` after every `graph.addNode()` in a loop | Use `graph.import()` for batch data loading, or wrap mutations in `graph.updateEachNodeAttributes()`. Call `sigma.scheduleRefresh()` once after all mutations. |
+| sigma.js nodeReducer | Returning new objects on every render frame, causing unnecessary WebGL buffer uploads | Memoize reducer outputs. Only return new objects when node data actually changed. Use shallow comparison. |
+| better-sqlite3 via npx | Assuming prebuild-install will work in npx's temp directory | Test `npx --yes your-package` on clean machines. Include platform-specific prebuilds in the npm package itself via `prebuild-install` or `@neon-rs/load`. |
+| git pre-commit hooks + lint-staged | Running `tsc --noEmit` on staged files only | `tsc --noEmit` checks the ENTIRE project, not individual files. It takes 10-20s on medium projects. Skip type-check in pre-commit; use CI instead. Run only ast-grep (fast, file-scoped) in the hook. |
+| WebSocket + MCP server | Using the MCP StdioServerTransport for WebSocket communication | StdioServerTransport is stdin/stdout only. The WebSocket server must be a separate HTTP server running alongside the MCP process, or use an SSE transport for the dashboard. |
+| GraphQL/REST for dashboard data | Creating a full API layer between MCP server and dashboard | The MCP server already has all the query logic. Expose a thin HTTP endpoint from the same process rather than building a separate API server. |
 
 ## Performance Traps
 
+Patterns that work at small scale but fail as usage grows.
+
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Parsing entire codebase without file filtering | Bootstrap takes 30+ minutes, WASM OOM | Filter by language extension first, skip node_modules/vendor/dist, respect .gitignore | >50K files without filtering |
-| Full graph traversal for every blast radius query | Graph queries >1s, orient phase timeouts | Pre-compute in-degree centrality at bootstrap time, cache BFS results, index by file path | >10K nodes without indexing |
-| Loading all graph nodes into memory via graphology | Memory exhaustion on large codebases | Use streaming/batch processing, load subgraphs on demand, keep full graph in SQLite | >100K nodes loaded simultaneously |
-| Re-parsing unchanged files on every bootstrap | 5-minute bootstrap becomes 20 minutes | Store file hashes, only re-parse changed files (detect via mtime + content hash) | Second run on any codebase |
-| Unbounded WAL file growth (checkpoint starvation) | Disk usage growing, query performance degrading | Call db.checkpoint() periodically, avoid long-running read transactions during writes | Concurrent reads blocking WAL recycling |
-| MCP tool returning full file contents instead of summaries | Context window fills with raw data, compaction triggers | Return summaries, metadata, and file paths; let the caller read files if needed | Any tool returning >2K tokens regularly |
-| Spawning max concurrent agents on Pro plan rate limits | API rate limit errors, agents timing out, pipeline stalls | Default to sequential spawning on Pro plans (configurable), implement exponential backoff, detect 429 responses | >3 concurrent agents on Pro plan |
+| Full graph reload from SQLite on every incremental update | Acceptable at 1K nodes (~50ms), unusable at 10K nodes (~500ms) | Keep graphology instance in memory, apply delta updates instead of full reload | >5K nodes, >10K edges |
+| BFS blast radius on undirected graph traversal | Explodes through the entire graph via bidirectional edges | Use directed traversal (outbound edges only) for blast radius; use undirected only for reachability checks | >2K nodes where most files import a shared utility |
+| ast-grep CLI subprocess per convention rule (current v1.0 pattern) | 18 rules x 200ms each = 3.6s per full scan | Combine rules into a single YAML scan config, or switch to @ast-grep/napi for in-process execution | >15 convention rules, or pre-commit hook with >5 staged files |
+| sigma.js rendering all 10K+ nodes with labels | WebGL renders nodes fine, but HTML overlay for labels stutters | Use `labelRenderedSizeThreshold` to only render labels for large/zoomed nodes. Default to labels only on hover. | >5K visible nodes simultaneously |
+| JSON serialization of full graph for WebSocket transfer | 10K nodes + 50K edges = ~5MB JSON, 100ms+ parse time on client | Use binary format (MessagePack/CBOR) or send delta updates instead of full graph snapshots | Graph > 20K total elements |
+| Computing community detection on every incremental update | Louvain on 50K nodes takes ~940ms, acceptable once, not on every file save | Only recompute communities when >5% of nodes change. Cache community assignments in SQLite. | Any graph where incremental updates happen more than once per minute |
 
 ## Security Mistakes
 
+Domain-specific security issues for a Claude Code plugin with local filesystem access.
+
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| MCP tools exposing arbitrary file reads outside project directory | Path traversal: AI reads ~/.ssh/*, credentials, env files | Validate all file paths are within the project root; reject absolute paths and ../ traversal |
-| Storing API keys or secrets in codescope analysis files | Secrets persisted in .claude/codescope/ and potentially committed to git | Never include file content in analysis outputs that could contain secrets; scan for patterns (API_KEY, SECRET, TOKEN) before writing |
-| Sub-agents executing arbitrary Bash commands from coordination files | Command injection if coordination file contents are interpolated into Bash | Never construct Bash commands from agent output; use structured data and validated parameters |
-| MCP server running without input validation on tool arguments | Malformed arguments cause crashes, potential injection | Validate all tool inputs with Zod schemas; return isError: true for invalid inputs |
-| Knowledge graph storing sensitive code patterns | Intellectual property exposure if graph.db is shared or leaked | graph.db stores structural relationships (file->imports->file), not code content; document this clearly |
+| WebSocket server binding to 0.0.0.0 instead of 127.0.0.1 | Any device on the network can connect to the dashboard and read codebase structure, convention violations, danger zones | Bind to `127.0.0.1` only. Add a session token for WebSocket connections. |
+| Pre-commit hook reading arbitrary file paths from git diff without sanitization | Symlink attacks could cause the hook to read files outside the repository | Resolve all file paths and verify they are within the project root before processing. Use `path.resolve()` and check `resolvedPath.startsWith(projectRoot)`. |
+| Storing dashboard auth tokens in localStorage | XSS in the dashboard (or any other local page) can steal the token | Use httpOnly cookies for the dashboard session. If using WebSocket auth, send the token in the initial handshake header, not as a query parameter (visible in logs). |
+| npx postinstall script executing with user permissions | A malicious dependency could exploit the postinstall to exfiltrate code or credentials | Minimize postinstall scripts. Use `--ignore-scripts` flag support. Never download binaries from URLs in postinstall -- use prebuild-install's signed GitHub releases only. |
 
 ## UX Pitfalls
 
+Common user experience mistakes for a developer tool plugin.
+
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Convention detection reporting >20 findings on first run | User overwhelmed, dismisses the tool entirely | Show top 5 highest-confidence conventions, hide rest behind "show more"; progressive disclosure |
-| Bootstrap providing no progress feedback | User thinks it is hung after 60 seconds, kills the process | Report progress at each pipeline stage: "Scout: mapping services (2/5 complete)..." |
-| Danger zone reports without actionable guidance | User knows files are risky but not what to do about it | Always pair danger zone identification with specific guidance: "High in-degree (14 imports). Changes here affect: [list]. Recommend: test X, Y, Z" |
-| Eval agent blocking user on false findings | User forced to triage hallucinated issues, loses trust | Default to auto-skip-minor mode for eval findings below confidence threshold; only gate on high-confidence issues |
-| Learning system accumulating stale/wrong learnings | AI making decisions based on outdated or incorrect learnings | UNVERIFIED default, confidence decay (gotcha 90d, decision 180d), contradiction detection, max 50 active learnings |
-| Orient pipeline taking >60s without explanation | User abandons the tool | Show each phase as it starts: "Phase A: Clarifying scope... Phase B: Researching... Phase C: Analyzing graph..." |
+| Auto-injection adding context without visual indication | Developer has no idea why Claude "knows" about conventions -- context injection is invisible, feels like magic or hallucination | Add a brief `[CodeScope: injected blast radius for src/foo.ts]` note in the additionalContext so it appears in Claude's response |
+| Pre-commit hook with cryptic error messages | Developer sees "Convention violation: prefer-named-exports in src/pages/index.tsx" with no guidance on how to fix or suppress | Include the convention's adoption %, link to the golden file example, and the suppress command (`codescope ignore prefer-named-exports src/pages/`) |
+| Dashboard requiring separate installation step | Users who installed the plugin via Claude Code don't expect to run a second `npm install` for the dashboard | Bundle the dashboard as a static asset served by the MCP server. `codescope dashboard` should open a browser to localhost with zero additional setup. |
+| npx installer showing 30s of native compilation output | First impression is a wall of C++ compiler warnings | Show a spinner with "Installing CodeScope..." and pipe compilation output to a log file. Display only success/failure with a help link on failure. |
+| Graph visualization defaulting to full graph view | 10K nodes renders as an incomprehensible blob | Default to showing only the current file's 2-hop neighborhood. Provide a "Show full graph" toggle for users who want the overview. |
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Plugin manifest:** Often missing -- hooks declared in plugin.json instead of hooks/hooks.json. Verify hooks load via `/reload-plugins`.
-- [ ] **MCP tool error handling:** Often missing -- tools throw exceptions instead of returning `{isError: true, content: [...]}`. Verify every tool returns structured errors for all failure modes.
-- [ ] **web-tree-sitter cleanup:** Often missing -- `tree.delete()` calls in parsing loops. Verify WASM heap does not grow unbounded over 1000+ file parses.
-- [ ] **Graph query indexing:** Often missing -- SQLite indexes on node file paths and edge source/target columns. Verify graph queries return in <100ms on 10K+ node graphs.
-- [ ] **Convention confidence thresholds:** Often missing -- raw pattern matches reported without frequency or sample size thresholds. Verify false positive rate is <5% on test codebases.
-- [ ] **Orchestrator state persistence:** Often missing -- state tracked in context instead of on disk. Verify pipeline recovers correctly after simulated compaction.
-- [ ] **Sub-agent file write verification:** Often missing -- orchestrator assumes Write tool succeeded. Verify file existence and content after every sub-agent task.
-- [ ] **Import resolution for path aliases:** Often missing -- enhanced-resolve configured for root tsconfig only. Verify resolution works for packages with their own tsconfig path aliases.
-- [ ] **Rate limit handling:** Often missing -- no backoff on 429 responses. Verify pipeline degrades gracefully under rate limiting.
-- [ ] **eval agent finding verification:** Often missing -- findings accepted without checking cited evidence. Verify every eval finding references real files and line numbers.
+Things that appear complete but are missing critical pieces.
+
+- [ ] **Auto-injection hooks:** Often missing token budget enforcement -- verify hooks have a `maxTokens` check before returning `additionalContext`. Test with a session that triggers 100+ tool calls and measure total injected tokens.
+- [ ] **Incremental graph update:** Often missing reverse dependency edge cleanup -- verify that renaming `src/utils/helpers.ts` to `src/utils/helpers-v2.ts` preserves ALL edges from other files that imported helpers.ts. Not just the renamed file's own edges.
+- [ ] **Pre-commit hook:** Often missing framework exception handling -- verify that `export default` in a Next.js page file does NOT trigger a "prefer-named-exports" violation. Test with every major framework's required export patterns.
+- [ ] **WebSocket dashboard:** Often missing reconnection state sync -- verify that after a 30-second disconnect, the reconnected dashboard shows the CURRENT graph state, not the stale pre-disconnect state.
+- [ ] **sigma.js visualization:** Often missing proper `.kill()` cleanup -- verify that opening and closing the dashboard 10 times does not increase memory by more than 10%. Use Chrome DevTools Memory snapshot comparison.
+- [ ] **npx distribution:** Often missing platform coverage -- verify `npx codescope` works on: macOS ARM64 (Apple Silicon), macOS Intel, Ubuntu 22.04 x64, Windows 11 x64 with both Node.js 22 and Node.js 24.
+- [ ] **PR review:** Often missing rename detection -- verify that a PR that renames a file does NOT produce "deleted high-centrality file" warnings. Test with `git mv` renames.
+- [ ] **Session handoff:** Often missing commit SHA recording -- verify that the handoff document includes the exact git commit, and that resuming after a `git commit` by another user triggers a staleness warning.
+- [ ] **Convention enforcement:** Often missing staleness check -- verify that if bootstrap was run >7 days ago, the pre-commit hook degrades to warn-only mode regardless of config.
 
 ## Recovery Strategies
 
+When pitfalls occur despite prevention, how to recover.
+
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Sub-agent file content blindness | LOW | Switch to filesystem coordination pattern; refactor agent output paths |
-| context:fork ignored | LOW | Replace with Task tool delegation; update skill frontmatter |
-| Sub-agent Write failures | MEDIUM | Implement Bash-tool workaround or coordination-file pattern; re-run affected pipeline stages |
-| WASM ABI mismatch | LOW | Pin versions, rebuild grammars from source, update lockfile |
-| WASM memory leaks | MEDIUM | Add tree.delete()/parser.delete() calls in all parsing loops; may need worker thread isolation |
-| SQLite write contention | HIGH | Redesign to single-writer pattern; migrate from direct writes to JSONL batch-insert; rebuild graph |
-| LLM-as-judge inconsistency | MEDIUM | Switch to binary scoring; create golden dataset; re-evaluate all historical findings |
-| Skill overfiring | LOW | Tighten descriptions; add disable-model-invocation where needed |
-| Multi-agent error amplification | HIGH | Add validation gates between all pipeline stages; may require re-running affected pipelines |
-| Orchestrator context exhaustion | HIGH | Implement disk-based state machine; requires rethinking orchestrator architecture |
+| Context bloat from over-injection | LOW | Clear injected context by running `/compact`. Reduce injection budget in config.yml. Restart session. |
+| Corrupt graph from failed incremental update | MEDIUM | Run `codescope:bootstrap --force` to rebuild from scratch. The full bootstrap takes <5 min for 100K LOC. Delete graph.db and .wal/.shm files first. |
+| SQLITE_BUSY errors during concurrent access | LOW | Add `busy_timeout = 5000` pragma to `openDatabase()`. Restart MCP server. One-line fix. |
+| npx install failure (native addon) | MEDIUM | Provide `codescope doctor` command that diagnoses the issue and offers: (a) global install with `npm install -g`, (b) Docker image, (c) fallback to node:sqlite. |
+| sigma.js memory leak after repeated refreshes | LOW | Refresh the browser tab. Implement single-instance pattern to prevent recurrence. |
+| Pre-commit false positive blocking a commit | LOW | User runs `git commit --no-verify`. CodeScope should detect this (via post-commit hook) and log it as a "bypass event" for convention confidence recalibration. |
+| Stale session handoff causing incorrect edits | HIGH | Cannot easily undo agent work that applied stale assumptions. Must `git stash` or `git reset` the changes and re-run from orient. Prevention is essential. |
+| PR review false positive on renamed file | LOW | Dismiss the review comment. But repeated false positives destroy trust. Fix rename detection to prevent recurrence. |
+| WebSocket listener memory leak | LOW | Refresh dashboard. Implement proper cleanup in onclose handler. |
 
 ## Pitfall-to-Phase Mapping
 
+How roadmap phases should address these pitfalls.
+
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Sub-agent file blindness (#5812) | Phase 1: Plugin Skeleton | Sub-agent creates file, parent reads it from coordination path without re-discovery |
-| context:fork ignored (#17283) | Phase 1: Plugin Skeleton | Auto-invoked skill executes in isolated Task tool context, main context unchanged |
-| Sub-agent Write failures (#9458) | Phase 1: Plugin Skeleton | Sub-agent file operations verified to persist; fallback pattern documented |
-| WASM ABI incompatibility | Phase 2: Convention Detection | All grammars load successfully; version lockfile in place; CI test for grammar loading |
-| WASM memory leaks | Phase 2: Convention Detection | Bootstrap 10K files without memory growth beyond 2x initial; tree.delete() in all loops |
-| SQLite write contention | Phase 3: Knowledge Graph | Bootstrap with 3 concurrent agents produces identical graph to sequential run |
-| Skill overfiring | Phase 1: Plugin Skeleton | Skills only fire on matching contexts; token usage baseline established |
-| Multi-agent error amplification | Phase 4: Orient Pipeline | Validation gate catches intentionally broken Scout output; pipeline halts with clear error |
-| Orchestrator context exhaustion | Phase 1: Plugin Skeleton | Pipeline completes with simulated compaction at 50% progress; state recovered from disk |
-| LLM-as-judge inconsistency | Phase 5: Eval Agent | Same input produces same score 9/10 times; all findings cite verifiable evidence |
-| Convention false positives | Phase 2: Convention Detection | False positive rate <5% on test codebase with known conventions |
-| Import resolution edge cases | Phase 3: Knowledge Graph | Monorepo with path aliases resolves 95%+ of imports correctly |
-| Rate limit handling | Phase 4: Orient Pipeline | Pipeline completes under simulated rate limiting (1 agent at a time) |
+| Context bloat (Pitfall 1) | Auto-injection hooks | Measure total injected tokens across a 50-tool-call session. Must be <5000 tokens total. |
+| Partial graph state (Pitfall 2) | Incremental graph updates | Rename a file imported by 10+ other files. Verify all edges are preserved after incremental update. |
+| SQLITE_BUSY (Pitfall 3) | Incremental graph updates | Run an MCP tool query while an incremental update is in progress. Must not throw. |
+| npx native addon failure (Pitfall 4) | npx distribution | `npx --yes codescope` on macOS ARM64 with clean npm cache. Must complete in <60s without node-gyp. |
+| sigma.js memory leak (Pitfall 5) | Visualization dashboard | Open/close dashboard 20 times. Memory delta must be <50MB. |
+| Hook latency (Pitfall 6) | Auto-injection hooks | Measure PreToolUse hook response time. Must be <50ms p99 (with daemon pattern). |
+| Pre-commit false positives (Pitfall 7) | Convention enforcement | Run hook on Next.js, Remix, and SvelteKit projects. Zero false positives on framework-required patterns. |
+| WebSocket memory leak (Pitfall 8) | Visualization dashboard | Simulate 20 reconnection cycles. Verify listener count stays at 1 per event type. |
+| Layout thrashing (Pitfall 9) | Visualization dashboard | Add a node to a 5K-node graph. Existing node positions must not change by more than 5px. |
+| PR rename false positives (Pitfall 10) | PR review | Submit a PR with `git mv` renames. Zero false "deleted file" warnings. |
+| Stale handoff (Pitfall 11) | Session continuity | Pause session, make a commit, resume. Must warn about stale state. |
+| Framework convention conflicts (Pitfall 12) | Convention enforcement | Bootstrap a Next.js project. `pages/` and `app/` must be auto-exempted from export-style conventions. |
 
 ## Sources
 
-### Official Documentation and GitHub Issues
-- [Claude Code Plugins Documentation](https://code.claude.com/docs/en/plugins)
-- [Issue #5812: Feature Request - Allow Hooks to Bridge Context Between Sub-Agents](https://github.com/anthropics/claude-code/issues/5812) -- closed NOT_PLANNED
-- [Issue #17283: Skill tool should honor context:fork and agent: frontmatter](https://github.com/anthropics/claude-code/issues/17283)
-- [Issue #9458: Sub-agent Write tool operations don't persist to filesystem](https://github.com/anthropics/claude-code/issues/9458)
-- [Issue #5171: web-tree-sitter 0.26.x incompatible with WASM files built by tree-sitter-cli 0.20.x](https://github.com/tree-sitter/tree-sitter/issues/5171)
-- [Issue #1580: Recommended usage of web-tree-sitter](https://github.com/tree-sitter/tree-sitter/issues/1580)
-- [MCP Tools Specification](https://modelcontextprotocol.io/docs/concepts/tools)
-- [Claude Code Agent Teams](https://code.claude.com/docs/en/agent-teams)
-
-### MCP Server Design
-- [MCP Best Practices - Philipp Schmid](https://www.philschmid.de/mcp-best-practices)
-- [MCP Server Naming Conventions](https://zazencodes.com/blog/mcp-server-naming-conventions)
-- [15 Best Practices for Building MCP Servers - The New Stack](https://thenewstack.io/15-best-practices-for-building-mcp-servers-in-production/)
-- [Error Handling in MCP Tools](https://apxml.com/courses/getting-started-model-context-protocol/chapter-3-implementing-tools-and-logic/error-handling-reporting)
-- [Better MCP Tool Error Responses](https://alpic.ai/blog/better-mcp-tool-call-error-responses-ai-recover-gracefully)
-
-### Multi-Agent Systems
-- [Why Your Multi-Agent System is Failing: The 17x Error Trap - Towards Data Science](https://towardsdatascience.com/why-your-multi-agent-system-is-failing-escaping-the-17x-error-trap-of-the-bag-of-agents/)
-- [AI Coding Agents in 2026: Coherence Through Orchestration - Mike Mason](https://mikemason.ca/writing/ai-coding-agents-jan-2026/)
-- [Claude Code Context Buffer Management](https://claudefa.st/blog/guide/mechanics/context-buffer-management)
-
-### LLM-as-Judge Evaluation
-- [LLM-as-a-Judge Complete Guide - Evidently AI](https://www.evidentlyai.com/llm-guide/llm-as-a-judge)
-- [LLM-As-Judge: 7 Best Practices - Monte Carlo Data](https://www.montecarlodata.com/blog-llm-as-judge/)
-- [LLMs-as-Judges: A Comprehensive Survey](https://arxiv.org/html/2412.05579v2)
-
-### Tree-sitter and Parsing
-- [Modern Tree-sitter Part 7: Pain Points and Promise - Pulsar Edit](https://blog.pulsar-edit.dev/posts/20240902-savetheclocktower-modern-tree-sitter-part-7/)
-- [ast-grep Pattern Syntax](https://ast-grep.github.io/guide/pattern-syntax.html)
-
-### SQLite and Graph
-- [better-sqlite3 Performance Documentation](https://github.com/WiseLibs/better-sqlite3/blob/master/docs/performance.md)
-- [SQLite File Locking and Concurrency](https://sqlite.org/lockingv3.html)
-- [Graphology Louvain Community Detection](https://graphology.github.io/standard-library/communities-louvain.html)
-
-### Static Analysis and Conventions
-- [DeepSource: How We Ensure Less Than 5% False Positive Rate](https://deepsource.com/blog/how-deepsource-ensures-less-false-positives)
-- [Using LLMs to Filter False Positives - Datadog](https://www.datadoghq.com/blog/using-llms-to-filter-out-false-positives/)
-
-### TypeScript Import Resolution
-- [Managing TypeScript Packages in Monorepos - Nx](https://nx.dev/blog/managing-ts-packages-in-monorepos)
-- [TypeScript Path Aliases Issue #58657](https://github.com/microsoft/TypeScript/issues/58657)
+- [Claude Code Hooks Reference](https://code.claude.com/docs/en/hooks) -- PreToolUse/PostToolUse JSON format, exit codes, decision control
+- [Claude Code Context Buffer: The 33K-45K Token Problem](https://claudefa.st/blog/guide/mechanics/context-buffer-management) -- auto-compaction triggers, buffer size
+- [Claude Code Context Bloat Bug Report (Issue #29971)](https://github.com/anthropics/claude-code/issues/29971) -- MCP tools loaded unconditionally, context cost hidden
+- [sigma.js Memory Leak (Issue #795)](https://github.com/jacomyal/sigma.js/issues/795) -- create/kill cycle memory growth, closed wontfix
+- [sigma.js WebGL Context Recovery (Issue #1321)](https://github.com/jacomyal/sigma.js/issues/1321) -- lost context after instance churn
+- [sigma.js Batch Update Optimization (Issue #1516)](https://github.com/jacomyal/sigma.js/issues/1516) -- event storm from sequential mutations
+- [sigma.js Lifecycle Docs](https://www.sigmajs.org/docs/advanced/lifecycle/) -- refresh vs scheduleRefresh
+- [sigma.js Data Docs](https://www.sigmajs.org/docs/advanced/data/) -- nodeReducer, edgeReducer
+- [better-sqlite3 ARM64 npx Failure (claude-flow#360)](https://github.com/ruvnet/claude-flow/issues/360) -- prebuild-install path resolution in npx temp dir
+- [better-sqlite3 macOS M1 Install (Issue #1317)](https://github.com/WiseLibs/better-sqlite3/issues/1317) -- ARM64 prebuild availability
+- [SQLite SQLITE_BUSY Despite Timeout](https://berthub.eu/articles/posts/a-brief-post-on-sqlite3-database-locked-despite-timeout/) -- transaction upgrade deadlocks
+- [SQLite WAL Concurrency](https://sqlite.org/wal.html) -- single writer, checkpoint starvation
+- [Improving Concurrency with better-sqlite3](https://wchargin.com/better-sqlite3/performance.html) -- busy timeout, checkpointing
+- [WebSocket Memory Leak (ws#804)](https://github.com/websockets/ws/issues/804) -- listener accumulation on reconnect
+- [WebSocket Objects Not Destroyed](https://useaxentix.com/blog/websockets/why-websocket-objects-arent-destroyed-when-out-of-scope/) -- explicit cleanup required
+- [WebSocket Best Practices for Production](https://websocket.org/guides/best-practices/) -- exponential backoff, heartbeat, state sync
+- [lint-staged GitHub](https://github.com/lint-staged/lint-staged) -- staged-files-only approach, tsc limitation
+- [GitHub PR Rename Detection (Discussion #8573)](https://github.com/orgs/community/discussions/8573) -- renamed files shown as delete+add
+- [Inspect: Entity-Level Code Review](https://inspect-review.vercel.app/) -- structural hashing for rename detection
+- [Git diff documentation](https://git-scm.com/docs/git-diff) -- `--diff-filter=R`, `--find-renames`
+- [Claude Code Hook Development SKILL](https://github.com/anthropics/claude-code/blob/main/plugins/plugin-dev/skills/hook-development/SKILL.md) -- official hook patterns
 
 ---
-*Pitfalls research for: Claude Code plugin with codebase intelligence (CodeScope)*
-*Researched: 2026-03-22*
+*Pitfalls research for: CodeScope v2.0 Intelligence Layer + Interactive Dashboard + npx Distribution*
+*Researched: 2026-03-27*

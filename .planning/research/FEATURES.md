@@ -1,287 +1,386 @@
-# Feature Research
+# Feature Research: CodeScope v2.0
 
-**Domain:** Codebase intelligence and AI coding assistant plugins (Claude Code ecosystem)
-**Researched:** 2026-03-22
-**Confidence:** HIGH
+**Domain:** Codebase intelligence layer features -- auto-injection, graph-aware review, interactive visualization, convention enforcement, session continuity, change impact prediction, technical debt tracking, npx distribution
+**Researched:** 2026-03-27
+**Confidence:** HIGH (most features have clear ecosystem precedents and v1 foundations to build on)
 
 ## Feature Landscape
 
 ### Table Stakes (Users Expect These)
 
-Features users assume exist. Missing these = product feels incomplete. Every serious codebase intelligence tool in 2026 has these.
+Features that v2 users will expect given v1's capabilities and the competitive landscape. Missing these makes v2 feel like a point release, not a real upgrade.
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| Codebase structure analysis (files, modules, functions, classes) | Every competitor does this. codebase-memory-mcp indexes 64 languages, GitNexus builds full knowledge graphs, Understand Anything runs a 5-agent pipeline. Users expect automated codebase mapping. | MEDIUM | Tree-sitter parsing is the standard approach. web-tree-sitter WASM for TS/JS/Python v1. Must support incremental re-analysis. |
-| Dependency / import graph | codebase-memory-mcp has 18 relationship types including CALLS, IMPORTS, IMPLEMENTS. GitNexus traces execution flows. Without a dependency graph, blast radius and convention analysis are impossible. | HIGH | enhanced-resolve + tsconfig-paths for TS/JS, ast-grep patterns for Python. Import resolution accuracy is the hard part (95-99% TS/JS, ~80% Python target). |
-| Search across codebase (structural + text) | codebase-context provides hybrid search with pattern signals. codebase-memory-mcp has search_graph and search_code. GitNexus has BM25 + semantic hybrid. Users expect to find code by name, pattern, or intent. | MEDIUM | ast-grep for structural search, graphology for graph traversal. Semantic search (embeddings) deferred to v2 -- structural + text is sufficient for v1. |
-| Convention detection from actual code | codebase-context's core differentiator: adoption percentages, trend direction (rising/declining), conflict detection. Users expect the tool to learn patterns from what the team actually writes, not just written rules. | HIGH | ast-grep frequency analysis across codebase. Must detect patterns with adoption %, identify trends, flag conflicts (>20% adoption for competing approaches). <5% false positive target. |
-| Golden file identification | codebase-context ranks files by modern pattern density as "best implementation" references. AI agents need exemplars to follow when writing new code. Without golden files, the AI writes code in isolation. | MEDIUM | Rank files by convention adherence density. These become the "write code like this" references for sub-agents. |
-| Persistent analysis results (survives sessions) | Sugar, BrainSync, codebase-context, codebase-memory-mcp all persist to disk or SQLite. Users will not accept re-analyzing the entire codebase every session. | LOW | File-based persistence under .claude/codescope/. SQLite for graph (graph.db), markdown for human-readable artifacts (conventions.md, overview.md, danger-zones.md). |
-| MCP tool interface | MCP is "quickly becoming table stakes" per industry analysis. codebase-memory-mcp exposes 14 tools, GitNexus exposes 7, codebase-context exposes 5. Every competitor is MCP-native. | MEDIUM | @modelcontextprotocol/sdk. 11 tools planned. Must be discoverable by Claude Code and other MCP clients. |
-| Blast radius / impact analysis | codebase-memory-mcp's detect_changes maps git diff to affected symbols with risk classification (CRITICAL/HIGH/MEDIUM/LOW). GitNexus has blast-radius MCP tool. code-review-graph achieves 6.8x fewer tokens on reviews via impact analysis. This is expected for any tool claiming "code intelligence." | HIGH | BFS traversal from changed nodes via graphology. Must trace upstream (callers) and downstream (callees) impact. Risk classification per node. |
-| Interactive onboarding / configuration | GitHub Copilot has copilot-instructions.md and copilot-setup-steps.yml. Claude Code plugins use plugin.json + .mcp.json. Users expect guided setup, not manual file editing. | LOW | Interactive slash command (/codescope:onboard) for project detection, model selection, workflow preferences. Generates config.md. |
-| Project memory (cross-session learnings) | Sugar has 7 memory types with semantic search. BrainSync gives "every AI coding agent persistent memory." GitHub Copilot has agentic memory. codebase-context auto-extracts from git history. Without memory, every session starts from zero -- the core problem CodeScope solves. | MEDIUM | learnings.md with max 50 entries, confidence decay (90d gotchas, 180d decisions), UNVERIFIED default, contradiction detection. Project-scoped. |
+| Feature | Why Expected | Complexity | v1 Dependency | Notes |
+|---------|--------------|------------|---------------|-------|
+| Incremental graph updates on demand | v1 has incremental re-bootstrap via git diff with 50% threshold, but it's a manual trigger. codebase-memory-mcp does incremental updates automatically. Users who bootstrapped once expect the graph to stay fresh without re-running the full pipeline. | MEDIUM | `bootstrap/incremental.ts`, `graph/builder.ts`, `graph/batch-writer.ts` | On-demand via detect-changes MCP tool trigger. Hash-based file change detection (like code-review-graph's SHA-256 approach). Sub-2-second update for changed files. |
+| Auto-injection of codebase context on file edits | Claude Code's hook system (PreToolUse/PostToolUse) is specifically designed for this. Windsurf's Cascade, Cursor, and Augment Code all auto-inject codebase context. Any "intelligence layer" that requires manual MCP tool calls for every edit is not an intelligence layer -- it's a tool collection. This is the single most important v2 feature. | HIGH | All 12 MCP tools (as context sources), `graph/cache.ts`, `conventions/types.ts`, `graph/analytics.ts` | PreToolUse hook on Write/Edit matching `*.ts,*.js,*.py`. Return `additionalContext` with conventions, blast radius neighbors, and danger zone warnings for the target file. PostToolUse hook for post-edit validation feedback. Must be invisible -- zero user action required. |
+| Session continuity (pause/resume) | Session Context Management MCP for Claude already exists with `/start` and `/handoff` commands. Developers expect multi-hour tasks to survive context compaction and session interrupts. Claude Code has PreCompact/PostCompact hooks. The filesystem coordination pattern (coordination.md) already provides the foundation. | MEDIUM | `execution/coordination.ts`, `orient/types.ts`, orient pipeline state files | Handoff document generation at PreCompact hook. Resume skill that reads handoff document and restores execution state. All critical state already lives on disk (filesystem-first architecture). |
+| Change impact prediction (pre-change blast radius) | v1 has blast radius for existing files. Blast Radius (blast-radius.dev) and GitNexus both offer pre-change impact analysis on PRs. Users expect to know what will break before they make changes, not after. | MEDIUM | `graph/analytics.ts` (blastRadius), `tools/blast-radius.ts`, `tools/detect-changes.ts` | Extend existing BFS blast radius to accept proposed changes (file list + change type) and predict downstream impact. Return risk-scored impact report before execution starts. Integrate into orient pipeline's analysis phase. |
+| npx codescope install experience | Claude Code plugin marketplace uses `/plugin marketplace add` + `/plugin install`. The community already has `npx claude-plugins install` for single-command installs. Every serious Claude Code plugin needs frictionless first-run. Over 9,000 plugins in the ecosystem means discoverability matters. | LOW | `.claude-plugin/plugin.json`, `config/loader.ts`, `onboard/detect.ts` | `npx codescope` should: detect project, install plugin to project scope, trigger onboard skill, run first bootstrap. Single command, under 30 seconds to working state. Package published to npm with bin entry point. |
+| Technical debt tracking (readiness history) | v1 computes readiness scores with A-F grades across 4 dimensions. NDepend tracks metrics over time. McKinsey research shows 20-40% productivity gains from systematic debt tracking. Users who see a score want to see it improve. | LOW | `bootstrap/readiness.ts` (ReadinessScore), `tools/readiness-tool.ts` | Store readiness snapshots in SQLite with timestamp. Compute deltas between runs. The delta tracking field already exists in DimensionScore (`delta: string | null`). Just needs persistence and history query. |
 
 ### Differentiators (Competitive Advantage)
 
-Features that set CodeScope apart. Not expected in all tools, but these create the gap between "another code intelligence MCP" and "the autonomous pipeline nobody else has."
+Features that set v2 apart. These create the gap between "another code intelligence MCP" and "the always-on intelligence layer that makes every edit smarter."
 
-| Feature | Value Proposition | Complexity | Notes |
-|---------|-------------------|------------|-------|
-| Full autonomous orient-to-ship pipeline | No competitor combines analysis + research + planning + execution + verification + evaluation + debug in a single pipeline. feature-dev has 7 phases but no graph intelligence. codebase-context has analysis but no execution. codebase-memory-mcp has graphs but no pipeline. CodeScope is the first to chain all of these. | VERY HIGH | /codescope:orient triggers: clarification -> research -> analysis -> planning -> execution -> static verify -> runtime verify -> eval -> user gate -> debug. Thin orchestrator (<15K tokens), sub-agents for heavy work. |
-| Graph-informed task clarification (Phase A) | Before writing code, CodeScope uses the knowledge graph to ask smart questions about scope. No competitor does this. codebase-context has preflight cards, but those are reactive (edit intent), not proactive (task scoping). | HIGH | Graph traversal to identify affected components, then generate scope contract (in-scope / out-of-scope) with the user. Prevents the #1 cause of AI code failure: working on the wrong thing. |
-| Multi-agent execution with filesystem coordination | feature-dev uses sequential agents. CodeScope uses parallel agents with filesystem coordination (append-only coordination.md). This mirrors the 2026 best practice: "Planner, Worker, Judge" with isolated contexts. | VERY HIGH | Issue #5812 constraint: sub-agents can't return file contents. Filesystem is the IPC mechanism. Dependency-ordered + parallel execution. Configurable max concurrent agents (default 3). |
-| LLM-as-judge evaluation agent | Only the code-review plugin does anything similar (confidence scoring 0-100). No competitor has a dedicated eval agent that scores scope compliance, convention adherence, completeness, and correctness before the user sees results. Research shows thinking models drastically outperform standard models as judges. | HIGH | Eval agent scores on 4 dimensions. Findings above threshold trigger debug cycle. Point-wise scoring (1-5 scale) is more reliable than pair-wise comparison per CodeJudgeBench research. >70% finding accuracy target. |
-| Auto-debug with escalation | No competitor has a debug loop that re-executes, re-verifies, and re-evaluates with a cycle limit. feature-dev stops at quality review. codebase-context has no execution at all. | HIGH | Max 3 debug cycles. Debug agent creates targeted fix plans. Design decision escalation when fix isn't clear. Auto-skip-minor mode for low-severity findings. >80% resolution within 3 cycles target. |
-| Convention enforcement via ast-grep (structural, not textual) | codebase-context detects conventions but doesn't enforce them structurally. Most tools rely on regex or LLM judgment. ast-grep matches by syntax tree structure, supporting 27 languages. CodeRabbit recently built an "AI-native universal linter" on ast-grep -- the approach is validated. | MEDIUM | Suggestion-only in v1 (never block). conventions-enforced.md tracks promoted patterns. Static verify agent checks convention compliance on generated code. |
-| Knowledge graph with community detection | codebase-memory-mcp has Louvain community detection. GitNexus has cohesion-scored clusters. CodeScope combines both with service boundary mapping for monorepo/multi-service codebases. The synthesis of graph + communities + service boundaries is unique. | HIGH | SQLite (better-sqlite3) with nodes, edges, communities tables. graphology for Louvain detection and in-degree centrality. Scout agent maps service boundaries first, then graph analysis within and across services. |
-| Risk-aware danger zone mapping | codebase-memory-mcp classifies risk per symbol. GitNexus computes blast radius. But neither produces a persistent "danger zones" document that agents consult before touching high-risk areas. This is the difference between "here's the blast radius" and "don't touch this without extra care." | MEDIUM | danger-zones.md with high-centrality nodes, high-churn files, and cross-boundary dependencies. Agents receive danger zone context before execution. |
-| Squad scaling for large codebases | No competitor adapts analysis strategy based on codebase size. codebase-memory-mcp handles the Linux kernel but uses the same approach for a 5K LOC project. CodeScope scales from 1 squad (<100K LOC) to per-service squads (>100K LOC) with configurable caps. | MEDIUM | Threshold-based squad allocation. Per-service analysis produces per-service artifacts that get synthesized into cross-service maps. Addresses the "one size fits all" problem. |
-| Global memory (cross-project) | Sugar has global memory at ~/.sugar/memory.db. GitHub Copilot has cross-agent memory. CodeScope's global memory (~/.codescope/global-memory.md) captures patterns that apply everywhere, not just one project. | LOW | Separate from project memory. Guidelines type always surfaces. Useful for personal coding preferences, security practices, preferred patterns. |
-| AI readiness scoring | No competitor produces a "how ready is this codebase for AI-assisted changes" score. This is a unique selling point: bootstrap produces a readiness.md that tells the user where AI will struggle and why. | LOW | Synthesized from test coverage, convention consistency, graph completeness, documentation quality. Actionable recommendations for improvement. |
+| Feature | Value Proposition | Complexity | v1 Dependency | Notes |
+|---------|-------------------|------------|---------------|-------|
+| Graph-aware PR review with structural impact | code-review-graph achieves 6.8x token reduction and 49x on daily tasks by providing structural context. Greptile V3 uses multi-hop graph investigation. Macroscope uses AST + LLM hybrid analysis. CodeScope already has the graph, AST parsing, and convention detection -- but no PR review skill. Combining all three into a review that understands structural dependencies, not just text diffs, is unique. | HIGH | `graph/analytics.ts`, `conventions/runner.ts`, `verify/static-verify.ts`, `verify/blast-radius-diff.ts` | New `/codescope:review-pr` skill. Diff parsing -> graph lookup for changed symbols -> BFS blast radius of changes -> convention check on new/modified code -> structural risk assessment (touching danger zones? crossing community boundaries?). Output: review findings with structural evidence, not just LLM opinions. |
+| Convention enforcement hooks (opt-in pre-commit) | v1 is suggestion-only by design (trust-building). v2 users who have verified conventions want optional enforcement. ast-grep already has pre-commit hook integration (boidolr/ast-grep-pre-commit). Husky + lint-staged is the standard JS/TS approach. The difference: CodeScope's conventions are detected from actual code patterns, not manually written rules. | MEDIUM | `conventions/runner.ts`, `conventions/golden-files.ts`, `conventions/types.ts`, detected conventions in `conventions.md` | Optional hook that runs `sg scan` with CodeScope's detected convention rules on staged files. Only enforces VERIFIED conventions (user-confirmed). Uses lint-staged for file filtering. Husky for git hook management. Never enables by default -- explicit opt-in via `/codescope:settings`. Exit code 2 (blocking) for violations, with `--fix` suggestions. |
+| Full interactive visualization dashboard | v1 explicitly deferred this as an anti-feature. But the competitive landscape has shifted: code-review-graph, GitNexus, and Understand Anything all have visualization. sigma.js + graphology is the standard pairing (graphology is already in the stack). sigma.js renders thousands of nodes via WebGL. @react-sigma/core is production-ready for React. The key differentiator: CodeScope's dashboard includes convention heatmaps and readiness trends, not just a node-link diagram. | VERY HIGH | `graph/database.ts` (SQLite data), `graph/analytics.ts` (centrality, communities), `bootstrap/readiness.ts`, `conventions/types.ts` | Local dev server (Hono) serving React + sigma.js dashboard. Views: dependency graph explorer (sigma.js), convention heatmap (which files follow which conventions), readiness trends (line chart over time), blast radius explorer (interactive BFS from selected node), command center (pipeline status). ForceAtlas2 layout. Community coloring via Louvain results. |
+| Pipeline evolution (qualification, diagnostics, reconciliation) | No competitor has per-task qualification (is this task suitable for autonomous execution?), diagnostic failure routing (why did this fail?), or plan-vs-actual reconciliation (did we do what we planned?). These are the difference between "runs a pipeline" and "runs a reliable pipeline that learns from failures." | HIGH | `orient/pipeline.ts`, `execution/orchestrator.ts`, `eval/eval-agent.ts`, `debug/debug-agent.ts`, `learning/manager.ts` | Pre-execution qualification: complexity estimation, risk assessment, confidence scoring. If confidence < threshold, add checkpoints or request user guidance. Post-execution reconciliation: compare planned changes vs actual changes, surface drift. Diagnostic routing: classify failures (build error, test failure, convention violation, design error) and route to appropriate fix strategy. |
+| Context budget awareness | Claude Code's orchestrator constraint is <15K tokens. No competitor manages context budgets explicitly. As auto-injection adds context, the risk of blowing the budget increases. Context budget awareness means the system knows how much context it can afford and prioritizes accordingly. | MEDIUM | `tools/helpers.ts` (response formatting), all MCP tool responses | Token counting for auto-injected context. Priority queue: danger zone warnings > convention violations > blast radius neighbors > general context. Truncation strategy when budget exceeded. Staleness metadata (already in MCP responses) used to deprioritize stale context. |
+| Always-on intelligence (invisible to user) | The transition from "tool you invoke" to "intelligence that's always there." Auto-injection + incremental updates + session continuity together create this. No single competitor achieves all three. Cursor comes closest with its codebase indexing, but it doesn't have convention awareness or structural graph analysis. | HIGH (aggregate) | All v1 systems | This is the combination of auto-injection + incremental graph updates + session continuity. Not a single feature but the emergent property of the other features working together. The marketing narrative for v2. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features that seem good but create problems. These are deliberate exclusions.
+Features to explicitly NOT build in v2. Some are v1 anti-features that remain valid; others are new temptations.
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Real-time / continuous re-indexing | "Keep the graph always up to date." codebase-memory-mcp has filesystem watchers. | web-tree-sitter has documented memory leaks with persistent parsing. Continuous indexing burns compute during active development when files change rapidly. The critical gap in the field is that "no tool has nailed incremental, real-time graph updates" (Ry Walker research). | On-demand re-indexing: re-analyze changed files at orient time. Incremental by default (only re-parse changed files). Explicit /codescope:bootstrap for full refresh. |
-| Blocking convention enforcement | "Reject code that violates conventions." Enterprise tools like Qodo offer blocking rules. | Destroys trust with users. False positives (even at <5%) that block work create frustration. Convention detection is inherently probabilistic -- blocking on probabilistic analysis is wrong. The field consensus is: suggestion for non-critical, block only for security. | Suggestion-only in v1. Surface violations as findings with severity. User can dismiss/correct. Never auto-promote to enforced. Trust-building approach: be right first, then optionally enforce. |
-| Semantic / embedding-based search | "Use vector search for natural language code queries." GitNexus has semantic embeddings. Augment has a semantic Context Engine. | Requires either a local embedding model (Ollama -- large dependency, performance varies) or cloud API calls (cost, latency, privacy). Structural search + text search covers 90% of use cases for a code intelligence tool. Semantic search is a v2 enhancement, not a v1 requirement. | ast-grep structural search + graphology graph queries + text search. Covers function signatures, call patterns, dependency chains. Defer @lancedb/lancedb + Ollama to v2. |
-| Visual knowledge graph dashboard | "See my codebase as an interactive graph." Understand Anything has a React Flow dashboard. GitNexus has a web UI. Axon has a force-directed visualization. | Significant frontend engineering effort (React, Vite, React Flow, Dagre layout). The core value of CodeScope is autonomous pipeline execution, not visualization. Dashboard is impressive in demos but rarely used in daily workflow. Terminal-based developers (Claude Code users) prefer text output. | Text-based summaries in overview.md and danger-zones.md. Graph queries via MCP tools return structured data. Defer sigma + @react-sigma/core visualization to v2. |
-| Cross-project learning / pattern library | "Learn patterns across all my repos." Sugar has global memory. GitHub Copilot has cross-agent memory. | Conflation risk: patterns that work in Project A may be harmful in Project B (different frameworks, different constraints). Global conventions need careful curation. Cross-project learning without human review leads to pattern pollution. | Global memory for personal preferences only (~/.codescope/global-memory.md). Project-specific conventions stay project-specific. Cross-project pattern library deferred to v2 with explicit curation workflow. |
-| ADR auto-generation | "Automatically document architecture decisions." codebase-memory-mcp has manage_adr with CRUD operations. | Auto-generated ADRs lack the "why" context that makes ADRs valuable. The decision rationale requires human input. Auto-generated ADRs become noise that nobody reads. | Learning system captures decisions with rationale as learnings. User can review and promote. ADR auto-generation deferred to v2 where learnings can seed ADR drafts. |
-| CI/CD integration (automated pipeline hooks) | "Run CodeScope analysis on every PR." Greptile and CodeRabbit do this for code review. | Scope creep from developer tool into CI/CD infrastructure. Different deployment model, different reliability requirements, different user expectations. PR-level integration requires GitHub App infrastructure. | v1 is a developer tool, not a CI/CD tool. GitHub Actions integration deferred to v2. Users can manually run /codescope:orient before creating PRs. |
-| All-language support from day one | "Support every language." codebase-memory-mcp supports 64 languages. | Import resolution quality varies dramatically by language. TypeScript/JavaScript has excellent tooling (enhanced-resolve, tsconfig-paths). Python has reasonable ast-grep patterns (~80%). Other languages would be LOW accuracy, creating false confidence. | TS/JS + Python for v1 with honest accuracy claims. Additional languages in future versions as import resolution quality improves. |
+| Real-time filesystem watchers for continuous re-indexing | "Keep the graph always current." codebase-memory-mcp uses filesystem watchers. | web-tree-sitter memory leaks with persistent parsing (documented constraint in PROJECT.md). Continuous indexing during active development creates thrashing -- files change rapidly during editing. Battery/CPU impact on developer machines. The field consensus remains: "no tool has nailed incremental, real-time graph updates." | On-demand incremental updates triggered by hook events (PostToolUse on Write/Edit) or explicit MCP tool call. Hash-based change detection for efficiency. Batch updates, not per-keystroke. |
+| Blocking all conventions by default | "If you detected it, enforce it." Enterprise compliance teams want this. | Destroys the trust-building approach that differentiates CodeScope. Detected conventions have confidence levels -- enforcing LOW confidence patterns causes false positive blocks. Even at <5% false positive rate, blocking creates developer friction. | Opt-in enforcement for VERIFIED conventions only. Suggestion-only by default. Progressive trust: detect -> suggest -> verify -> optionally enforce. Never auto-promote. |
+| Full IDE extension (VS Code, JetBrains) | "I want to see this in my editor." Every developer tool eventually gets this request. | Massive engineering surface. VS Code extension API is complex. JetBrains plugin API is different. CodeScope already works through Claude Code which runs in terminals and has VS Code integration. Building a standalone IDE extension would duplicate effort and fragment the product. | Let the community build on MCP tools. Claude Code already has VS Code integration. sigma.js dashboard opens in browser. The MCP interface is the universal adapter. |
+| Cross-repository analysis | "Analyze my microservices across repos." Blast Radius (blast-radius.dev) does cross-repo impact analysis. | Different git histories, different bootstrap states, different convention sets. Cross-repo analysis requires a coordination layer that doesn't exist. The complexity scales quadratically with repo count. | Single-repo analysis with service boundary awareness (already in v1 via monorepo squad scaling). Cross-repo deferred to v3 when the single-repo experience is perfected. |
+| AI-powered auto-fix for convention violations | "Don't just tell me it's wrong, fix it." GitHub Copilot does auto-fix suggestions. | Convention auto-fix requires understanding intent, not just pattern. ast-grep has rewrite rules but they're mechanical transforms. LLM-generated fixes need verification, creating a recursive loop. | Surface violations with specific guidance (golden file references, pattern examples). Let the developer or Claude Code agent apply the fix with full context. Convention enforcement shows the problem; the existing pipeline fixes it. |
+| Semantic/embedding search in v2 | "Natural language code search." Augment Code and GitNexus have this. | Still requires Ollama (large dependency) or cloud API calls (cost, privacy). Structural + text search covers the core use cases. Adding embeddings doubles the storage requirements. | Defer to v3. v2 improvements focus on making structural search smarter with graph-informed ranking (files with high centrality rank higher). |
+| Usage/cost monitoring dashboard | "How many tokens is CodeScope using?" 6+ tools already exist for this. | Commodity feature. Not core value. Claude Code itself may add this. | Expose token usage metadata in MCP tool responses (already partially there with timing metadata). Let external tools aggregate. |
 
 ## Feature Dependencies
 
 ```
-[Codebase Structure Analysis]
+[Incremental Graph Updates]
     |
-    +--requires--> [Tree-sitter Parsing (web-tree-sitter WASM)]
+    +--required-by--> [Auto-Injection Hooks]
+    |                     |
+    |                     +--required-by--> [Always-On Intelligence]
+    |                     |
+    |                     +--enhances--> [Convention Enforcement]
     |
-    +--enables--> [Convention Detection]
-    |                 |
-    |                 +--enables--> [Golden File Identification]
-    |                 |
-    |                 +--enables--> [Convention Enforcement (Static Verify)]
+    +--required-by--> [Change Impact Prediction]
+    |                     |
+    |                     +--enhances--> [Graph-Aware PR Review]
     |
-    +--enables--> [Dependency / Import Graph]
-                      |
-                      +--requires--> [Import Resolution (enhanced-resolve)]
-                      |
-                      +--enables--> [Knowledge Graph (SQLite + graphology)]
-                                        |
-                                        +--enables--> [Community Detection (Louvain)]
-                                        |
-                                        +--enables--> [Blast Radius Analysis (BFS)]
-                                        |
-                                        +--enables--> [Danger Zone Mapping]
-                                        |
-                                        +--enables--> [Graph-Informed Clarification (Phase A)]
+    +--required-by--> [Technical Debt Tracking]
 
-[MCP Server Interface]
+[Session Continuity]
     |
-    +--enables--> [All MCP tool access from Claude Code]
+    +--required-by--> [Always-On Intelligence]
+    +--requires--> [v1 filesystem coordination]
 
-[Project Memory / Learnings]
+[Pipeline Evolution]
     |
-    +--independent-- (can function without graph, enhanced by graph)
+    +--requires--> [v1 orient pipeline]
+    +--enhances--> [Auto-Injection Hooks] (context budget awareness)
+    +--enhances--> [Graph-Aware PR Review] (qualification scoring)
 
-[Convention Detection] + [Knowledge Graph] + [Danger Zones]
+[Convention Enforcement Hooks]
     |
-    +--together enable--> [AI Readiness Score]
+    +--requires--> [v1 convention detection]
+    +--requires--> [Incremental Graph Updates] (fresh conventions)
+    +--conflicts-with--> [Blocking All Conventions] (anti-feature)
 
-[Orient Pipeline]
+[Interactive Visualization Dashboard]
     |
-    +--requires--> [Knowledge Graph]
-    +--requires--> [Convention Detection]
-    +--requires--> [MCP Server]
-    +--requires--> [Project Memory]
-    |
-    +--enables--> [Multi-Agent Execution]
-                      |
-                      +--enables--> [Static Verify Agent]
-                      |                 |
-                      |                 +--requires--> [Convention Detection]
-                      |                 +--requires--> [Blast Radius Analysis]
-                      |
-                      +--enables--> [Runtime Verify Agent]
-                      |                 |
-                      |                 +--requires--> [Test detection/generation]
-                      |
-                      +--enables--> [Eval Agent (LLM-as-Judge)]
-                      |
-                      +--enables--> [Debug Agent]
-                                        |
-                                        +--requires--> [Eval Agent findings]
+    +--requires--> [Incremental Graph Updates] (fresh data)
+    +--requires--> [Technical Debt Tracking] (readiness history)
+    +--enhances--> [Graph-Aware PR Review] (visual blast radius)
+    +--independent-of--> [Auto-Injection Hooks]
 
-[Onboarding (/codescope:onboard)]
+[npx Install Experience]
     |
-    +--must come before--> [Bootstrap (/codescope:bootstrap)]
-                               |
-                               +--must come before--> [Orient (/codescope:orient)]
+    +--independent-of--> [all other v2 features]
+    +--requires--> [npm package publishing]
+    +--enhances--> [marketplace discoverability]
+
+[Graph-Aware PR Review]
+    |
+    +--requires--> [v1 graph analytics + verify pipeline]
+    +--requires--> [Change Impact Prediction]
+    +--enhances--> [Convention Enforcement]
 ```
 
 ### Dependency Notes
 
-- **Knowledge Graph requires Import Resolution:** The graph quality is directly proportional to import resolution accuracy. Without accurate import resolution, the graph has false edges and missing connections. This is why TS/JS (95-99% accuracy) is prioritized over Python (~80%).
-- **Orient Pipeline requires Bootstrap artifacts:** The orient pipeline reads overview.md, conventions.md, danger-zones.md, and graph.db. Bootstrap must complete first. If bootstrap hasn't run, orient should fail with a clear message.
-- **Convention Enforcement requires Convention Detection:** You can't enforce what you haven't detected. Detection comes first (bootstrap), enforcement happens later (static verify during orient).
-- **Eval Agent is independent of execution specifics:** The eval agent reads the plan, the scope contract, and the code changes -- it doesn't need to know how execution happened. This makes it testable in isolation.
-- **Debug Agent requires Eval Agent findings:** The debug loop is: eval finds issues -> debug fixes them -> re-verify -> re-eval. Without eval findings, there's nothing to debug.
-- **Project Memory enhances everything but blocks nothing:** Memory is useful context for all phases but no phase should fail if memory is empty. The system must work on first run with zero learnings.
+- **Auto-Injection requires Incremental Updates:** You cannot inject stale context. If the graph is outdated, auto-injected conventions and blast radius data will be wrong. Incremental updates must ship first or concurrently.
+- **Interactive Dashboard requires Tech Debt Tracking:** The readiness trends view is a core dashboard panel. Without history, it's just a static score display (which v1 already has via MCP tool).
+- **Convention Enforcement requires Incremental Updates:** Conventions must reflect current codebase state, not last bootstrap. Enforcing stale conventions creates false positives.
+- **npx Install is fully independent:** Can ship in any phase. No dependency on other v2 features. Pure packaging/distribution concern.
+- **Dashboard is independent of Auto-Injection:** The dashboard reads from SQLite and the graph. Auto-injection reads the same data but injects it into Claude's context. They share data sources but don't depend on each other.
+- **Pipeline Evolution enhances everything:** Better qualification, diagnostics, and reconciliation improve every pipeline execution. But nothing strictly requires it -- v1 pipeline works without it.
 
-## MVP Definition
+## v2 Phase Recommendations
 
-### Launch With (v1)
+### Phase 1: Foundation (Incremental Updates + Session Continuity)
 
-Minimum viable product -- what's needed to validate the core thesis that persistent codebase understanding makes AI code changes better.
+Must-ship-first features that everything else depends on.
 
-- [ ] **Plugin skeleton** (manifest, hooks, scripts) -- foundation for everything else
-- [ ] **/codescope:onboard** -- interactive config creation so users can get started
-- [ ] **/codescope:bootstrap** (full analysis pipeline) -- the core value: deep codebase understanding
-  - Scout agent (service boundaries)
-  - Researcher agent (structure, frameworks, entry points)
-  - Convention detector (ast-grep frequency analysis, golden files)
-  - Risk analyzer (knowledge graph, centrality, danger zones)
-  - Learning synthesizer (initialize learnings.md)
-  - Synthesis agent (cross-service map, merged conventions, readiness score)
-- [ ] **MCP server with core tools** -- the interface for Claude Code to access intelligence
-  - codescope_recall, codescope_graph_query, codescope_blast_radius
-  - codescope_conventions, codescope_orient, codescope_verify
-  - codescope_search, codescope_readiness, codescope_status
-  - codescope_detect_changes, codescope_service_map
-- [ ] **/codescope:orient** (full autonomous pipeline) -- the differentiating pipeline
-  - Phase A: Graph-informed clarification (scope contract)
-  - Phase B: Research sub-agent
-  - Phase C: Internal analysis (graph traversal, blast radius, conventions)
-  - Phase D: Plan sub-agent (execution plan with agent assignments)
-- [ ] **Multi-agent execution engine** -- parallel agents with filesystem coordination
-- [ ] **Static verify agent** -- convention compliance, blast radius diff, code review
-- [ ] **Runtime verify agent** -- build, unit tests, integration tests, E2E auto-detection
-- [ ] **Eval agent** -- LLM-as-judge scoring on 4 dimensions
-- [ ] **User gate** -- interactive finding selection (debug / ignore / defer)
-- [ ] **Debug agent** -- targeted fixes, max 3 cycles, escalation
-- [ ] **Project memory** -- learnings.md with UNVERIFIED default, decay, contradiction detection
+- [ ] **Incremental graph updates** -- Hash-based file change detection, on-demand re-parse of changed files, sub-2-second update latency. Foundation for auto-injection, impact prediction, and fresh conventions.
+- [ ] **Session continuity** -- Handoff document generation at PreCompact, resume skill, execution state serialization. Foundation for always-on intelligence.
+- [ ] **npx codescope install** -- npm package with bin entry, project detection, plugin install, first bootstrap trigger. Independent feature, easy win, enables marketplace distribution.
 
-### Add After Validation (v1.x)
+### Phase 2: Intelligence Layer (Auto-Injection + Impact Prediction)
 
-Features to add once the core pipeline is proven and users provide feedback.
+The core value proposition of v2: invisible codebase intelligence on every edit.
 
-- [ ] **/codescope:review-learnings** -- review and confirm/reject accumulated learnings. Add when learnings accumulate and users want to curate them.
-- [ ] **/codescope:settings** -- interactive configuration changes. Add when users want to tweak behavior without editing config.md.
-- [ ] **Auto-smoke test generation** -- generate basic smoke tests when no tests exist. Add when runtime verify agent encounters untested codebases frequently.
-- [ ] **Global memory** (~/.codescope/global-memory.md) -- cross-project patterns. Add when users work across multiple CodeScope-analyzed projects.
-- [ ] **Squad scaling** (per-service squads above 100K LOC) -- add when users attempt large monorepo analysis and single-squad is too slow.
-- [ ] **Convention trend analysis** (rising/declining over time) -- add when bootstrap has been run multiple times and historical data exists.
+- [ ] **Auto-injection hooks** -- PreToolUse on Write/Edit, PostToolUse validation feedback, context budget management, priority queue for context items. This is the flagship v2 feature.
+- [ ] **Change impact prediction** -- Pre-change blast radius, risk-scored impact report, integration into orient analysis phase. Extends v1 blast radius from reactive to predictive.
+- [ ] **Context budget awareness** -- Token counting, priority queue, truncation strategy. Required for auto-injection to not blow up the orchestrator's 15K token budget.
 
-### Future Consideration (v2+)
+### Phase 3: Review + Enforcement (PR Review + Convention Hooks)
 
-Features to defer until product-market fit is established.
+Build on the intelligence layer to improve code review and optionally enforce conventions.
 
-- [ ] **Visual knowledge graph dashboard** (sigma + @react-sigma/core) -- impressive but not core value
-- [ ] **Semantic search** (@lancedb/lancedb + Ollama) -- structural search sufficient for v1
-- [ ] **Cross-project learning / pattern library** -- conflation risk without curation
-- [ ] **ADR auto-generation** -- learnings system is the v1 alternative
-- [ ] **CI/CD integration** (GitHub Actions hooks) -- different deployment model
-- [ ] **Cross-service HTTP linking** (route detection + HTTP call matching) -- codebase-memory-mcp does this, add when multi-service users need it
-- [ ] **Convention drift monitoring** -- requires temporal data from multiple bootstrap runs
-- [ ] **MCP Apps** (inline visual rendering) -- platform feature not yet mature
-- [ ] **Additional language support** beyond TS/JS/Python -- as import resolution quality improves
+- [ ] **Graph-aware PR review** -- `/codescope:review-pr` skill, diff parsing, structural impact, convention check, danger zone flagging. Uses auto-injection infrastructure.
+- [ ] **Convention enforcement hooks** -- Opt-in pre-commit via husky + lint-staged + ast-grep, VERIFIED conventions only, `--fix` suggestions. Trust escalation from suggestion to enforcement.
+
+### Phase 4: Visualization + Tracking (Dashboard + Tech Debt)
+
+The most engineering-heavy but least blocking features.
+
+- [ ] **Interactive visualization dashboard** -- sigma.js + @react-sigma/core, convention heatmap, readiness trends, blast radius explorer. Local dev server via Hono.
+- [ ] **Technical debt tracking** -- Readiness history in SQLite, trend computation, delta tracking over time.
+
+### Phase 5: Pipeline Maturity (Evolution + Refinement)
+
+Improve the autonomous pipeline based on v2 usage patterns.
+
+- [ ] **Pipeline evolution** -- Per-task qualification, diagnostic failure routing, plan-vs-actual reconciliation. Makes the pipeline more reliable and self-improving.
 
 ## Feature Prioritization Matrix
 
-| Feature | User Value | Implementation Cost | Priority |
-|---------|------------|---------------------|----------|
-| Plugin skeleton + onboarding | HIGH | LOW | P1 |
-| Codebase structure analysis (tree-sitter) | HIGH | MEDIUM | P1 |
-| Import / dependency graph | HIGH | HIGH | P1 |
-| Convention detection (ast-grep) | HIGH | HIGH | P1 |
-| Golden file identification | MEDIUM | MEDIUM | P1 |
-| Knowledge graph (SQLite + graphology) | HIGH | HIGH | P1 |
-| Blast radius analysis | HIGH | MEDIUM | P1 |
-| Danger zone mapping | MEDIUM | LOW | P1 |
-| MCP server (11 tools) | HIGH | MEDIUM | P1 |
-| Project memory (learnings.md) | HIGH | MEDIUM | P1 |
-| AI readiness scoring | MEDIUM | LOW | P1 |
-| Orient pipeline (Phases A-D) | HIGH | VERY HIGH | P1 |
-| Multi-agent execution engine | HIGH | VERY HIGH | P1 |
-| Static verify agent | HIGH | MEDIUM | P1 |
-| Runtime verify agent | HIGH | HIGH | P1 |
-| Eval agent (LLM-as-judge) | HIGH | HIGH | P1 |
-| User gate (interactive findings) | HIGH | LOW | P1 |
-| Debug agent (3-cycle loop) | HIGH | HIGH | P1 |
-| Review learnings command | MEDIUM | LOW | P2 |
-| Settings command | LOW | LOW | P2 |
-| Global memory | MEDIUM | LOW | P2 |
-| Squad scaling | MEDIUM | MEDIUM | P2 |
-| Auto-smoke test generation | MEDIUM | MEDIUM | P2 |
-| Convention trend analysis | LOW | MEDIUM | P2 |
-| Visual dashboard | MEDIUM | HIGH | P3 |
-| Semantic search | MEDIUM | HIGH | P3 |
-| CI/CD integration | MEDIUM | HIGH | P3 |
-| Cross-project learning | LOW | HIGH | P3 |
-| ADR auto-generation | LOW | MEDIUM | P3 |
+| Feature | User Value | Implementation Cost | Priority | Phase |
+|---------|------------|---------------------|----------|-------|
+| Auto-injection hooks | HIGH | HIGH | P1 | 2 |
+| Incremental graph updates | HIGH | MEDIUM | P1 | 1 |
+| Session continuity | HIGH | MEDIUM | P1 | 1 |
+| Change impact prediction | HIGH | MEDIUM | P1 | 2 |
+| npx install experience | MEDIUM | LOW | P1 | 1 |
+| Graph-aware PR review | HIGH | HIGH | P2 | 3 |
+| Convention enforcement hooks | MEDIUM | MEDIUM | P2 | 3 |
+| Technical debt tracking | MEDIUM | LOW | P2 | 4 |
+| Interactive visualization | MEDIUM | VERY HIGH | P2 | 4 |
+| Pipeline evolution | HIGH | HIGH | P2 | 5 |
+| Context budget awareness | HIGH | MEDIUM | P1 | 2 |
 
 **Priority key:**
-- P1: Must have for launch -- validates the core thesis
-- P2: Should have, add when core is proven and feedback demands it
-- P3: Nice to have, future consideration after product-market fit
+- P1: Must have for v2 launch -- these define the "always-on intelligence layer" narrative
+- P2: Should have -- adds significant value but v2 is viable without them
+- P3: Nice to have (none in this list -- all are planned features)
 
 ## Competitor Feature Analysis
 
-| Feature | codebase-context | codebase-memory-mcp | Understand Anything | feature-dev | GitNexus | CodeScope (Our Approach) |
-|---------|-----------------|---------------------|--------------------|-----------|---------|-----------------------|
-| Codebase structure analysis | Yes (hybrid search + refs) | Yes (64 languages, tree-sitter) | Yes (5-agent pipeline) | Yes (codebase-explorer phase) | Yes (multi-phase indexing) | Yes (tree-sitter WASM, TS/JS/Python v1) |
-| Convention detection | **Best-in-class**: adoption %, trends, conflicts, golden files | No | No | No (relies on codebase exploration) | No | Yes -- inspired by codebase-context approach with ast-grep structural matching |
-| Knowledge graph | No (search index, not graph) | **Best-in-class**: SQLite, 12 node types, 18 relationship types, Louvain, Cypher queries | Basic (JSON-based) | No | Yes (KuzuDB, hybrid search) | Yes -- SQLite + graphology, inspired by codebase-memory-mcp with added service boundaries |
-| Blast radius | No (preflight impact analysis) | Yes (detect_changes with risk classification) | Yes (diff impact) | No | Yes (BFS from changed nodes) | Yes -- BFS via graphology with risk classification |
-| Memory / learnings | Yes (decisions, gotchas, failures with decay) | No | No | No | No | Yes -- inspired by codebase-context with UNVERIFIED default and contradiction detection |
-| Autonomous execution pipeline | **No** | **No** | **No** | Yes (7-phase sequential) | **No** | **Yes** -- full pipeline with parallel execution, verification, eval, debug loop |
-| Multi-agent coordination | No | No | Yes (5 parallel analyzers) | Yes (7 sequential agents) | No | Yes -- parallel with filesystem coordination, dependency ordering |
-| LLM-as-judge evaluation | No | No | No | Yes (quality-reviewer phase) | No | Yes -- dedicated eval agent with 4-dimension scoring |
-| Debug loop | No | No | No | No | No | **Unique** -- max 3 cycles with escalation |
-| Service boundary detection | No | Partial (cross-service HTTP linking) | No | No | No | Yes -- Scout agent maps boundaries before analysis |
-| Interactive visualization | No | No | **Best-in-class**: React Flow dashboard | No | Yes (web UI + browser WASM) | No in v1 -- text-based, dashboard in v2 |
-| Onboarding | No (auto-detect) | No (auto-configure) | Yes (/understand-onboard) | No | No (zero-config) | Yes -- interactive /codescope:onboard with guided setup |
-| Risk classification | No | Yes (CRITICAL/HIGH/MEDIUM/LOW) | No | No | No | Yes -- danger-zones.md with centrality-based risk |
-| Language support | Multi-language (unspecified count) | 64 languages (3 quality tiers) | Multi-language (tree-sitter) | Any (LLM-based exploration) | Multi-language (tree-sitter) | TS/JS + Python v1 (honest about accuracy per language) |
+| Feature | code-review-graph | codebase-memory-mcp | Blast Radius (SaaS) | Augment Code | CodeScope v2 Approach |
+|---------|-------------------|---------------------|---------------------|--------------|----------------------|
+| Graph construction | Tree-sitter, 18 languages, SHA-256 incremental | 66 languages, sub-ms queries, single binary | API/schema/contract analysis | Multi-repo Context Engine | Tree-sitter (TS/JS/Python), graphology, SQLite. Fewer languages but deeper analysis (conventions, communities, danger zones). |
+| Auto-context injection | MCP tools, manual invocation | MCP tools, manual invocation | N/A (CI tool) | Automatic, IDE-integrated | Claude Code hooks (PreToolUse/PostToolUse). Invisible injection without MCP tool calls. Unique in the Claude Code plugin ecosystem. |
+| PR review | `/code-review-graph:review-pr`, 6.8x token reduction | No PR review | PR comment with impact summary | IDE-integrated review | Structural impact + convention compliance + danger zone flagging. Graph-aware, not just diff-aware. |
+| Convention detection | No | No | No | No | ast-grep frequency analysis with confidence levels. Unique in the space. |
+| Convention enforcement | No | No | No | No | Opt-in pre-commit hooks for VERIFIED conventions. Progressive trust model. |
+| Visualization | No | No | No | No | sigma.js + graphology dashboard with convention heatmaps and readiness trends. |
+| Session continuity | No | No | N/A | IDE manages sessions | Handoff documents + resume skill. Filesystem-first, survives compaction. |
+| Impact prediction | Blast radius via graph | detect_changes with risk scoring | Cross-repo API/schema impact | Dependency tracing | Pre-change BFS blast radius + risk scoring. Extends v1 from reactive to predictive. |
+| Install experience | npm install + MCP config | Download binary, add to MCP config | SaaS signup | IDE extension install | `npx codescope` single command. Detects project, installs plugin, runs onboard + bootstrap. |
+| Pipeline autonomy | No pipeline | No pipeline | No pipeline | No pipeline | Full orient-to-ship pipeline (v1) + qualification + diagnostics + reconciliation (v2). Unique. |
 
-### Competitive Positioning Summary
+## Detailed Feature Specifications
 
-**codebase-context** owns convention detection. CodeScope adopts this approach and adds structural enforcement via ast-grep.
+### 1. Auto-Injection Hooks
 
-**codebase-memory-mcp** owns the knowledge graph space with the best performance and broadest language support. CodeScope builds a comparable graph with added service boundaries and community-aware analysis.
+**How it works in the ecosystem:**
+Claude Code hooks fire on 24 events. PreToolUse hooks receive `tool_name` and `tool_input` (including `file_path` for Write/Edit). Hooks return `additionalContext` as a string that gets injected into Claude's conversation context. PostToolUse hooks receive `tool_response` and can inject post-edit feedback. The hook system supports command, HTTP, prompt, and agent handler types.
 
-**feature-dev** owns the structured development workflow. CodeScope extends this pattern with graph intelligence, verification, evaluation, and debug loops that feature-dev lacks.
+**CodeScope implementation:**
+- PreToolUse hook on `Write|Edit` matcher, with `if: "Edit(*.ts)|Edit(*.js)|Edit(*.py)|Write(*.ts)|Write(*.js)|Write(*.py)"` filtering
+- Hook handler reads the target file path from `tool_input.file_path`
+- Queries graph cache for: conventions applicable to this file, blast radius neighbors (1-hop), danger zone status, community membership
+- Returns `additionalContext` with a compact context brief (~500-1000 tokens max)
+- PostToolUse hook runs convention check on the written file, returns violation feedback as `additionalContext`
+- All context goes through priority queue with token budget enforcement
 
-**Understand Anything** owns visualization and onboarding. CodeScope deliberately defers visualization but matches the multi-agent analysis approach.
+**Key insight from research:** The `updatedInput` field in PreToolUse can modify tool parameters before execution. This opens the door for future enhancements like injecting convention-aware code templates, but v2 should start with read-only context injection only.
 
-**GitNexus** owns zero-config graph intelligence with the best Claude Code integration (hooks, skills). CodeScope differentiates with the full autonomous pipeline that GitNexus doesn't attempt.
+**Confidence:** HIGH -- Claude Code hooks API is well-documented with 24 event types, `additionalContext` is the standard injection mechanism.
 
-**No competitor combines all of these.** CodeScope's unique value is the integration: persistent codebase understanding (analysis) feeding an autonomous pipeline (execution) with verification and self-correction (quality). The closest competitor would need to combine codebase-context + codebase-memory-mcp + feature-dev + an eval system -- and nobody has done that.
+### 2. Graph-Aware PR Review
+
+**How it works in the ecosystem:**
+code-review-graph builds a structural map and achieves 6.8x token reduction by providing only relevant context. Greptile V3 uses multi-hop graph investigation. Macroscope uses AST + LLM hybrid analysis. The 2026 trend: system-aware tools that understand relationships between services, shared libraries, and contracts across repositories.
+
+**CodeScope implementation:**
+- New `/codescope:review-pr` skill
+- Input: git diff (staged or branch comparison)
+- Step 1: Parse diff to extract changed files and changed symbols (functions, classes, exports)
+- Step 2: Query knowledge graph for each changed symbol -- find callers, dependents, community membership
+- Step 3: BFS blast radius from each changed symbol to find downstream impact
+- Step 4: Check changed code against detected conventions
+- Step 5: Flag changes in danger zones (high centrality, cross-community boundaries)
+- Step 6: Generate structured review with severity-ranked findings and structural evidence
+- Output: Review findings with graph-backed reasoning, not just LLM opinions
+
+**Key insight from research:** The 2026 shift in code review is from "text diff analysis" to "semantic/structural analysis." GitHub's Octoverse report shows 32% faster merge times and 28% fewer post-merge defects with AI-assisted review. The differentiator is structural evidence.
+
+**Confidence:** HIGH -- v1 already has blast radius, convention checking, danger zone detection, and static verify. PR review is composing these existing capabilities into a new skill.
+
+### 3. Interactive Visualization Dashboard
+
+**How it works in the ecosystem:**
+sigma.js renders graphs via WebGL (handles thousands of nodes). graphology serves as the data layer (already in CodeScope's stack). @react-sigma/core provides React integration with hooks and composable components. ForceAtlas2 is the standard layout algorithm. Production deployments show interactive centrality calculation, dynamic data updates, and neighborhood exploration on hover.
+
+**CodeScope implementation:**
+- Local dev server: Hono (lightweight, already peer to the ecosystem) serving static React app
+- Graph view: sigma.js + @react-sigma/core with graphology data from SQLite
+- Layout: ForceAtlas2 (force-directed, clusters communities naturally)
+- Coloring: Louvain community assignments (already computed in v1)
+- Node sizing: in-degree centrality (already computed in v1)
+- Convention heatmap: overlay showing convention adherence per file/module
+- Readiness trends: line chart showing readiness score dimensions over time (requires tech debt tracking)
+- Blast radius explorer: click a node, see BFS expansion with risk-colored layers
+- Command center: pipeline status, last bootstrap time, active learnings count
+
+**Key insight from research:** sigma.js + graphology is the only production-ready graph visualization stack in the JS ecosystem that handles the scale of real codebases (1000+ nodes). React Flow (used by Understand Anything) is better for small, structured diagrams but struggles with large dependency graphs.
+
+**Confidence:** MEDIUM -- sigma.js + graphology integration is well-documented, but the full dashboard (5 views, interactive features) is significant frontend engineering. The VERY HIGH complexity rating reflects this.
+
+### 4. Convention Enforcement Hooks
+
+**How it works in the ecosystem:**
+Husky manages git hooks. lint-staged filters staged files for efficient checking. ast-grep has native pre-commit integration (boidolr/ast-grep-pre-commit). ESLint + Prettier + Husky is the standard JS/TS pre-commit stack. ast-grep's lint rule format (YAML with tree-sitter patterns) matches CodeScope's convention detection format.
+
+**CodeScope implementation:**
+- Opt-in activation via `/codescope:settings` (never default-enabled)
+- Generates `.husky/pre-commit` hook that runs `sg scan` with CodeScope's convention rules
+- Only enforces conventions with status VERIFIED in learnings
+- Convention rules auto-generated from detected patterns (already in `conventions/runner.ts`)
+- lint-staged config for file filtering (only staged TS/JS/Python files)
+- Exit code 2 for violations (standard blocking), exit 0 for pass
+- `--fix` mode uses ast-grep rewrite rules where applicable
+- Bypass with `git commit --no-verify` (standard git escape hatch)
+
+**Key insight from research:** The progressive trust model is critical. v1 builds trust (detect, suggest, verify). v2 optionally enforces. The user must explicitly opt in at each escalation level. This is what differentiates CodeScope from tools that impose conventions.
+
+**Confidence:** HIGH -- Husky + lint-staged + ast-grep is a well-established pattern. The novel part is auto-generating ast-grep rules from detected conventions, which v1 already does.
+
+### 5. Session Continuity
+
+**How it works in the ecosystem:**
+Session Context Management MCP for Claude uses `/start` and `/handoff` commands. Claude Code has PreCompact and PostCompact hooks. The filesystem coordination pattern (coordination.md) from v1 already serializes execution state to disk. The core challenge is not "how to save state" (already solved) but "how to restore context efficiently after a compaction or session restart."
+
+**CodeScope implementation:**
+- PreCompact hook: generate handoff document summarizing current pipeline state, pending tasks, completed tasks, active findings
+- SessionStart hook (matcher: `resume`): detect handoff document, inject as `additionalContext` for the resumed session
+- `/codescope:resume` skill: read handoff document, display summary, offer to continue or start fresh
+- Handoff document format: structured markdown with frontmatter (task, phase, progress, next steps)
+- State stored in `.claude/codescope/sessions/` directory
+- Automatic cleanup of sessions older than 7 days
+
+**Key insight from research:** Claude Code's hook system already has `SessionStart` with `source: "resume"` matcher. This fires exactly when we need it. The `PostCompact` hook fires after context compaction, which is the primary cause of state loss. Both hooks support `additionalContext` injection.
+
+**Confidence:** HIGH -- The hook API supports this directly. The v1 filesystem-first architecture means all state already persists to disk.
+
+### 6. Change Impact Prediction
+
+**How it works in the ecosystem:**
+Blast Radius (blast-radius.dev) maps downstream impact of PRs by analyzing API, schema, and contract changes. GitNexus assesses blast radius by mapping symbol-level dependencies and execution flows. AI-powered approaches model call graphs, data flows, and historical change patterns to generate blast-radius reports listing files, tests, and services likely to break.
+
+**CodeScope implementation:**
+- Extend `handleBlastRadius` to accept a "proposed changes" mode
+- Input: list of files + change descriptions (from orient analysis phase)
+- For each proposed change: identify affected symbols, BFS from each symbol through graph
+- Aggregate blast radii across all proposed changes (union of affected nodes)
+- Risk scoring: weight by centrality, community boundary crossings, danger zone overlap
+- Output: pre-change impact report with risk classification per affected component
+- Integration: orient pipeline's analysis phase calls impact prediction before planning
+
+**Key insight from research:** The difference between v1 blast radius (reactive -- "this file affects these files") and v2 impact prediction (proactive -- "these planned changes will affect these components with these risks") is the difference between a diagnostic tool and a planning tool.
+
+**Confidence:** HIGH -- v1 blast radius BFS is the core algorithm. The extension is straightforward: accept multiple entry points, aggregate results, add risk scoring.
+
+### 7. Technical Debt Tracking
+
+**How it works in the ecosystem:**
+NDepend tracks code metrics over time and predicts which technical debts will cause problems. SonarQube provides a "technical debt" metric based on rule violations. Zenhub tracks debt as GitHub issues. The 2026 trend: historical tracking with trend visualization, not just point-in-time snapshots.
+
+**CodeScope implementation:**
+- New SQLite table: `readiness_history` (timestamp, dimension, percent, grade, delta)
+- On every bootstrap/re-bootstrap: snapshot current readiness scores
+- On every incremental update: snapshot affected dimension changes
+- Query API: readiness over time, per-dimension trends, improvement velocity
+- MCP tool enhancement: `codescope_readiness` returns history and trends alongside current score
+- Dashboard integration: line chart showing readiness dimensions over time
+
+**Key insight from research:** v1 already has `DimensionScore.delta` field but it only tracks the delta from the previous run, not historical trends. The gap is persistent history storage. SQLite is already in the stack; adding a table is trivial.
+
+**Confidence:** HIGH -- Simple data model extension to existing readiness system.
+
+### 8. npx Install Experience
+
+**How it works in the ecosystem:**
+Claude Code plugins are distributed via marketplaces (GitHub repos with `marketplace.json`) or direct npm packages. The official Anthropic marketplace is auto-available. Community registries like claude-plugins.dev exist. The `npx claude-plugins install` pattern handles marketplace + plugin installation in one command. Best practice: zero-install execution, latest version guaranteed, progressive disclosure (simple first, configure later).
+
+**CodeScope implementation:**
+- npm package: `codescope` with `bin: { codescope: "./bin/codescope.js" }`
+- `npx codescope` entry point: detect project root, check Claude Code availability
+- Step 1: Install plugin to project scope (`/plugin install codescope@...` equivalent)
+- Step 2: Offer to run onboard (interactive config)
+- Step 3: Offer to run initial bootstrap
+- Progress indicators: chalk for colored output, ora for spinners
+- Error handling: clear messages if Claude Code not installed, if project not detected
+- Marketplace entry: publish to official Anthropic marketplace for discoverability
+
+**Key insight from research:** The best `npx` experiences (create-next-app, create-vite) follow a pattern: detect environment -> ask minimal questions -> execute setup -> show next steps. The worst ones dump configuration options upfront. CodeScope should detect first, ask later.
+
+**Confidence:** HIGH -- npm packaging and npx execution are well-established patterns. The novel part is orchestrating Claude Code plugin installation programmatically.
 
 ## Sources
 
-- [PatrickSys/codebase-context](https://github.com/PatrickSys/codebase-context) -- Convention detection, golden files, memory, preflight checks
-- [DeusData/codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) -- Knowledge graph, blast radius, 64 languages, Louvain
-- [Lum1104/Understand-Anything](https://github.com/Lum1104/Understand-Anything) -- 5-agent pipeline, React Flow visualization, onboarding
-- [Anthropic feature-dev plugin](https://deepwiki.com/anthropics/claude-plugins-official/7.2.3-feature-dev-and-agent-sdk-dev) -- 7-phase sequential workflow
-- [GitNexus](https://github.com/abhigyanpatwari/GitNexus) -- Zero-server knowledge graph, Claude Code hooks
-- [Code Intelligence Tools Compared](https://rywalker.com/research/code-intelligence-tools) -- Ry Walker's tier analysis, critical gap findings
-- [CodeLayer / BoundaryML ACE methodology](https://deepwiki.com/humanlayer/advanced-context-engineering-for-coding-agents/7-future-vision:-codelayer) -- Research-Plan-Implement workflow
-- [Sugar memory system](https://github.com/roboticforce/sugar) -- 7 memory types, project + global tiers, semantic search
-- [Augment Code Context Engine](https://www.augmentcode.com/context-engine) -- Semantic indexing, multi-repo, Context Engine MCP
-- [CodeJudgeBench](https://arxiv.org/abs/2507.10535) -- LLM-as-judge for coding tasks, point-wise vs pair-wise comparison
-- [LLM-as-a-Judge for Software Engineering](https://arxiv.org/pdf/2510.24367) -- Agent-as-a-Judge evaluation patterns
-- [ast-grep AI integration](https://ast-grep.github.io/advanced/prompting.html) -- Convention detection with AST structural matching
-- [Anthropic 2026 Agentic Coding Trends Report](https://resources.anthropic.com/hubfs/2026%20Agentic%20Coding%20Trends%20Report.pdf) -- Repository intelligence, multi-agent patterns
-- [Mike Mason: AI Coding Agents in 2026](https://mikemason.ca/writing/ai-coding-agents-jan-2026/) -- Coherence through orchestration, Planner/Worker/Judge pattern
+### Claude Code Hooks & Plugins
+- [Claude Code Hooks Reference](https://code.claude.com/docs/en/hooks) -- 24 hook events, PreToolUse/PostToolUse API, additionalContext injection, permission decisions
+- [Claude Code Plugin Discovery](https://code.claude.com/docs/en/discover-plugins) -- marketplace distribution, /plugin commands, installation scopes
+- [Claude Code Hooks Automation Guide](https://www.gend.co/blog/configure-claude-code-hooks-automation) -- practical patterns for hook configuration
+- [Claude Code Hooks Production Patterns](https://www.pixelmojo.io/blogs/claude-code-hooks-production-quality-ci-cd-patterns) -- CI/CD integration patterns
+- [Claude Code Hooks Complete Guide (March 2026)](https://smartscope.blog/en/generative-ai/claude/claude-code-hooks-guide/) -- comprehensive walkthrough
+
+### Graph Visualization
+- [sigma.js](https://www.sigmajs.org/) -- WebGL graph rendering library
+- [React Sigma.js Practical Guide](https://www.menudo.com/react-sigma-js-the-practical-guide-to-interactive-graph-visualization-in-react/) -- production-ready React integration
+- [Sigma React Graph Visualization](https://lyonwj.com/blog/sigma-react-graph-visualization) -- architecture with graphology
+- [Graphology + Sigma.js Exploration](https://dev.to/gabetronic/exploring-network-graph-visualization-graphology-and-sigmajs-5fcg) -- integration patterns
+- [sigma.js GitHub](https://github.com/jacomyal/sigma.js/) -- library source and examples
+
+### Code Review & Impact Analysis
+- [code-review-graph GitHub](https://github.com/tirth8205/code-review-graph) -- 6.8x token reduction, Tree-sitter graph, MCP integration
+- [Blast Radius](https://blast-radius.dev/) -- cross-repo impact analysis for PRs
+- [AI Code Review Tools 2026](https://dev.to/heraldofsolace/the-best-ai-code-review-tools-of-2026-2mb3) -- ecosystem overview
+- [State of AI Code Review 2026](https://dev.to/rahulxsingh/the-state-of-ai-code-review-in-2026-trends-tools-and-whats-next-2gfh) -- shift to structural analysis
+
+### Convention Enforcement
+- [Pre-commit Framework](https://pre-commit.com/) -- multi-language pre-commit hooks
+- [ast-grep Pre-commit](https://github.com/boidolr/ast-grep-pre-commit) -- structural lint with pre-commit
+- [Husky + lint-staged Guide](https://builtin.com/articles/lint-staged-with-husky-pre-commit) -- standard JS/TS pre-commit pattern
+- [ast-grep Lint Rules](https://ast-grep.github.io/guide/project/lint-rule.html) -- YAML rule format for convention enforcement
+- [Pre-commit Hooks Code Quality (2026)](https://oneuptime.com/blog/post/2026-01-25-pre-commit-hooks-code-quality/view) -- modern best practices
+
+### Technical Debt & Readiness
+- [Technical Debt Management Tools 2025](https://www.zenhub.com/blog-posts/the-top-technical-debt-management-tools-2025) -- ecosystem overview
+- [Technical Debt Measurement Tools 2026](https://www.codeant.ai/blogs/tools-measure-technical-debt) -- modern tools
+- [Developer's Guide to Technical Debt](https://medium.com/@hackastak/the-developers-guide-to-technical-debt-tools-that-actually-help-285c53240a84) -- practical approaches
+
+### Competitive Intelligence
+- [codebase-memory-mcp GitHub](https://github.com/DeusData/codebase-memory-mcp) -- 66 languages, sub-ms queries, single binary
+- [Claude Code Plugin Ecosystem 2026](https://aitoolanalysis.com/claude-code-plugins/) -- 9,000+ extensions
+- [AI Code Editors 2026](https://www.syncfusion.com/blogs/post/ai-code-editors-2026) -- Windsurf, Cursor, Augment context injection patterns
+- [AI Tools for Complex Codebases](https://www.augmentcode.com/tools/13-best-ai-coding-tools-for-complex-codebases) -- multi-repo intelligence
+
+### Session Continuity
+- [Session Context Management MCP](https://mcp.aibase.com/server/1639703163391189724) -- /start and /handoff commands
+- [AI Coding Assistant Challenges](https://medium.com/@timbiondollo/how-i-solved-the-biggest-problem-with-ai-coding-assistants-and-you-can-too-aa5e5af80952) -- context loss as primary problem
+
+### Install Experience
+- [NPX CLI Tool Building](https://johnsedlak.com/blog/2025/03/building-an-npx-cli-tool) -- best practices
+- [NPX Script Project Setup](https://getstream.io/blog/npx-script-project-setup/) -- scaffolding patterns
+- [Claude Plugins Official](https://github.com/anthropics/claude-plugins-official) -- official marketplace structure
 
 ---
-*Feature research for: Codebase intelligence and AI coding assistant plugins*
-*Researched: 2026-03-22*
+*Feature research for: CodeScope v2.0 Intelligence Layer*
+*Researched: 2026-03-27*
