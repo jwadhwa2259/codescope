@@ -1,7 +1,7 @@
 # Requirements: CodeScope v2.0
 
 **Defined:** 2026-03-27
-**Core Value:** AI-generated code changes that respect existing conventions, stay within safe blast radius, and actually work in the codebase — verified end-to-end before the user sees them.
+**Core Value:** AI-generated code changes that respect existing conventions, stay within safe blast radius, and actually work in the codebase -- verified end-to-end before the user sees them.
 
 ## v2.0 Requirements
 
@@ -63,7 +63,7 @@ Requirements for v2.0 Intelligence Layer + Interactive Dashboard. Each maps to r
 - [ ] **VIZ-04**: Readiness dashboard panel shows 4 gauges + historical trend line from readiness_history table
 - [ ] **VIZ-05**: Blast radius explorer panel shows concentric ring visualization for selected file
 - [ ] **VIZ-06**: WebSocket pushes real-time updates during bootstrap/orient execution (agent progress, wave completion)
-- [ ] **VIZ-07**: Interactive command center — click file to trigger review or impact prediction from the UI
+- [ ] **VIZ-07**: Interactive command center -- click file to trigger review or impact prediction from the UI
 - [ ] **VIZ-08**: Screenshot export mode for marketing (`npx codescope viz --screenshot output.png`)
 - [ ] **VIZ-09**: `/codescope:viz` skill launches dashboard and opens browser
 
@@ -114,54 +114,54 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GRAPH-01 | — | Pending |
-| GRAPH-02 | — | Pending |
-| GRAPH-03 | — | Pending |
-| GRAPH-04 | — | Pending |
-| INJECT-01 | — | Pending |
-| INJECT-02 | — | Pending |
-| INJECT-03 | — | Pending |
-| INJECT-04 | — | Pending |
-| INJECT-05 | — | Pending |
-| PIPE-01 | — | Pending |
-| PIPE-02 | — | Pending |
-| PIPE-03 | — | Pending |
-| PIPE-04 | — | Pending |
-| SESS-01 | — | Pending |
-| SESS-02 | — | Pending |
-| SESS-03 | — | Pending |
-| SESS-04 | — | Pending |
-| REVIEW-01 | — | Pending |
-| REVIEW-02 | — | Pending |
-| REVIEW-03 | — | Pending |
-| REVIEW-04 | — | Pending |
-| IMPACT-01 | — | Pending |
-| IMPACT-02 | — | Pending |
-| ENFORCE-01 | — | Pending |
-| ENFORCE-02 | — | Pending |
-| ENFORCE-03 | — | Pending |
-| ENFORCE-04 | — | Pending |
-| VIZ-01 | — | Pending |
-| VIZ-02 | — | Pending |
-| VIZ-03 | — | Pending |
-| VIZ-04 | — | Pending |
-| VIZ-05 | — | Pending |
-| VIZ-06 | — | Pending |
-| VIZ-07 | — | Pending |
-| VIZ-08 | — | Pending |
-| VIZ-09 | — | Pending |
-| DEBT-01 | — | Pending |
-| DEBT-02 | — | Pending |
-| DIST-01 | — | Pending |
-| DIST-02 | — | Pending |
-| DIST-03 | — | Pending |
-| DIST-04 | — | Pending |
+| GRAPH-01 | Phase 9 | Pending |
+| GRAPH-02 | Phase 9 | Pending |
+| GRAPH-03 | Phase 9 | Pending |
+| GRAPH-04 | Phase 9 | Pending |
+| INJECT-01 | Phase 10 | Pending |
+| INJECT-02 | Phase 10 | Pending |
+| INJECT-03 | Phase 10 | Pending |
+| INJECT-04 | Phase 10 | Pending |
+| INJECT-05 | Phase 10 | Pending |
+| PIPE-01 | Phase 13 | Pending |
+| PIPE-02 | Phase 13 | Pending |
+| PIPE-03 | Phase 13 | Pending |
+| PIPE-04 | Phase 13 | Pending |
+| SESS-01 | Phase 12 | Pending |
+| SESS-02 | Phase 12 | Pending |
+| SESS-03 | Phase 12 | Pending |
+| SESS-04 | Phase 12 | Pending |
+| REVIEW-01 | Phase 11 | Pending |
+| REVIEW-02 | Phase 11 | Pending |
+| REVIEW-03 | Phase 11 | Pending |
+| REVIEW-04 | Phase 11 | Pending |
+| IMPACT-01 | Phase 11 | Pending |
+| IMPACT-02 | Phase 11 | Pending |
+| ENFORCE-01 | Phase 12 | Pending |
+| ENFORCE-02 | Phase 12 | Pending |
+| ENFORCE-03 | Phase 12 | Pending |
+| ENFORCE-04 | Phase 12 | Pending |
+| VIZ-01 | Phase 14 | Pending |
+| VIZ-02 | Phase 14 | Pending |
+| VIZ-03 | Phase 14 | Pending |
+| VIZ-04 | Phase 14 | Pending |
+| VIZ-05 | Phase 14 | Pending |
+| VIZ-06 | Phase 14 | Pending |
+| VIZ-07 | Phase 14 | Pending |
+| VIZ-08 | Phase 14 | Pending |
+| VIZ-09 | Phase 14 | Pending |
+| DEBT-01 | Phase 9 | Pending |
+| DEBT-02 | Phase 9 | Pending |
+| DIST-01 | Phase 15 | Pending |
+| DIST-02 | Phase 15 | Pending |
+| DIST-03 | Phase 15 | Pending |
+| DIST-04 | Phase 15 | Pending |
 
 **Coverage:**
-- v2.0 requirements: 38 total
-- Mapped to phases: 0
-- Unmapped: 38 ⚠️
+- v2.0 requirements: 42 total
+- Mapped to phases: 42/42
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-27*
-*Last updated: 2026-03-27 after initial definition*
+*Last updated: 2026-03-27 after roadmap creation (all 42 requirements mapped to Phases 9-15)*
