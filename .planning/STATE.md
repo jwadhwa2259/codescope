@@ -179,8 +179,14 @@ None yet.
 - Platform constraint validation needed in Phase 1: sub-agent Write tool persistence (Issue #9458), context:fork behavior (Issue #17283), file content blindness (Issue #5812)
 - web-tree-sitter 0.25.x + tree-sitter-cli version must match ABI exactly
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260327-fvp | Fix all 6 audit findings: command injection, type safety, dependency vulnerabilities | 2026-03-27 | 443ddd5 | [260327-fvp-fix-all-6-audit-findings-command-injecti](./quick/260327-fvp-fix-all-6-audit-findings-command-injecti/) |
+
 ## Session Continuity
 
-Last session: 2026-03-27T18:34:58.837Z
-Stopped at: Completed quick task 260327-fvp
+Last session: 2026-03-27
+Stopped at: Completed quick task 260327-fvp: Fix all 6 audit findings
 Resume file: None
