@@ -53,8 +53,8 @@ AI-generated code changes that respect existing conventions, stay within safe bl
   - Runtime fallback: agent teams → sequential if feature unavailable
   - No user-facing execution mode config — planner always does the right thing
   - Each agent gets scope contract, conventions, golden files, coordination context
-- [ ] Static verify agent — convention compliance (ast-grep), blast radius diff, code review
-- [ ] Runtime verify agent — build verification, unit/integration tests, E2E (Playwright/Xcode/Gradle auto-detection), auto-smoke generation
+- [x] Static verify agent — convention compliance (ast-grep), blast radius diff, code review — *Validated in Phase 5: Verification*
+- [x] Runtime verify agent — build verification, unit/integration tests, E2E (Playwright/Xcode/Gradle auto-detection), auto-smoke generation — *Validated in Phase 5*
 - [x] Eval agent — LLM-as-judge scoring scope compliance, convention adherence, completeness, correctness — *Validated in Phase 6: Eval, User Gate, and Debug*
 - [x] User gate — interactive finding selection (debug selected / ignore all / defer to TODO) — *Validated in Phase 6*
 - [x] Auto-debug and auto-skip-minor modes — *Validated in Phase 6*
@@ -133,4 +133,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-24 — Phase 6 complete: eval agent (LLM-as-judge, 4 criteria, 50K chunking), user gate (3 modes), debug agent (bounded fix cycles, design decision escalation), codescope_eval MCP tool, orient skill body Step 6 integration, 735 tests passing*
+*Last updated: 2026-03-27 — Phase 8 complete (final phase): all v1.0 tech debt resolved — JSON sidecar pipeline, type consolidation, doc accuracy, dead code removal, dual-path learning capture, ROADMAP accuracy. 865 tests passing. v1.0 milestone complete.*
