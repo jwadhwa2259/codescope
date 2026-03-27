@@ -172,8 +172,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md -- JSON sidecar pipeline, type consolidation, JSDoc/comment fixes, dead code removal
-- [ ] 08-02-PLAN.md -- Learning capture dual-path args, ROADMAP progress update
+- [x] 08-01-PLAN.md -- JSON sidecar pipeline, type consolidation, JSDoc/comment fixes, dead code removal
+- [x] 08-02-PLAN.md -- Learning capture dual-path args, ROADMAP progress update
 
 ## Progress
 
