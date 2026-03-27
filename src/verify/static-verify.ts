@@ -11,7 +11,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import type {
   StaticVerifyOptions,
   StaticVerifyResult,
@@ -95,8 +95,8 @@ export function scanFilesAgainstRule(
     if (!fs.existsSync(filePath)) continue;
 
     try {
-      const output = execSync(
-        `sg scan --rule ${ruleFile} --json ${filePath}`,
+      const output = execFileSync(
+        "sg", ["scan", "--rule", ruleFile, "--json", filePath],
         {
           encoding: "utf-8",
           maxBuffer: 50 * 1024 * 1024,

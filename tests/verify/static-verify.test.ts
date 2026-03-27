@@ -28,11 +28,11 @@ vi.mock("../../src/utils/paths.js", () => ({
   getCodescopePath: vi.fn((projectRoot: string) => `${projectRoot}/.claude/codescope`),
 }));
 
-// Track fs reads and execSync calls
+// Track fs reads and execFileSync/execSync calls
 const mockFileContents = new Map<string, string>();
-let mockExecSyncCalls: Array<{ cmd: string; opts: unknown }> = [];
-let mockExecSyncResults = new Map<string, string>();
-let mockExecSyncErrors = new Map<string, { stdout: string; stderr: string; status: number }>();
+let mockExecCalls: Array<{ cmd: string; opts: unknown }> = [];
+let mockExecResults = new Map<string, string>();
+let mockExecErrors = new Map<string, { stdout: string; stderr: string; status: number }>();
 
 vi.mock("node:fs", async () => {
   const actual = await vi.importActual<typeof import("node:fs")>("node:fs");
@@ -56,12 +56,12 @@ vi.mock("node:fs", async () => {
   };
 });
 
-vi.mock("node:child_process", () => ({
-  execSync: vi.fn((cmd: string, opts?: unknown) => {
-    mockExecSyncCalls.push({ cmd, opts });
+vi.mock("node:child_process", () => {
+  const handler = (cmd: string, opts?: unknown) => {
+    mockExecCalls.push({ cmd, opts });
 
     // Check for error mock first
-    for (const [pattern, errObj] of mockExecSyncErrors) {
+    for (const [pattern, errObj] of mockExecErrors) {
       if (cmd.includes(pattern)) {
         const err = new Error("Command failed") as Error & { stdout: string; stderr: string; status: number };
         err.stdout = errObj.stdout;
@@ -72,15 +72,26 @@ vi.mock("node:child_process", () => ({
     }
 
     // Check for result mock
-    for (const [pattern, result] of mockExecSyncResults) {
+    for (const [pattern, result] of mockExecResults) {
       if (cmd.includes(pattern)) {
         return result;
       }
     }
 
     return "";
-  }),
-}));
+  };
+
+  return {
+    execFileSync: vi.fn((file: string, args: string[], opts?: unknown) => {
+      // Reconstruct cmd string so existing pattern matching continues to work
+      const cmd = [file, ...args].join(" ");
+      return handler(cmd, opts);
+    }),
+    execSync: vi.fn((cmd: string, opts?: unknown) => {
+      return handler(cmd, opts);
+    }),
+  };
+});
 
 import { computeBlastRadiusDiff } from "../../src/verify/blast-radius-diff.js";
 import { runStaticVerify } from "../../src/verify/static-verify.js";
@@ -108,9 +119,9 @@ describe("runStaticVerify", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFileContents.clear();
-    mockExecSyncCalls = [];
-    mockExecSyncResults.clear();
-    mockExecSyncErrors.clear();
+    mockExecCalls = [];
+    mockExecResults.clear();
+    mockExecErrors.clear();
   });
 
   // Test 1: runStaticVerify returns StaticVerifyResult shape
@@ -158,7 +169,7 @@ describe("runStaticVerify", () => {
     mockFileContents.set("src/foo.ts", "export default function foo() {}");
 
     // ast-grep returns a match via non-zero exit (common pattern)
-    mockExecSyncErrors.set("sg scan", {
+    mockExecErrors.set("sg scan", {
       stdout: JSON.stringify([{
         text: "export default function foo() {}",
         range: { start: { line: 5, column: 0 }, end: { line: 5, column: 31 } },
@@ -186,7 +197,7 @@ describe("runStaticVerify", () => {
 
     expect(result.conventionViolations.length).toBeGreaterThan(0);
     // Verify ast-grep was called
-    const sgCalls = mockExecSyncCalls.filter((c) => c.cmd.includes("sg scan"));
+    const sgCalls = mockExecCalls.filter((c) => c.cmd.includes("sg scan"));
     expect(sgCalls.length).toBeGreaterThan(0);
   });
 
@@ -210,7 +221,7 @@ describe("runStaticVerify", () => {
     mockFileContents.set("/mock/scope.json", "{}");
     mockFileContents.set("src/foo.ts", "export default foo");
 
-    mockExecSyncErrors.set("sg scan", {
+    mockExecErrors.set("sg scan", {
       stdout: JSON.stringify([{
         text: "export default foo",
         range: { start: { line: 3, column: 0 }, end: { line: 3, column: 18 } },
@@ -261,7 +272,7 @@ describe("runStaticVerify", () => {
     mockFileContents.set("/mock/scope.json", "{}");
     mockFileContents.set("src/bar.ts", "export default something");
 
-    mockExecSyncErrors.set("sg scan", {
+    mockExecErrors.set("sg scan", {
       stdout: JSON.stringify([{
         text: "export default",
         range: { start: { line: 10, column: 0 }, end: { line: 10, column: 14 } },
@@ -340,7 +351,7 @@ describe("runStaticVerify", () => {
     mockFileContents.set("/mock/scope.json", '{"inScope": ["feature X"]}');
 
     // git diff returns something
-    mockExecSyncResults.set("git diff", "diff --git a/src/foo.ts\n+added line");
+    mockExecResults.set("git diff", "diff --git a/src/foo.ts\n+added line");
 
     // dispatchReviewAgent captures the prompt
     let capturedPrompt = "";
@@ -373,7 +384,7 @@ describe("runStaticVerify", () => {
     mockFileContents.set(`${CS_PATH}/conventions-enforced.md`, "");
     mockFileContents.set("/mock/scope.json", "{}");
 
-    mockExecSyncResults.set("git diff", "some diff");
+    mockExecResults.set("git diff", "some diff");
 
     let capturedPrompt = "";
     const mockDispatch = vi.fn(async (prompt: string) => {
@@ -401,7 +412,7 @@ describe("runStaticVerify", () => {
   it("parses dispatchReviewAgent return value into ReviewFinding[]", async () => {
     mockFileContents.set(`${CS_PATH}/conventions-enforced.md`, "");
     mockFileContents.set("/mock/scope.json", "{}");
-    mockExecSyncResults.set("git diff", "some diff");
+    mockExecResults.set("git diff", "some diff");
 
     const findings: ReviewFinding[] = [
       { file: "src/foo.ts", line: 10, description: "Unused import", severity: "INFO" },
@@ -429,7 +440,7 @@ describe("runStaticVerify", () => {
   it("populates blastRadiusDiff by calling computeBlastRadiusDiff", async () => {
     mockFileContents.set(`${CS_PATH}/conventions-enforced.md`, "");
     mockFileContents.set("/mock/scope.json", "{}");
-    mockExecSyncResults.set("git diff", "");
+    mockExecResults.set("git diff", "");
 
     const callbacks = makeCallbacks();
     const result = await runStaticVerify(
@@ -456,7 +467,7 @@ describe("runStaticVerify", () => {
   it("tracks timing in milliseconds for convention, blastRadius, and codeReview", async () => {
     mockFileContents.set(`${CS_PATH}/conventions-enforced.md`, "");
     mockFileContents.set("/mock/scope.json", "{}");
-    mockExecSyncResults.set("git diff", "");
+    mockExecResults.set("git diff", "");
 
     const callbacks = makeCallbacks();
     const result = await runStaticVerify(

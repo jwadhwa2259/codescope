@@ -1,4 +1,4 @@
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import * as path from "node:path";
 import * as fs from "node:fs";
 import type {
@@ -125,8 +125,8 @@ function scanSingleRule(
   targetDir: string,
 ): AstGrepMatch[] {
   try {
-    const output = execSync(
-      `sg scan --rule ${ruleFile} --json ${targetDir}`,
+    const output = execFileSync(
+      "sg", ["scan", "--rule", ruleFile, "--json", targetDir],
       {
         encoding: "utf-8",
         maxBuffer: 50 * 1024 * 1024,
