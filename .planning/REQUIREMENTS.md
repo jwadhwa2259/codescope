@@ -158,7 +158,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Settings & Management
 
 - [x] **MGMT-01**: `/codescope:settings` skill allows interactive or direct configuration changes with immediate feedback
-- [ ] **MGMT-02**: `/codescope:review-learnings` skill presents learnings for user to confirm, reject, or edit
+- [x] **MGMT-02**: `/codescope:review-learnings` skill presents learnings for user to confirm, reject, or edit
 - [x] **MGMT-03**: Reset commands available: --reset (config), --reset-global (global memory), bootstrap --force (re-analyze)
 
 ## v2 Requirements
@@ -310,7 +310,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LRNG-07 | Phase 7 | Complete |
 | LRNG-08 | Phase 7 | Complete |
 | MGMT-01 | Phase 7 | Complete |
-| MGMT-02 | Phase 7 | Pending |
+| MGMT-02 | Phase 7 | Complete |
 | MGMT-03 | Phase 7 | Complete |
 
 **Coverage:**
