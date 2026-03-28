@@ -2,7 +2,7 @@
 
 ## Current State
 
-**Version:** v1.0 MVP shipped 2026-03-27 | v2.0 Phase 9 complete 2026-03-28
+**Version:** v1.0 MVP shipped 2026-03-27 | v2.0 Phase 10 complete 2026-03-28
 **Codebase:** 21,742 LOC TypeScript (source) + 20,759 LOC TypeScript (tests, 917 passing)
 **Stack:** TypeScript, web-tree-sitter WASM, ast-grep CLI, better-sqlite3, graphology, enhanced-resolve, @modelcontextprotocol/sdk, vitest
 
@@ -34,6 +34,8 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - MCP server with 12 operational tools — v1.0 (13 tools after Phase 9: codescope_trends added)
 - Graph cache with 5-min TTL for sub-100ms tool queries — v1.0 (async staleness-aware cache after Phase 9)
 - MCP response contract (ok/error/partial envelopes with staleness metadata) — v1.0
+- Auto-injection artifact pipeline (danger-zones, conventions, blast-radius JSON indexes) — Phase 10
+- PreToolUse/PostToolUse hooks with 500-token budget composer for invisible context injection — Phase 10
 - AI readiness score (4 dimensions, A-F grades, delta tracking) — v1.0
 - Incremental re-bootstrap via git diff with 50% threshold — v1.0
 - Bootstrap --force confirmation — v1.0
@@ -139,4 +141,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after v2.0 milestone start*
+*Last updated: 2026-03-28 after Phase 10 (auto-injection) complete*
