@@ -16,11 +16,11 @@ Requirements for v2.0 Intelligence Layer + Interactive Dashboard. Each maps to r
 
 ### Auto-Injection
 
-- [ ] **INJECT-01**: PreToolUse hook on Edit/Write automatically injects file-specific conventions, blast radius, and danger zone warnings into Claude's context
-- [ ] **INJECT-02**: PostToolUse hook on Edit/Write validates changes against conventions and warns on blast radius expansion
-- [ ] **INJECT-03**: Injection budget capped at 500 tokens per file with priority queue (danger zones > conventions > blast radius > general)
-- [ ] **INJECT-04**: Injection triggers only for files with centrality > 0.3 OR detected conventions (medium aggressiveness)
-- [ ] **INJECT-05**: Hooks degrade gracefully to no-op when bootstrap hasn't run or graph.db doesn't exist
+- [x] **INJECT-01**: PreToolUse hook on Edit/Write automatically injects file-specific conventions, blast radius, and danger zone warnings into Claude's context
+- [x] **INJECT-02**: PostToolUse hook on Edit/Write validates changes against conventions and warns on blast radius expansion
+- [x] **INJECT-03**: Injection budget capped at 500 tokens per file with priority queue (danger zones > conventions > blast radius > general)
+- [x] **INJECT-04**: Injection triggers only for files with centrality > 0.3 OR detected conventions (medium aggressiveness)
+- [x] **INJECT-05**: Hooks degrade gracefully to no-op when bootstrap hasn't run or graph.db doesn't exist
 
 ### Pipeline Evolution
 
@@ -118,11 +118,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GRAPH-02 | Phase 9 | Complete |
 | GRAPH-03 | Phase 9 | Complete |
 | GRAPH-04 | Phase 9 | Complete |
-| INJECT-01 | Phase 10 | Pending |
-| INJECT-02 | Phase 10 | Pending |
-| INJECT-03 | Phase 10 | Pending |
-| INJECT-04 | Phase 10 | Pending |
-| INJECT-05 | Phase 10 | Pending |
+| INJECT-01 | Phase 10 | Complete |
+| INJECT-02 | Phase 10 | Complete |
+| INJECT-03 | Phase 10 | Complete |
+| INJECT-04 | Phase 10 | Complete |
+| INJECT-05 | Phase 10 | Complete |
 | PIPE-01 | Phase 13 | Pending |
 | PIPE-02 | Phase 13 | Pending |
 | PIPE-03 | Phase 13 | Pending |
