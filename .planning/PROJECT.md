@@ -2,8 +2,8 @@
 
 ## Current State
 
-**Version:** v1.0 MVP shipped 2026-03-27
-**Codebase:** 21,742 LOC TypeScript (source) + 20,759 LOC TypeScript (tests, 865 passing)
+**Version:** v1.0 MVP shipped 2026-03-27 | v2.0 Phase 9 complete 2026-03-28
+**Codebase:** 21,742 LOC TypeScript (source) + 20,759 LOC TypeScript (tests, 917 passing)
 **Stack:** TypeScript, web-tree-sitter WASM, ast-grep CLI, better-sqlite3, graphology, enhanced-resolve, @modelcontextprotocol/sdk, vitest
 
 ## What This Is
@@ -31,8 +31,8 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - Risk Analyzer: knowledge graph construction, centrality, communities, danger zones — v1.0
 - Learning Synthesizer: learnings.md schema initialization — v1.0
 - `/codescope:bootstrap` — full autonomous codebase analysis pipeline with monorepo squad scaling, cross-service synthesis, AI readiness scoring — v1.0
-- MCP server with 12 operational tools — v1.0
-- Graph cache with 5-min TTL for sub-100ms tool queries — v1.0
+- MCP server with 12 operational tools — v1.0 (13 tools after Phase 9: codescope_trends added)
+- Graph cache with 5-min TTL for sub-100ms tool queries — v1.0 (async staleness-aware cache after Phase 9)
 - MCP response contract (ok/error/partial envelopes with staleness metadata) — v1.0
 - AI readiness score (4 dimensions, A-F grades, delta tracking) — v1.0
 - Incremental re-bootstrap via git diff with 50% threshold — v1.0
