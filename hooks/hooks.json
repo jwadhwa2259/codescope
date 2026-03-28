@@ -1,5 +1,5 @@
 {
-  "description": "CodeScope auto-injection: codebase context on every file edit",
+  "description": "CodeScope: codebase context injection and session continuity",
   "hooks": {
     "PreToolUse": [
       {
@@ -23,6 +23,32 @@
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/hooks/post-tool-use.mjs\"",
             "timeout": 10,
             "statusMessage": "Validating against conventions..."
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "manual|auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/hooks/pre-compact.mjs\"",
+            "timeout": 10,
+            "statusMessage": "Saving session state..."
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "resume|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/hooks/session-start.mjs\"",
+            "timeout": 5,
+            "statusMessage": "Loading session context..."
           }
         ]
       }

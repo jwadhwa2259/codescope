@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Layer + Interactive Dashboard
 status: executing
-stopped_at: Completed 12-03-PLAN.md
-last_updated: "2026-03-28T17:39:06.444Z"
+stopped_at: Completed Wave 2 (12-03, 12-04)
+last_updated: "2026-03-28T17:41:44.616Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
   percent: 50
 ---
 
@@ -63,6 +63,7 @@ Progress: [#####░░░░░] 50%
 | Phase 12 P01 | 3min | 2 tasks | 5 files |
 | Phase 12 P02 | 4min | 2 tasks | 7 files |
 | Phase 12 P03 | 3min | 2 tasks | 4 files |
+| Phase 12 P04 | 4min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,9 @@ All v1.0 decisions validated -- see PROJECT.md for outcomes.
 - [Phase 12]: Phase detection returns first pipeline phase whose artifact does NOT exist, with coordination.md as special-case execution phase indicator
 - [Phase 12]: Husky marker block uses codescope-enforcement-start/end comments for idempotent append and clean removal
 - [Phase 12]: Wrapper script runs backup hook first then CodeScope check -- existing hooks take priority
+- [Phase 12]: Duplicated handoff logic in hooks/lib/handoff-builder.ts for build isolation -- hooks cannot import from src/session/
+- [Phase 12]: Staleness check uses execSync git log with 3-day threshold and >5 commit minimum for handoff freshness
+- [Phase 12]: tsdown.config.ts sole ownership by Plan 04 consolidates all 9 entry points (hooks, enforcement, session modules)
 
 ### Pending Todos
 
@@ -111,6 +115,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T17:39:06.442Z
-Stopped at: Completed 12-03-PLAN.md
+Last session: 2026-03-28T17:41:44.614Z
+Stopped at: Completed Wave 2 (12-03, 12-04)
 Resume file: None
