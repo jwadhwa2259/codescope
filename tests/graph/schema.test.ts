@@ -177,7 +177,7 @@ describe("Schema creation", () => {
     expect(columns).toHaveLength(3);
   });
 
-  it("creates all 5 indexes", () => {
+  it("creates all 6 indexes (v2 schema includes idx_readiness_ts)", () => {
     dbPath = tmpDbPath();
     db = openDatabase(dbPath);
     createSchema(db);
@@ -194,7 +194,8 @@ describe("Schema creation", () => {
     expect(indexNames).toContain("idx_edges_source");
     expect(indexNames).toContain("idx_edges_target");
     expect(indexNames).toContain("idx_edges_kind");
-    expect(indexes).toHaveLength(5);
+    expect(indexNames).toContain("idx_readiness_ts");
+    expect(indexes).toHaveLength(6);
   });
 
   it("schema creation is idempotent", () => {
