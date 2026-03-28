@@ -69,8 +69,8 @@ Requirements for v2.0 Intelligence Layer + Interactive Dashboard. Each maps to r
 
 ### Technical Debt Tracking
 
-- [ ] **DEBT-01**: `readiness_history` SQLite table stores readiness snapshots with timestamps on every bootstrap/incremental update
-- [ ] **DEBT-02**: `codescope_trends` MCP tool returns period comparisons (current vs previous, deltas, trend direction)
+- [x] **DEBT-01**: `readiness_history` SQLite table stores readiness snapshots with timestamps on every bootstrap/incremental update
+- [x] **DEBT-02**: `codescope_trends` MCP tool returns period comparisons (current vs previous, deltas, trend direction)
 
 ### Distribution
 
@@ -150,8 +150,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIZ-07 | Phase 14 | Pending |
 | VIZ-08 | Phase 14 | Pending |
 | VIZ-09 | Phase 14 | Pending |
-| DEBT-01 | Phase 9 | Pending |
-| DEBT-02 | Phase 9 | Pending |
+| DEBT-01 | Phase 9 | Complete |
+| DEBT-02 | Phase 9 | Complete |
 | DIST-01 | Phase 15 | Pending |
 | DIST-02 | Phase 15 | Pending |
 | DIST-03 | Phase 15 | Pending |
