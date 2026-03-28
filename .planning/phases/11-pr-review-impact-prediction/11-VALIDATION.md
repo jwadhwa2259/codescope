@@ -38,12 +38,12 @@ created: 2026-03-28
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 11-01-01 | 01 | 1 | REVIEW-01 | unit | `npx vitest run tests/tools/review.test.ts` | ❌ W0 | ⬜ pending |
-| 11-01-02 | 01 | 1 | REVIEW-02 | unit | `npx vitest run tests/tools/review.test.ts` | ❌ W0 | ⬜ pending |
-| 11-01-03 | 01 | 1 | REVIEW-03 | unit | `npx vitest run tests/tools/review.test.ts` | ❌ W0 | ⬜ pending |
-| 11-01-04 | 01 | 1 | REVIEW-04 | unit | `npx vitest run tests/tools/review.test.ts` | ❌ W0 | ⬜ pending |
-| 11-02-01 | 02 | 1 | IMPACT-01 | unit | `npx vitest run tests/graph/reverse-bfs.test.ts` | ❌ W0 | ⬜ pending |
-| 11-02-02 | 02 | 1 | IMPACT-02 | unit | `npx vitest run tests/tools/predict-impact.test.ts` | ❌ W0 | ⬜ pending |
+| 11-01-01 | 01 | 1 | IMPACT-01 | unit | `npx vitest run tests/graph/reverse-blast-radius.test.ts` | ❌ W0 | ⬜ pending |
+| 11-01-02 | 01 | 1 | IMPACT-02 | unit | `npx vitest run tests/tools/impact-prediction.test.ts` | ❌ W0 | ⬜ pending |
+| 11-02-01 | 02 | 1 | REVIEW-01 | unit | `npx vitest run tests/tools/review.test.ts` | ❌ W0 | ⬜ pending |
+| 11-02-02 | 02 | 1 | REVIEW-02 | unit | `npx vitest run tests/tools/review.test.ts` | ❌ W0 | ⬜ pending |
+| 11-02-03 | 02 | 1 | REVIEW-03 | unit | `npx vitest run tests/tools/review.test.ts` | ❌ W0 | ⬜ pending |
+| 11-03-01 | 03 | 2 | REVIEW-04 | unit | `npx vitest run --reporter=verbose` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -51,9 +51,10 @@ created: 2026-03-28
 
 ## Wave 0 Requirements
 
-- [ ] `tests/tools/review.test.ts` — stubs for REVIEW-01 through REVIEW-04
-- [ ] `tests/graph/reverse-bfs.test.ts` — stubs for reverse BFS traversal (IMPACT-01)
-- [ ] `tests/tools/predict-impact.test.ts` — stubs for codescope_predict_impact tool (IMPACT-02)
+- [ ] `tests/graph/reverse-blast-radius.test.ts` — stubs for reverse BFS traversal (IMPACT-01)
+- [ ] `tests/tools/impact-prediction.test.ts` — stubs for codescope_predict_impact tool (IMPACT-02)
+- [ ] `tests/tools/review.test.ts` — stubs for REVIEW-01 through REVIEW-03
+
 
 *Existing vitest infrastructure covers framework needs — no new framework install required.*
 
