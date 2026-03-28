@@ -53,7 +53,7 @@ Requirements for v2.0 Intelligence Layer + Interactive Dashboard. Each maps to r
 - [x] **ENFORCE-01**: Opt-in pre-commit hook runs ast-grep convention check on staged files
 - [x] **ENFORCE-02**: Only VERIFIED (user-confirmed) conventions are enforced, never auto-detected
 - [x] **ENFORCE-03**: Configurable severity via config.yml: suggest-only (default) / warn / block
-- [ ] **ENFORCE-04**: `npx codescope install-hooks` installs pre-commit without overwriting existing hooks
+- [x] **ENFORCE-04**: `npx codescope install-hooks` installs pre-commit without overwriting existing hooks
 
 ### Visualization Dashboard
 
@@ -140,7 +140,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ENFORCE-01 | Phase 12 | Complete |
 | ENFORCE-02 | Phase 12 | Complete |
 | ENFORCE-03 | Phase 12 | Complete |
-| ENFORCE-04 | Phase 12 | Pending |
+| ENFORCE-04 | Phase 12 | Complete |
 | VIZ-01 | Phase 14 | Pending |
 | VIZ-02 | Phase 14 | Pending |
 | VIZ-03 | Phase 14 | Pending |
