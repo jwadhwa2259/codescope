@@ -75,7 +75,7 @@ describe("Plugin Manifest", () => {
           "utf-8"
         )
       );
-      expect(manifest.skills).toHaveLength(6);
+      expect(manifest.skills).toHaveLength(8);
     });
 
     it("each skill path file exists on disk", () => {
