@@ -11,7 +11,9 @@ import { analyzeChanges } from "./incremental.js";
 import { readBootstrapMeta, writeBootstrapMeta } from "./meta.js";
 import { invalidateCache } from "../graph/cache.js";
 import { loadConfig } from "../config/loader.js";
-import { getCodescopePath } from "../utils/paths.js";
+import { getCodescopePath, getGraphDbPath } from "../utils/paths.js";
+import { storeReadinessSnapshot } from "../graph/readiness-history.js";
+import { openDatabase, closeDatabase } from "../graph/database.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -351,6 +353,21 @@ export async function runBootstrap(
     path: readinessPath,
     description: "AI readiness score",
   });
+
+  // ---- Step 7b: Store readiness snapshot per DEBT-01 ----
+  try {
+    const graphDbPath = getGraphDbPath(projectRoot);
+    if (fs.existsSync(graphDbPath)) {
+      const snapshotDb = openDatabase(graphDbPath);
+      try {
+        storeReadinessSnapshot(snapshotDb, readinessScore);
+      } finally {
+        closeDatabase(snapshotDb);
+      }
+    }
+  } catch {
+    warnings.push('Failed to store readiness snapshot for trend tracking.');
+  }
 
   // ---- Step 8: Create empty conventions-enforced.md per D-14 ----
   const enforcedPath = path.join(codescopeDir, "conventions-enforced.md");
