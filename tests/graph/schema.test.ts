@@ -63,6 +63,13 @@ describe("SQLite database connection", () => {
     expect(fk).toBe(1);
   });
 
+  it("sets busy_timeout = 5000", () => {
+    dbPath = tmpDbPath();
+    db = openDatabase(dbPath);
+    const timeout = db.pragma("busy_timeout", { simple: true });
+    expect(timeout).toBe(5000);
+  });
+
   it("closeDatabase releases the database handle", () => {
     dbPath = tmpDbPath();
     db = openDatabase(dbPath);
