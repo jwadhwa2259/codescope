@@ -81,11 +81,12 @@ Plans:
   2. Review detects new dependency edges, circular dependencies, and changes that cross community boundaries in the diff
   3. Changed files are checked against conventions with violations shown alongside evidence (adoption rate, golden file references)
   4. User can call `codescope_predict_impact` with file paths and receive a pre-change blast radius showing all transitive callers/importers up to N hops
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 11-01: TBD
-- [ ] 11-02: TBD
+- [ ] 11-01-PLAN.md -- Reverse BFS analytics function and codescope_predict_impact MCP tool with tests
+- [ ] 11-02-PLAN.md -- codescope_review MCP tool with diff resolution, risk scoring, dependency analysis, convention compliance, cross-community detection
+- [ ] 11-03-PLAN.md -- /codescope:review skill, plugin.json wiring, tool index registration
 
 ### Phase 12: Convention Enforcement + Session Continuity
 **Goal**: Developers can opt into pre-commit convention enforcement that only blocks on user-verified patterns, and can pause/resume CodeScope workflows across sessions without losing context
@@ -168,7 +169,7 @@ Phases execute in numeric order: 9 > 10 > 11 > 12 > 13 > 14 > 15
 | 8. Tech Debt Cleanup | v1.0 | 2/2 | Complete | 2026-03-27 |
 | 9. Graph Foundation + Debt Tracking | v2.0 | 3/3 | Complete | 2026-03-28 |
 | 10. Auto-Injection | v2.0 | 2/2 | Complete    | 2026-03-28 |
-| 11. PR Review + Impact Prediction | v2.0 | 0/0 | Not started | - |
+| 11. PR Review + Impact Prediction | v2.0 | 0/3 | Planned | - |
 | 12. Convention Enforcement + Session Continuity | v2.0 | 0/0 | Not started | - |
 | 13. Pipeline Evolution | v2.0 | 0/0 | Not started | - |
 | 14. Visualization Dashboard | v2.0 | 0/0 | Not started | - |
