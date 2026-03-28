@@ -31,8 +31,8 @@ Requirements for v2.0 Intelligence Layer + Interactive Dashboard. Each maps to r
 
 ### Session Continuity
 
-- [ ] **SESS-01**: `/codescope:pause` generates structured handoff document with completed work, remaining tasks, key decisions, and resume command
-- [ ] **SESS-02**: `/codescope:resume` reads handoff document and resumes orient pipeline at the correct phase/wave
+- [x] **SESS-01**: `/codescope:pause` generates structured handoff document with completed work, remaining tasks, key decisions, and resume command
+- [x] **SESS-02**: `/codescope:resume` reads handoff document and resumes orient pipeline at the correct phase/wave
 - [ ] **SESS-03**: `--resume {taskSlug}` flag on orient skips completed phases and loads existing artifacts
 - [ ] **SESS-04**: PreCompact hook auto-generates handoff before context compaction
 
@@ -127,8 +127,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PIPE-02 | Phase 13 | Pending |
 | PIPE-03 | Phase 13 | Pending |
 | PIPE-04 | Phase 13 | Pending |
-| SESS-01 | Phase 12 | Pending |
-| SESS-02 | Phase 12 | Pending |
+| SESS-01 | Phase 12 | Complete |
+| SESS-02 | Phase 12 | Complete |
 | SESS-03 | Phase 12 | Pending |
 | SESS-04 | Phase 12 | Pending |
 | REVIEW-01 | Phase 11 | Complete |
