@@ -1,0 +1,31 @@
+{
+  "description": "CodeScope auto-injection: codebase context on every file edit",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/hooks/pre-tool-use.mjs\"",
+            "timeout": 5,
+            "statusMessage": "Checking codebase context..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/hooks/post-tool-use.mjs\"",
+            "timeout": 10,
+            "statusMessage": "Validating against conventions..."
+          }
+        ]
+      }
+    ]
+  }
+}

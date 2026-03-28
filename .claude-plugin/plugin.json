@@ -8,5 +8,6 @@
     { "name": "orient", "path": "skills/orient/SKILL.md" },
     { "name": "settings", "path": "skills/settings/SKILL.md" },
     { "name": "review-learnings", "path": "skills/review-learnings/SKILL.md" }
-  ]
+  ],
+  "hooks": "./hooks/hooks.json"
 }

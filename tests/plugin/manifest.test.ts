@@ -90,6 +90,106 @@ describe("Plugin Manifest", () => {
         expect(fs.existsSync(skillPath), `Missing: ${skill.path}`).toBe(true);
       }
     });
+
+    it("has hooks field pointing to hooks.json", () => {
+      const manifest = JSON.parse(
+        fs.readFileSync(
+          path.join(PROJECT_ROOT, ".claude-plugin", "plugin.json"),
+          "utf-8"
+        )
+      );
+      expect(manifest.hooks).toBe("./hooks/hooks.json");
+    });
+
+    it("hooks file referenced in plugin.json exists on disk", () => {
+      const manifest = JSON.parse(
+        fs.readFileSync(
+          path.join(PROJECT_ROOT, ".claude-plugin", "plugin.json"),
+          "utf-8"
+        )
+      );
+      const hooksPath = path.join(PROJECT_ROOT, manifest.hooks);
+      expect(fs.existsSync(hooksPath), `Missing: ${manifest.hooks}`).toBe(
+        true
+      );
+    });
+  });
+
+  describe("hooks/hooks.json", () => {
+    it("exists and is valid JSON", () => {
+      const content = fs.readFileSync(
+        path.join(PROJECT_ROOT, "hooks", "hooks.json"),
+        "utf-8"
+      );
+      const hooks = JSON.parse(content);
+      expect(hooks).toBeDefined();
+      expect(hooks.hooks).toBeDefined();
+    });
+
+    it("has PreToolUse and PostToolUse keys", () => {
+      const hooks = JSON.parse(
+        fs.readFileSync(
+          path.join(PROJECT_ROOT, "hooks", "hooks.json"),
+          "utf-8"
+        )
+      );
+      expect(hooks.hooks.PreToolUse).toBeDefined();
+      expect(hooks.hooks.PostToolUse).toBeDefined();
+    });
+
+    it('PreToolUse matcher is "Edit|Write"', () => {
+      const hooks = JSON.parse(
+        fs.readFileSync(
+          path.join(PROJECT_ROOT, "hooks", "hooks.json"),
+          "utf-8"
+        )
+      );
+      expect(hooks.hooks.PreToolUse[0].matcher).toBe("Edit|Write");
+    });
+
+    it("PreToolUse command references dist/hooks/pre-tool-use.mjs", () => {
+      const hooks = JSON.parse(
+        fs.readFileSync(
+          path.join(PROJECT_ROOT, "hooks", "hooks.json"),
+          "utf-8"
+        )
+      );
+      expect(hooks.hooks.PreToolUse[0].hooks[0].command).toContain(
+        "dist/hooks/pre-tool-use.mjs"
+      );
+    });
+
+    it("PostToolUse command references dist/hooks/post-tool-use.mjs", () => {
+      const hooks = JSON.parse(
+        fs.readFileSync(
+          path.join(PROJECT_ROOT, "hooks", "hooks.json"),
+          "utf-8"
+        )
+      );
+      expect(hooks.hooks.PostToolUse[0].hooks[0].command).toContain(
+        "dist/hooks/post-tool-use.mjs"
+      );
+    });
+
+    it("PreToolUse timeout is 5 seconds", () => {
+      const hooks = JSON.parse(
+        fs.readFileSync(
+          path.join(PROJECT_ROOT, "hooks", "hooks.json"),
+          "utf-8"
+        )
+      );
+      expect(hooks.hooks.PreToolUse[0].hooks[0].timeout).toBe(5);
+    });
+
+    it("PostToolUse timeout is 10 seconds", () => {
+      const hooks = JSON.parse(
+        fs.readFileSync(
+          path.join(PROJECT_ROOT, "hooks", "hooks.json"),
+          "utf-8"
+        )
+      );
+      expect(hooks.hooks.PostToolUse[0].hooks[0].timeout).toBe(10);
+    });
   });
 
   describe(".mcp.json", () => {
