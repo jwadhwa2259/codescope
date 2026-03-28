@@ -75,10 +75,12 @@ describe("Incremental reparse engine (src/graph/incremental.ts)", () => {
   let tmpDir: string;
 
   beforeEach(() => {
+    process.env.CODESCOPE_GRAMMAR_DIR = grammarDir;
     invalidateCache();
   });
 
   afterEach(() => {
+    delete process.env.CODESCOPE_GRAMMAR_DIR;
     try {
       if (db) closeDatabase(db);
     } catch {

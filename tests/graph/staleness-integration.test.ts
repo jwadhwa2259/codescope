@@ -33,10 +33,12 @@ describe.skipIf(!grammarsExist)("Staleness integration (end-to-end)", () => {
   let tmpDir: string;
 
   beforeEach(() => {
+    process.env.CODESCOPE_GRAMMAR_DIR = grammarDir;
     invalidateCache();
   });
 
   afterEach(() => {
+    delete process.env.CODESCOPE_GRAMMAR_DIR;
     invalidateCache();
     if (tmpDir) cleanupDir(tmpDir);
   });
