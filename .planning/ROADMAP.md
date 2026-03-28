@@ -98,11 +98,14 @@ Plans:
   3. User can configure enforcement severity (suggest-only / warn / block) per project via config.yml
   4. Running `/codescope:pause` produces a structured handoff document; `/codescope:resume` picks up exactly where the workflow left off, including correct phase and wave position
   5. Context compaction automatically triggers handoff generation so session state survives compaction events
-**Plans**: TBD
+**Plans**: 5 plans
 
 Plans:
-- [ ] 12-01: TBD
-- [ ] 12-02: TBD
+- [ ] 12-01-PLAN.md -- Convention enforcement core: types, VERIFIED rule filter, pre-commit check with severity mapping
+- [ ] 12-02-PLAN.md -- Session continuity core: types, handoff generator, handoff parser, session cleanup
+- [ ] 12-03-PLAN.md -- Hook installation/uninstallation CLIs, shell wrapper script, tsdown build wiring
+- [ ] 12-04-PLAN.md -- PreCompact and SessionStart Claude Code hooks, lightweight handoff builder, hooks.json registration
+- [ ] 12-05-PLAN.md -- Pause/resume skills, orient --resume flag, plugin manifest update
 
 ### Phase 13: Pipeline Evolution
 **Goal**: The orient/execute pipeline self-monitors with per-task qualification, classifies failures by root cause, and detects scope drift -- producing higher autonomous execution reliability
@@ -170,7 +173,7 @@ Phases execute in numeric order: 9 > 10 > 11 > 12 > 13 > 14 > 15
 | 9. Graph Foundation + Debt Tracking | v2.0 | 3/3 | Complete | 2026-03-28 |
 | 10. Auto-Injection | v2.0 | 2/2 | Complete    | 2026-03-28 |
 | 11. PR Review + Impact Prediction | v2.0 | 3/3 | Complete    | 2026-03-28 |
-| 12. Convention Enforcement + Session Continuity | v2.0 | 0/0 | Not started | - |
+| 12. Convention Enforcement + Session Continuity | v2.0 | 0/5 | Planned | - |
 | 13. Pipeline Evolution | v2.0 | 0/0 | Not started | - |
 | 14. Visualization Dashboard | v2.0 | 0/0 | Not started | - |
 | 15. Distribution | v2.0 | 0/0 | Not started | - |
