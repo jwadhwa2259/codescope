@@ -11,8 +11,8 @@ Requirements for v2.0 Intelligence Layer + Interactive Dashboard. Each maps to r
 
 - [ ] **GRAPH-01**: Graph detects stale data via file hash comparison on every MCP tool call and triggers incremental reparse automatically
 - [ ] **GRAPH-02**: Incremental delta reparse updates only changed files' nodes/edges in <2s without full re-bootstrap
-- [ ] **GRAPH-03**: Schema migration adds ON DELETE CASCADE to edges table preventing dangling references
-- [ ] **GRAPH-04**: SQLite busy_timeout pragma (5000ms) enables safe concurrent access between MCP server and dashboard
+- [x] **GRAPH-03**: Schema migration adds ON DELETE CASCADE to edges table preventing dangling references
+- [x] **GRAPH-04**: SQLite busy_timeout pragma (5000ms) enables safe concurrent access between MCP server and dashboard
 
 ### Auto-Injection
 
@@ -116,8 +116,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | GRAPH-01 | Phase 9 | Pending |
 | GRAPH-02 | Phase 9 | Pending |
-| GRAPH-03 | Phase 9 | Pending |
-| GRAPH-04 | Phase 9 | Pending |
+| GRAPH-03 | Phase 9 | Complete |
+| GRAPH-04 | Phase 9 | Complete |
 | INJECT-01 | Phase 10 | Pending |
 | INJECT-02 | Phase 10 | Pending |
 | INJECT-03 | Phase 10 | Pending |
