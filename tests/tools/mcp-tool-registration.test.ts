@@ -9,7 +9,7 @@ import { registerTools } from "../../src/tools/index.js";
  * Uses a spy on McpServer.prototype.tool to count and name registrations.
  */
 describe("MCP-01: All MCP tools are registered", () => {
-  it("registerTools registers exactly 12 distinct tool names on the server", () => {
+  it("registerTools registers exactly 13 distinct tool names on the server", () => {
     const server = new McpServer({ name: "codescope", version: "0.1.0" });
     const toolSpy = vi.spyOn(server, "tool");
 
@@ -21,10 +21,10 @@ describe("MCP-01: All MCP tools are registered", () => {
       (call) => call[0] as string,
     );
 
-    // All 12 CodeScope MCP tools (Phase 3 + Phase 6)
-    expect(registeredNames.length).toBe(12);
+    // All 13 CodeScope MCP tools (Phase 3 + Phase 6 + Phase 9)
+    expect(registeredNames.length).toBe(13);
 
-    // Verify all 12 required tools are present
+    // Verify all 13 required tools are present
     const requiredTools = [
       "codescope_status",         // MCP-10
       "codescope_recall",         // MCP-02
@@ -38,6 +38,7 @@ describe("MCP-01: All MCP tools are registered", () => {
       "codescope_detect_changes", // MCP-11
       "codescope_service_map",    // MCP-12
       "codescope_eval",           // EVAL-01
+      "codescope_trends",         // DEBT-01
     ];
 
     for (const toolName of requiredTools) {
