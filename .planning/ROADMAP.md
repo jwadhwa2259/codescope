@@ -53,7 +53,7 @@ v2.0 transforms CodeScope from a one-time analysis tool into an always-on intell
 
 Plans:
 - [x] 09-01-PLAN.md -- Schema migration system (v1-to-v2, CASCADE, busy_timeout, file_hashes, readiness_history tables)
-- [ ] 09-02-PLAN.md -- File hashing, staleness detection, incremental reparse engine, staleness-aware cache
+- [x] 09-02-PLAN.md -- File hashing, staleness detection, incremental reparse engine, staleness-aware cache
 - [ ] 09-03-PLAN.md -- Readiness snapshot storage, codescope_trends MCP tool with period comparisons
 
 ### Phase 10: Auto-Injection
