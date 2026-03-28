@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Layer + Interactive Dashboard
 status: executing
-stopped_at: Completed Wave 2 (12-03, 12-04)
-last_updated: "2026-03-28T17:41:44.616Z"
+stopped_at: Completed 12-05-PLAN.md
+last_updated: "2026-03-28T17:50:19.724Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 13
-  completed_plans: 12
+  completed_plans: 13
   percent: 50
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 ## Current Position
 
 Phase: 12 (convention-enforcement-session-continuity) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-03-28
 
@@ -64,6 +64,7 @@ Progress: [#####░░░░░] 50%
 | Phase 12 P02 | 4min | 2 tasks | 7 files |
 | Phase 12 P03 | 3min | 2 tasks | 4 files |
 | Phase 12 P04 | 4min | 2 tasks | 8 files |
+| Phase 12 P05 | 4min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,9 @@ All v1.0 decisions validated -- see PROJECT.md for outcomes.
 - [Phase 12]: Duplicated handoff logic in hooks/lib/handoff-builder.ts for build isolation -- hooks cannot import from src/session/
 - [Phase 12]: Staleness check uses execSync git log with 3-day threshold and >5 commit minimum for handoff freshness
 - [Phase 12]: tsdown.config.ts sole ownership by Plan 04 consolidates all 9 entry points (hooks, enforcement, session modules)
+- [Phase 12]: Skills invoke dist/ modules (not tsx/esm) for production use -- avoids devDependency issues
+- [Phase 12]: Orient --resume outputs JSON resume point; skill body decides which phase to call next
+- [Phase 12]: Guard main() with process.argv[1] check to prevent auto-execution on test import
 
 ### Pending Todos
 
@@ -115,6 +119,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T17:41:44.614Z
-Stopped at: Completed Wave 2 (12-03, 12-04)
+Last session: 2026-03-28T17:50:19.722Z
+Stopped at: Completed 12-05-PLAN.md
 Resume file: None

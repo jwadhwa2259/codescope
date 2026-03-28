@@ -32,7 +32,7 @@ v2.0 transforms CodeScope from a one-time analysis tool into an always-on intell
 - [ ] **Phase 9: Graph Foundation + Debt Tracking** - Always-fresh incremental graph with staleness detection, delta reparse, and readiness history
 - [x] **Phase 10: Auto-Injection** - Invisible codebase context injected on every file edit via Claude Code hooks (completed 2026-03-28)
 - [x] **Phase 11: PR Review + Impact Prediction** - Structural impact analysis for PRs and pre-change blast radius prediction (completed 2026-03-28)
-- [ ] **Phase 12: Convention Enforcement + Session Continuity** - Opt-in pre-commit convention blocking and pause/resume workflow
+- [x] **Phase 12: Convention Enforcement + Session Continuity** - Opt-in pre-commit convention blocking and pause/resume workflow (completed 2026-03-28)
 - [ ] **Phase 13: Pipeline Evolution** - Per-task qualification, diagnostic failure routing, and plan-vs-actual reconciliation
 - [ ] **Phase 14: Visualization Dashboard** - Interactive sigma.js graph explorer, convention heatmap, readiness trends, and command center
 - [ ] **Phase 15: Distribution** - npx codescope install experience and npm package for marketplace launch
@@ -105,7 +105,7 @@ Plans:
 - [x] 12-02-PLAN.md -- Session continuity core: types, handoff generator, handoff parser, session cleanup
 - [x] 12-03-PLAN.md -- Hook installation/uninstallation CLIs, shell wrapper script, tsdown build wiring
 - [x] 12-04-PLAN.md -- PreCompact and SessionStart Claude Code hooks, lightweight handoff builder, hooks.json registration
-- [ ] 12-05-PLAN.md -- Pause/resume skills, orient --resume flag, plugin manifest update
+- [x] 12-05-PLAN.md -- Pause/resume skills, orient --resume flag, plugin manifest update
 
 ### Phase 13: Pipeline Evolution
 **Goal**: The orient/execute pipeline self-monitors with per-task qualification, classifies failures by root cause, and detects scope drift -- producing higher autonomous execution reliability
@@ -173,7 +173,7 @@ Phases execute in numeric order: 9 > 10 > 11 > 12 > 13 > 14 > 15
 | 9. Graph Foundation + Debt Tracking | v2.0 | 3/3 | Complete | 2026-03-28 |
 | 10. Auto-Injection | v2.0 | 2/2 | Complete    | 2026-03-28 |
 | 11. PR Review + Impact Prediction | v2.0 | 3/3 | Complete    | 2026-03-28 |
-| 12. Convention Enforcement + Session Continuity | v2.0 | 4/5 | In Progress|  |
+| 12. Convention Enforcement + Session Continuity | v2.0 | 5/5 | Complete   | 2026-03-28 |
 | 13. Pipeline Evolution | v2.0 | 0/0 | Not started | - |
 | 14. Visualization Dashboard | v2.0 | 0/0 | Not started | - |
 | 15. Distribution | v2.0 | 0/0 | Not started | - |
