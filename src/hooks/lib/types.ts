@@ -88,3 +88,39 @@ export interface BlastRadiusIndex {
   generated: string;
   files: Record<string, BlastRadiusFileEntry>;
 }
+
+// ---- PreCompact / SessionStart Hook Types ----
+
+/** PreCompact hook input (received on stdin as JSON). */
+export interface PreCompactInput {
+  session_id: string;
+  transcript_path: string;
+  cwd: string;
+  hook_event_name: "PreCompact";
+  matcher_value: string; // "manual" | "auto"
+}
+
+/** PreCompact hook output (written to stdout as JSON). */
+export interface PreCompactOutput {
+  hookSpecificOutput: {
+    hookEventName: "PreCompact";
+    additionalContext?: string;
+  };
+}
+
+/** SessionStart hook input (received on stdin as JSON). */
+export interface SessionStartInput {
+  session_id: string;
+  transcript_path: string;
+  cwd: string;
+  hook_event_name: "SessionStart";
+  matcher_value: string; // "resume" | "compact" | "startup" | "clear"
+}
+
+/** SessionStart hook output (written to stdout as JSON). */
+export interface SessionStartOutput {
+  hookSpecificOutput: {
+    hookEventName: "SessionStart";
+    additionalContext?: string;
+  };
+}
