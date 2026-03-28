@@ -45,8 +45,8 @@ Requirements for v2.0 Intelligence Layer + Interactive Dashboard. Each maps to r
 
 ### Impact Prediction
 
-- [ ] **IMPACT-01**: `codescope_predict_impact` MCP tool accepts file paths or natural language description and returns pre-change blast radius with risk assessment
-- [ ] **IMPACT-02**: Reverse dependency query walks import edges backward to find all callers/importers up to N hops
+- [x] **IMPACT-01**: `codescope_predict_impact` MCP tool accepts file paths or natural language description and returns pre-change blast radius with risk assessment
+- [x] **IMPACT-02**: Reverse dependency query walks import edges backward to find all callers/importers up to N hops
 
 ### Convention Enforcement
 
@@ -135,8 +135,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REVIEW-02 | Phase 11 | Pending |
 | REVIEW-03 | Phase 11 | Pending |
 | REVIEW-04 | Phase 11 | Pending |
-| IMPACT-01 | Phase 11 | Pending |
-| IMPACT-02 | Phase 11 | Pending |
+| IMPACT-01 | Phase 11 | Complete |
+| IMPACT-02 | Phase 11 | Complete |
 | ENFORCE-01 | Phase 12 | Pending |
 | ENFORCE-02 | Phase 12 | Pending |
 | ENFORCE-03 | Phase 12 | Pending |
