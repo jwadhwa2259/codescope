@@ -38,9 +38,9 @@ Requirements for v2.0 Intelligence Layer + Interactive Dashboard. Each maps to r
 
 ### PR Review
 
-- [ ] **REVIEW-01**: `codescope_review` MCP tool accepts git diff/branch and returns structural impact analysis with risk scores per file
-- [ ] **REVIEW-02**: Review detects new dependency edges, circular dependencies, and cross-community changes in the diff
-- [ ] **REVIEW-03**: Review runs convention compliance on changed files and flags violations with evidence
+- [x] **REVIEW-01**: `codescope_review` MCP tool accepts git diff/branch and returns structural impact analysis with risk scores per file
+- [x] **REVIEW-02**: Review detects new dependency edges, circular dependencies, and cross-community changes in the diff
+- [x] **REVIEW-03**: Review runs convention compliance on changed files and flags violations with evidence
 - [ ] **REVIEW-04**: `/codescope:review` skill accepts branch name, PR number (via gh), or defaults to working tree diff
 
 ### Impact Prediction
@@ -131,9 +131,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SESS-02 | Phase 12 | Pending |
 | SESS-03 | Phase 12 | Pending |
 | SESS-04 | Phase 12 | Pending |
-| REVIEW-01 | Phase 11 | Pending |
-| REVIEW-02 | Phase 11 | Pending |
-| REVIEW-03 | Phase 11 | Pending |
+| REVIEW-01 | Phase 11 | Complete |
+| REVIEW-02 | Phase 11 | Complete |
+| REVIEW-03 | Phase 11 | Complete |
 | REVIEW-04 | Phase 11 | Pending |
 | IMPACT-01 | Phase 11 | Complete |
 | IMPACT-02 | Phase 11 | Complete |
