@@ -21,10 +21,10 @@ describe("MCP-01: All MCP tools are registered", () => {
       (call) => call[0] as string,
     );
 
-    // All 14 CodeScope MCP tools (Phase 3 + Phase 6 + Phase 9 + Phase 11)
-    expect(registeredNames.length).toBe(14);
+    // All 15 CodeScope MCP tools (Phase 3 + Phase 6 + Phase 9 + Phase 11)
+    expect(registeredNames.length).toBe(15);
 
-    // Verify all 14 required tools are present
+    // Verify all 15 required tools are present
     const requiredTools = [
       "codescope_status",          // MCP-10
       "codescope_recall",          // MCP-02
@@ -40,6 +40,7 @@ describe("MCP-01: All MCP tools are registered", () => {
       "codescope_eval",            // EVAL-01
       "codescope_trends",          // DEBT-01
       "codescope_predict_impact",  // IMPACT-01
+      "codescope_review",          // REVIEW-01
     ];
 
     for (const toolName of requiredTools) {

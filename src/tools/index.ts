@@ -13,9 +13,10 @@ import { registerServiceMapTool } from "./service-map.js";
 import { registerEvalTool } from "./eval.js";
 import { registerTrendsTool } from "./trends-tool.js";
 import { registerPredictImpactTool } from "./impact-prediction.js";
+import { registerReviewTool } from "./review.js";
 
 /**
- * Register all 14 CodeScope MCP tools on the server.
+ * Register all 15 CodeScope MCP tools on the server.
  *
  * Each tool handler checks isBootstrapped() internally and returns
  * NOT_BOOTSTRAPPED error if no data exists. No stubs needed.
@@ -35,6 +36,7 @@ import { registerPredictImpactTool } from "./impact-prediction.js";
  * 12. codescope_eval            - Evaluate code changes against criteria (Phase 6)
  * 13. codescope_trends          - Readiness trend data with period comparisons (Phase 9)
  * 14. codescope_predict_impact  - Reverse blast radius impact prediction (Phase 11)
+ * 15. codescope_review         - Structural impact analysis for PRs and changes (Phase 11)
  */
 export function registerTools(
   server: McpServer,
@@ -57,4 +59,5 @@ export function registerTools(
   registerEvalTool(server, projectRoot);
   registerTrendsTool(server, projectRoot);
   registerPredictImpactTool(server, projectRoot);
+  registerReviewTool(server, projectRoot);
 }
