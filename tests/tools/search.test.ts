@@ -95,7 +95,7 @@ describe("codescope_search (src/tools/search.ts)", () => {
 
     // Default: bootstrapped and graph available
     isBootstrapped.mockReturnValue(true);
-    getGraph.mockReturnValue({
+    getGraph.mockResolvedValue({
       graph: testGraph,
       centralities: new Map([
         ["1", 0.0],
@@ -224,7 +224,7 @@ describe("codescope_search (src/tools/search.ts)", () => {
       largeCentralities.set(String(i), i / 60);
     }
 
-    getGraph.mockReturnValue({
+    getGraph.mockResolvedValue({
       graph: largeGraph,
       centralities: largeCentralities,
       loadedAt: Date.now(),

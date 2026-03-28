@@ -302,7 +302,7 @@ export async function runStaticVerify(
 
   // ---- Step 2: Blast radius diff (timed) ----
   const blastRadiusStart = Date.now();
-  const blastRadiusDiff = computeBlastRadiusDiff(
+  const blastRadiusDiff = await computeBlastRadiusDiff(
     projectRoot,
     planPath,
     scopeContractPath,

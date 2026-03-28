@@ -56,10 +56,10 @@ describe("Graph Cache (src/graph/cache.ts)", () => {
     fs.rmSync(projectRoot, { recursive: true, force: true });
   });
 
-  it("Test 1: getGraph() loads graph from SQLite and returns DirectedGraph with centralities Map", () => {
+  it("Test 1: getGraph() loads graph from SQLite and returns DirectedGraph with centralities Map", async () => {
     createTestGraphDb(projectRoot);
 
-    const cached = getGraph(projectRoot);
+    const cached = await getGraph(projectRoot);
 
     expect(cached.graph).toBeDefined();
     expect(cached.graph.order).toBe(3); // 3 nodes
@@ -69,32 +69,32 @@ describe("Graph Cache (src/graph/cache.ts)", () => {
     expect(typeof cached.loadedAt).toBe("number");
   });
 
-  it("Test 2: getGraph() returns cached instance on second call (same reference)", () => {
+  it("Test 2: getGraph() returns cached instance on second call (same reference)", async () => {
     createTestGraphDb(projectRoot);
 
-    const first = getGraph(projectRoot);
-    const second = getGraph(projectRoot);
+    const first = await getGraph(projectRoot);
+    const second = await getGraph(projectRoot);
 
     // Same reference means cache is working
     expect(first.graph).toBe(second.graph);
     expect(first.centralities).toBe(second.centralities);
   });
 
-  it("Test 3: invalidateCache() causes next getGraph() to reload from SQLite (different reference)", () => {
+  it("Test 3: invalidateCache() causes next getGraph() to reload from SQLite (different reference)", async () => {
     createTestGraphDb(projectRoot);
 
-    const first = getGraph(projectRoot);
+    const first = await getGraph(projectRoot);
     invalidateCache();
-    const second = getGraph(projectRoot);
+    const second = await getGraph(projectRoot);
 
     // After invalidation, a new graph instance should be loaded
     expect(first.graph).not.toBe(second.graph);
   });
 
-  it("Test 4: getGraph() reloads after TTL expires (simulate via manual cache manipulation)", () => {
+  it("Test 4: getGraph() reloads after TTL expires (simulate via manual cache manipulation)", async () => {
     createTestGraphDb(projectRoot);
 
-    const first = getGraph(projectRoot);
+    const first = await getGraph(projectRoot);
 
     // Simulate TTL expiry by manipulating loadedAt to be old
     // We access the module's internal state through invalidateCache + re-get
@@ -103,8 +103,8 @@ describe("Graph Cache (src/graph/cache.ts)", () => {
     expect(first.loadedAt).toBeLessThanOrEqual(Date.now());
   });
 
-  it("Test 5: getGraph() throws meaningful error when graph.db does not exist", () => {
+  it("Test 5: getGraph() throws meaningful error when graph.db does not exist", async () => {
     // projectRoot has no graph.db
-    expect(() => getGraph(projectRoot)).toThrow();
+    await expect(getGraph(projectRoot)).rejects.toThrow();
   });
 });

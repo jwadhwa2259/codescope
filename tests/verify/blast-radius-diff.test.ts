@@ -111,10 +111,10 @@ describe("computeBlastRadiusDiff", () => {
     vi.clearAllMocks();
   });
 
-  it("Test 1: returns empty surprises/skips/scopeDrift when predicted equals actual", () => {
+  it("Test 1: returns empty surprises/skips/scopeDrift when predicted equals actual", async () => {
     const predictedFiles = ["src/a.ts", "src/b.ts"];
     vi.mocked(readPlanFromDisk).mockReturnValue(mockPlan([predictedFiles]));
-    vi.mocked(getGraph).mockReturnValue({
+    vi.mocked(getGraph).mockResolvedValue({
       graph: buildMockGraph(
         predictedFiles.map((f) => ({ id: f, filePath: f })),
         [],
@@ -131,7 +131,7 @@ describe("computeBlastRadiusDiff", () => {
       return "";
     }) as typeof fs.readFileSync);
 
-    const result = computeBlastRadiusDiff(
+    const result = await computeBlastRadiusDiff(
       "/project",
       "/project/plan.json",
       "/project/scope-contract.json",
@@ -144,7 +144,7 @@ describe("computeBlastRadiusDiff", () => {
     expect(result.timing_ms).toBeGreaterThanOrEqual(0);
   });
 
-  it("Test 2: identifies surprise files (in actual but not in predicted) with correct severity based on hop distance", () => {
+  it("Test 2: identifies surprise files (in actual but not in predicted) with correct severity based on hop distance", async () => {
     const predictedFiles = ["src/a.ts"];
     const changedFiles = ["src/a.ts", "src/b.ts"]; // b.ts is surprise
 
@@ -158,7 +158,7 @@ describe("computeBlastRadiusDiff", () => {
       ],
       [["src/a.ts", "src/b.ts"]],
     );
-    vi.mocked(getGraph).mockReturnValue({
+    vi.mocked(getGraph).mockResolvedValue({
       graph,
       centralities: new Map(),
       loadedAt: Date.now(),
@@ -171,7 +171,7 @@ describe("computeBlastRadiusDiff", () => {
       return "";
     }) as typeof fs.readFileSync);
 
-    const result = computeBlastRadiusDiff(
+    const result = await computeBlastRadiusDiff(
       "/project",
       "/project/plan.json",
       "/project/scope-contract.json",
@@ -183,7 +183,7 @@ describe("computeBlastRadiusDiff", () => {
     expect(result.surprises[0].minHopDistance).toBe(1);
   });
 
-  it("Test 3: surprise files with hop distance 1-2 get severity WARN, hop 3+ or unconnected get severity ERROR (per D-08)", () => {
+  it("Test 3: surprise files with hop distance 1-2 get severity WARN, hop 3+ or unconnected get severity ERROR (per D-08)", async () => {
     const predictedFiles = ["src/a.ts"];
     // b is 1 hop, c is 2 hops, d is 3 hops, e is unconnected
     const changedFiles = ["src/a.ts", "src/b.ts", "src/c.ts", "src/d.ts", "src/e.ts"];
@@ -205,7 +205,7 @@ describe("computeBlastRadiusDiff", () => {
         ["src/c.ts", "src/d.ts"],
       ],
     );
-    vi.mocked(getGraph).mockReturnValue({
+    vi.mocked(getGraph).mockResolvedValue({
       graph,
       centralities: new Map(),
       loadedAt: Date.now(),
@@ -218,7 +218,7 @@ describe("computeBlastRadiusDiff", () => {
       return "";
     }) as typeof fs.readFileSync);
 
-    const result = computeBlastRadiusDiff(
+    const result = await computeBlastRadiusDiff(
       "/project",
       "/project/plan.json",
       "/project/scope-contract.json",
@@ -237,12 +237,12 @@ describe("computeBlastRadiusDiff", () => {
     expect(eSurprise?.minHopDistance).toBe(-1);
   });
 
-  it("Test 4: identifies skip files (in predicted but not in actual) as INFO severity (per D-09)", () => {
+  it("Test 4: identifies skip files (in predicted but not in actual) as INFO severity (per D-09)", async () => {
     const predictedFiles = ["src/a.ts", "src/b.ts", "src/c.ts"];
     const changedFiles = ["src/a.ts"]; // b.ts and c.ts are skips
 
     vi.mocked(readPlanFromDisk).mockReturnValue(mockPlan([predictedFiles]));
-    vi.mocked(getGraph).mockReturnValue({
+    vi.mocked(getGraph).mockResolvedValue({
       graph: buildMockGraph(
         predictedFiles.map((f) => ({ id: f, filePath: f })),
         [],
@@ -258,7 +258,7 @@ describe("computeBlastRadiusDiff", () => {
       return "";
     }) as typeof fs.readFileSync);
 
-    const result = computeBlastRadiusDiff(
+    const result = await computeBlastRadiusDiff(
       "/project",
       "/project/plan.json",
       "/project/scope-contract.json",
@@ -275,12 +275,12 @@ describe("computeBlastRadiusDiff", () => {
     expect(skipPaths).toContain("src/c.ts");
   });
 
-  it("Test 5: detects scope drift when files are modified that are not in the scope contract affectedFiles (per D-10)", () => {
+  it("Test 5: detects scope drift when files are modified that are not in the scope contract affectedFiles (per D-10)", async () => {
     const predictedFiles = ["src/a.ts"];
     const changedFiles = ["src/a.ts", "src/x.ts"]; // x.ts not in scope contract
 
     vi.mocked(readPlanFromDisk).mockReturnValue(mockPlan([predictedFiles]));
-    vi.mocked(getGraph).mockReturnValue({
+    vi.mocked(getGraph).mockResolvedValue({
       graph: buildMockGraph(
         [
           { id: "src/a.ts", filePath: "src/a.ts" },
@@ -300,7 +300,7 @@ describe("computeBlastRadiusDiff", () => {
       return "";
     }) as typeof fs.readFileSync);
 
-    const result = computeBlastRadiusDiff(
+    const result = await computeBlastRadiusDiff(
       "/project",
       "/project/plan.json",
       "/project/scope-contract.json",
@@ -310,14 +310,14 @@ describe("computeBlastRadiusDiff", () => {
     expect(result.scopeDrift).toContain("src/x.ts");
   });
 
-  it("Test 6: handles case where graph has no node for a file (unconnected = ERROR severity)", () => {
+  it("Test 6: handles case where graph has no node for a file (unconnected = ERROR severity)", async () => {
     const predictedFiles = ["src/a.ts"];
     const changedFiles = ["src/a.ts", "src/unknown.ts"]; // unknown.ts not in graph
 
     vi.mocked(readPlanFromDisk).mockReturnValue(mockPlan([predictedFiles]));
 
     // Graph only contains a.ts -- unknown.ts not in graph
-    vi.mocked(getGraph).mockReturnValue({
+    vi.mocked(getGraph).mockResolvedValue({
       graph: buildMockGraph([{ id: "src/a.ts", filePath: "src/a.ts" }], []),
       centralities: new Map(),
       loadedAt: Date.now(),
@@ -330,7 +330,7 @@ describe("computeBlastRadiusDiff", () => {
       return "";
     }) as typeof fs.readFileSync);
 
-    const result = computeBlastRadiusDiff(
+    const result = await computeBlastRadiusDiff(
       "/project",
       "/project/plan.json",
       "/project/scope-contract.json",
@@ -343,9 +343,9 @@ describe("computeBlastRadiusDiff", () => {
     expect(unknownSurprise!.severity).toBe("ERROR");
   });
 
-  it("Test 7: handles empty git diff (no changed files) gracefully", () => {
+  it("Test 7: handles empty git diff (no changed files) gracefully", async () => {
     vi.mocked(readPlanFromDisk).mockReturnValue(mockPlan([["src/a.ts"]]));
-    vi.mocked(getGraph).mockReturnValue({
+    vi.mocked(getGraph).mockResolvedValue({
       graph: buildMockGraph([{ id: "src/a.ts", filePath: "src/a.ts" }], []),
       centralities: new Map(),
       loadedAt: Date.now(),
@@ -358,7 +358,7 @@ describe("computeBlastRadiusDiff", () => {
       return "";
     }) as typeof fs.readFileSync);
 
-    const result = computeBlastRadiusDiff(
+    const result = await computeBlastRadiusDiff(
       "/project",
       "/project/plan.json",
       "/project/scope-contract.json",
@@ -372,9 +372,9 @@ describe("computeBlastRadiusDiff", () => {
     expect(result.timing_ms).toBeGreaterThanOrEqual(0);
   });
 
-  it("Test 8: handles empty plan (no predicted files) gracefully", () => {
+  it("Test 8: handles empty plan (no predicted files) gracefully", async () => {
     vi.mocked(readPlanFromDisk).mockReturnValue(mockPlan([[]])); // no exclusive write files
-    vi.mocked(getGraph).mockReturnValue({
+    vi.mocked(getGraph).mockResolvedValue({
       graph: buildMockGraph(
         [
           { id: "src/a.ts", filePath: "src/a.ts" },
@@ -393,7 +393,7 @@ describe("computeBlastRadiusDiff", () => {
       return "";
     }) as typeof fs.readFileSync);
 
-    const result = computeBlastRadiusDiff(
+    const result = await computeBlastRadiusDiff(
       "/project",
       "/project/plan.json",
       "/project/scope-contract.json",

@@ -75,11 +75,11 @@ export function extractKeywordsFromTask(task: string): string[] {
  * - MEDIUM: communitiesSpanned > 1 OR dangerZonesInScope > 0
  * - LOW: otherwise
  */
-export function assessAmbiguity(
+export async function assessAmbiguity(
   projectRoot: string,
   keywords: string[],
-): AmbiguityAssessment {
-  const { graph, centralities } = getGraph(projectRoot);
+): Promise<AmbiguityAssessment> {
+  const { graph, centralities } = await getGraph(projectRoot);
   const reasons: string[] = [];
 
   // Count keyword matches in graph nodes
@@ -407,7 +407,7 @@ export async function runClarification(
 
   // Extract keywords and assess ambiguity
   const keywords = extractKeywordsFromTask(options.task);
-  const assessment = assessAmbiguity(options.projectRoot, keywords);
+  const assessment = await assessAmbiguity(options.projectRoot, keywords);
 
   // Determine whether to generate questions based on style and ambiguity level
   let needsClarification = false;
@@ -435,7 +435,7 @@ export async function runClarification(
   // Generate questions if needed
   if (needsClarification) {
     // Build a quick list of affected files for question generation context
-    const { graph, centralities } = getGraph(options.projectRoot);
+    const { graph, centralities } = await getGraph(options.projectRoot);
     const affectedFiles: AffectedFile[] = [];
 
     graph.forEachNode((_nodeId: string, attrs: Record<string, unknown>) => {

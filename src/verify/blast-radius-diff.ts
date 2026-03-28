@@ -23,12 +23,12 @@ import type { ScopeContract } from "../orient/types.js";
  * @param changedFiles - List of files actually changed (from git diff)
  * @returns BlastRadiusDiffResult with surprises, skips, scope drift, and timing
  */
-export function computeBlastRadiusDiff(
+export async function computeBlastRadiusDiff(
   projectRoot: string,
   planPath: string,
   scopeContractPath: string,
   changedFiles: string[],
-): BlastRadiusDiffResult {
+): Promise<BlastRadiusDiffResult> {
   const startMs = Date.now();
 
   // Step 1: Read plan and extract predicted files from all agents' exclusiveWriteFiles
@@ -47,7 +47,7 @@ export function computeBlastRadiusDiff(
   const surprises: SurpriseFile[] = [];
 
   if (surpriseFilePaths.length > 0) {
-    const { graph } = getGraph(projectRoot);
+    const { graph } = await getGraph(projectRoot);
 
     // Build a lookup: filePath -> nodeId for the graph
     const filePathToNodeId = new Map<string, string>();

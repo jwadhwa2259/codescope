@@ -109,7 +109,7 @@ describe("codescope_blast_radius (src/tools/blast-radius.ts)", () => {
 
     // Default: bootstrapped and graph available
     isBootstrapped.mockReturnValue(true);
-    getGraph.mockReturnValue({
+    getGraph.mockResolvedValue({
       graph: testGraph,
       centralities: new Map([
         ["1", 0.0],
@@ -213,7 +213,7 @@ describe("codescope_blast_radius (src/tools/blast-radius.ts)", () => {
       loc: 10,
     });
 
-    getGraph.mockReturnValue({
+    getGraph.mockResolvedValue({
       graph: isolatedGraph,
       centralities: new Map([["1", 0.0]]),
       loadedAt: Date.now(),

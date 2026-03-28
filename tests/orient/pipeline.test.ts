@@ -34,7 +34,7 @@ vi.mock("../../src/graph/cache.js", () => {
   }
 
   return {
-    getGraph: vi.fn(() => buildMockGraph()),
+    getGraph: vi.fn(async () => buildMockGraph()),
     invalidateCache: vi.fn(),
   };
 });

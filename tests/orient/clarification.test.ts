@@ -65,7 +65,7 @@ vi.mock("../../src/graph/cache.js", () => {
   }
 
   return {
-    getGraph: vi.fn(() => {
+    getGraph: vi.fn(async () => {
       const mock = buildMockGraph();
       return {
         graph: mock.graph,
@@ -135,40 +135,40 @@ describe("assessAmbiguity", () => {
     assessAmbiguity = mod.assessAmbiguity;
   });
 
-  it("returns HIGH when matchedNodes < 3", () => {
+  it("returns HIGH when matchedNodes < 3", async () => {
     // "xyz" matches nothing -> matchedNodes = 0 < 3 -> HIGH
-    const result = assessAmbiguity("/tmp/project", ["xyz", "nonexistent"]);
+    const result = await assessAmbiguity("/tmp/project", ["xyz", "nonexistent"]);
     expect(result.level).toBe("HIGH");
     expect(result.matchedNodes).toBeLessThan(3);
   });
 
-  it("returns HIGH when communitiesSpanned > 3", () => {
+  it("returns HIGH when communitiesSpanned > 3", async () => {
     // "ts" matches nodes in communities 0, 1, 2, 3, 4 -> > 3 -> HIGH
-    const result = assessAmbiguity("/tmp/project", ["ts"]);
+    const result = await assessAmbiguity("/tmp/project", ["ts"]);
     expect(result.level).toBe("HIGH");
     expect(result.communitiesSpanned).toBeGreaterThan(3);
   });
 
-  it("returns HIGH when dangerZonesInScope > 2", () => {
+  it("returns HIGH when dangerZonesInScope > 2", async () => {
     // Mock returns 3 danger zones: database.ts, auth.ts, payment.ts
     // "ts" matches all three filePaths -> dangerZonesInScope = 3 > 2 -> HIGH
-    const result = assessAmbiguity("/tmp/project", ["ts"]);
+    const result = await assessAmbiguity("/tmp/project", ["ts"]);
     expect(result.level).toBe("HIGH");
     // At least one HIGH condition met
   });
 
-  it("returns MEDIUM when communitiesSpanned > 1 and dangerZonesInScope > 0 but below HIGH thresholds", () => {
+  it("returns MEDIUM when communitiesSpanned > 1 and dangerZonesInScope > 0 but below HIGH thresholds", async () => {
     // "auth" matches nodes in community 0 (auth.ts, user.ts, login)
     // also matches danger zone "src/auth.ts"
     // matchedNodes >= 3, communitiesSpanned = 1, dangerZonesInScope = 1
     // communitiesSpanned <= 1 but dangerZonesInScope > 0 -> MEDIUM
-    const result = assessAmbiguity("/tmp/project", ["auth"]);
+    const result = await assessAmbiguity("/tmp/project", ["auth"]);
     expect(result.matchedNodes).toBeGreaterThanOrEqual(3);
     expect(result.dangerZonesInScope).toBeGreaterThan(0);
     expect(result.level).toBe("MEDIUM");
   });
 
-  it("returns LOW when matchedNodes >= 3, communitiesSpanned <= 1, dangerZonesInScope === 0", () => {
+  it("returns LOW when matchedNodes >= 3, communitiesSpanned <= 1, dangerZonesInScope === 0", async () => {
     // "migration" matches only in community 1 (migrations.ts)
     // matchedNodes = 1 < 3 -> HIGH, not LOW
     // Need a keyword that matches >= 3 nodes all in one community with no danger zones
@@ -193,7 +193,7 @@ describe("assessAmbiguity", () => {
     // We'll test the logic directly - if conditions are not met for HIGH or MEDIUM, it's LOW
     // Since our mock has limited nodes, let's verify the threshold logic works correctly
     // by checking that the function returns a valid AmbiguityAssessment structure
-    const result = assessAmbiguity("/tmp/project", ["auth"]);
+    const result = await assessAmbiguity("/tmp/project", ["auth"]);
     // auth matches auth.ts, login (filePath has auth.ts), auth.test.ts = 3+ nodes
     // dangerZonesInScope: "auth" matches "src/auth.ts" -> 1 > 0 -> MEDIUM (not LOW)
     expect(["HIGH", "MEDIUM", "LOW"]).toContain(result.level);
@@ -201,8 +201,8 @@ describe("assessAmbiguity", () => {
     expect(Array.isArray(result.reasons)).toBe(true);
   });
 
-  it("includes reasons explaining the assessment", () => {
-    const result = assessAmbiguity("/tmp/project", ["xyz"]);
+  it("includes reasons explaining the assessment", async () => {
+    const result = await assessAmbiguity("/tmp/project", ["xyz"]);
     expect(result.reasons.length).toBeGreaterThan(0);
     expect(result.reasons.some((r) => r.includes("nodes match"))).toBe(true);
   });

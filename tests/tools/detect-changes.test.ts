@@ -105,7 +105,7 @@ describe("codescope_detect_changes (src/tools/detect-changes.ts)", () => {
 
     // Default: bootstrapped and graph available
     isBootstrapped.mockReturnValue(true);
-    getGraph.mockReturnValue({
+    getGraph.mockResolvedValue({
       graph: testGraph,
       centralities: new Map([
         ["1", 0.9], // HIGH
