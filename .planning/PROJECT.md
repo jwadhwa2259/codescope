@@ -2,7 +2,7 @@
 
 ## Current State
 
-**Version:** v1.0 MVP shipped 2026-03-27 | v2.0 Phase 10 complete 2026-03-28
+**Version:** v1.0 MVP shipped 2026-03-27 | v2.0 Phase 11 complete 2026-03-28
 **Codebase:** 21,742 LOC TypeScript (source) + 20,759 LOC TypeScript (tests, 917 passing)
 **Stack:** TypeScript, web-tree-sitter WASM, ast-grep CLI, better-sqlite3, graphology, enhanced-resolve, @modelcontextprotocol/sdk, vitest
 
@@ -31,7 +31,7 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - Risk Analyzer: knowledge graph construction, centrality, communities, danger zones — v1.0
 - Learning Synthesizer: learnings.md schema initialization — v1.0
 - `/codescope:bootstrap` — full autonomous codebase analysis pipeline with monorepo squad scaling, cross-service synthesis, AI readiness scoring — v1.0
-- MCP server with 12 operational tools — v1.0 (13 tools after Phase 9: codescope_trends added)
+- MCP server with 12 operational tools — v1.0 (13 tools after Phase 9, 15 tools after Phase 11: codescope_predict_impact + codescope_review added)
 - Graph cache with 5-min TTL for sub-100ms tool queries — v1.0 (async staleness-aware cache after Phase 9)
 - MCP response contract (ok/error/partial envelopes with staleness metadata) — v1.0
 - Auto-injection artifact pipeline (danger-zones, conventions, blast-radius JSON indexes) — Phase 10
@@ -50,6 +50,9 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - Learning system — project memory with decay, contradiction detection, global memory — v1.0
 - `/codescope:review-learnings` — review and confirm/reject learnings — v1.0
 - `/codescope:settings` — interactive configuration — v1.0
+- `codescope_predict_impact` — reverse blast radius impact prediction with centrality-based risk — Phase 11
+- `codescope_review` — structural impact analysis for PRs/diffs (risk scores, dependency changes, cycle detection, convention compliance, cross-community flagging) — Phase 11
+- `/codescope:review` — user-facing review skill formatting review tool output as markdown — Phase 11
 - Verify-to-eval JSON sidecar pipeline — v1.0
 - Type consolidation (no local type copies or unsafe casts) — v1.0
 
