@@ -49,11 +49,12 @@ v2.0 transforms CodeScope from a one-time analysis tool into an always-on intell
   3. Deleting or renaming a file leaves no dangling edges or orphaned nodes in the graph
   4. Multiple processes (MCP server + future dashboard) can read/write the database without SQLITE_BUSY errors
   5. After each bootstrap or incremental update, a readiness snapshot is stored and the trends MCP tool returns period-over-period comparisons
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 09-01: TBD
-- [ ] 09-02: TBD
+- [ ] 09-01-PLAN.md -- Schema migration system (v1-to-v2, CASCADE, busy_timeout, file_hashes, readiness_history tables)
+- [ ] 09-02-PLAN.md -- File hashing, staleness detection, incremental reparse engine, staleness-aware cache
+- [ ] 09-03-PLAN.md -- Readiness snapshot storage, codescope_trends MCP tool with period comparisons
 
 ### Phase 10: Auto-Injection
 **Goal**: Claude receives relevant codebase context (conventions, blast radius, danger zones) automatically on every file edit -- invisible to the user, bounded to avoid context bloat
@@ -165,7 +166,7 @@ Phases execute in numeric order: 9 > 10 > 11 > 12 > 13 > 14 > 15
 | 6. Eval, User Gate, and Debug | v1.0 | 4/4 | Complete | 2026-03-26 |
 | 7. Learning System and Settings | v1.0 | 4/4 | Complete | 2026-03-26 |
 | 8. Tech Debt Cleanup | v1.0 | 2/2 | Complete | 2026-03-27 |
-| 9. Graph Foundation + Debt Tracking | v2.0 | 0/0 | Not started | - |
+| 9. Graph Foundation + Debt Tracking | v2.0 | 0/3 | Planning complete | - |
 | 10. Auto-Injection | v2.0 | 0/0 | Not started | - |
 | 11. PR Review + Impact Prediction | v2.0 | 0/0 | Not started | - |
 | 12. Convention Enforcement + Session Continuity | v2.0 | 0/0 | Not started | - |
