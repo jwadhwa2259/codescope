@@ -2,7 +2,7 @@
 
 ## Current State
 
-**Version:** v1.0 MVP shipped 2026-03-27 | v2.0 Phase 11 complete 2026-03-28
+**Version:** v1.0 MVP shipped 2026-03-27 | v2.0 Phase 12 complete 2026-03-28
 **Codebase:** 21,742 LOC TypeScript (source) + 20,759 LOC TypeScript (tests, 917 passing)
 **Stack:** TypeScript, web-tree-sitter WASM, ast-grep CLI, better-sqlite3, graphology, enhanced-resolve, @modelcontextprotocol/sdk, vitest
 
@@ -53,6 +53,11 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - `codescope_predict_impact` — reverse blast radius impact prediction with centrality-based risk — Phase 11
 - `codescope_review` — structural impact analysis for PRs/diffs (risk scores, dependency changes, cycle detection, convention compliance, cross-community flagging) — Phase 11
 - `/codescope:review` — user-facing review skill formatting review tool output as markdown — Phase 11
+- Convention enforcement: VERIFIED-only rule filtering, pre-commit check with configurable severity (suggest-only/warn/block), hook install/uninstall with husky detection — Phase 12
+- Session continuity: handoff generation/parsing, PreCompact/SessionStart hooks, 7-day cleanup — Phase 12
+- `/codescope:pause` — save pipeline state as structured handoff document — Phase 12
+- `/codescope:resume` — restore pipeline state with artifact validation and phase skipping — Phase 12
+- Orient `--resume` flag — artifact-based phase detection for interrupted workflows — Phase 12
 - Verify-to-eval JSON sidecar pipeline — v1.0
 - Type consolidation (no local type copies or unsafe casts) — v1.0
 
