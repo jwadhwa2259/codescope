@@ -14,6 +14,7 @@ import { loadConfig } from "../config/loader.js";
 import { getCodescopePath, getGraphDbPath } from "../utils/paths.js";
 import { storeReadinessSnapshot } from "../graph/readiness-history.js";
 import { openDatabase, closeDatabase } from "../graph/database.js";
+import { generateInjectionArtifacts } from "../artifacts/generator.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -385,6 +386,22 @@ export async function runBootstrap(
 
   // ---- Step 9: Invalidate graph cache per Pitfall 2 ----
   invalidateCache();
+
+  // ---- Step 9b: Generate injection artifacts for hooks (D-11, D-12) ----
+  try {
+    const graphDbPath = getGraphDbPath(projectRoot);
+    if (fs.existsSync(graphDbPath)) {
+      const artifactDb = openDatabase(graphDbPath);
+      try {
+        await generateInjectionArtifacts(projectRoot, artifactDb);
+      } finally {
+        closeDatabase(artifactDb);
+      }
+      progress("- [x] Injection artifacts generated");
+    }
+  } catch {
+    warnings.push("Failed to generate injection artifacts for hooks.");
+  }
 
   // ---- Step 10: Write bootstrap metadata per Pitfall 8 ----
   const durationMs = Date.now() - startMs;

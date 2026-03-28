@@ -247,4 +247,62 @@ describe("Incremental reparse engine (src/graph/incremental.ts)", () => {
     const hash = db.prepare("SELECT content_hash FROM file_hashes WHERE file_path = ?").get("src/to-remove.ts");
     expect(hash).toBeUndefined();
   });
+
+  describe("injection artifact generation after rebuild", () => {
+    it.skipIf(!grammarsExist)("regenerates injection artifact files after rebuildStaleFiles", async () => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "incr-test-"));
+      dbPath = path.join(tmpDir, ".claude", "codescope", "graph.db");
+      fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+
+      // Create a TS source file
+      const srcDir = path.join(tmpDir, "src");
+      fs.mkdirSync(srcDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(srcDir, "app.ts"),
+        `import { helper } from "./helper.js";\nexport function app() {\n  return helper();\n}\n`,
+        "utf-8",
+      );
+      fs.writeFileSync(
+        path.join(srcDir, "helper.ts"),
+        `export function helper() {\n  return "help";\n}\n`,
+        "utf-8",
+      );
+
+      db = openDatabase(dbPath);
+      createSchema(db);
+
+      // Insert initial data so the graph is non-empty
+      insertFileWithNodes(db, "src/app.ts", ["app"]);
+      insertFileWithNodes(db, "src/helper.ts", ["helper"]);
+
+      // Rebuild stale files (which triggers artifact generation internally)
+      await rebuildStaleFiles(db, ["src/app.ts"], tmpDir);
+
+      // Verify injection artifacts exist
+      const injectionDir = path.join(tmpDir, ".claude", "codescope", "injection");
+      expect(fs.existsSync(injectionDir)).toBe(true);
+
+      const dangerZonesPath = path.join(injectionDir, "danger-zones.json");
+      const conventionsPath = path.join(injectionDir, "conventions.json");
+      const blastRadiusPath = path.join(injectionDir, "blast-radius.json");
+
+      expect(fs.existsSync(dangerZonesPath)).toBe(true);
+      expect(fs.existsSync(conventionsPath)).toBe(true);
+      expect(fs.existsSync(blastRadiusPath)).toBe(true);
+
+      // Parse and verify structure
+      const dz = JSON.parse(fs.readFileSync(dangerZonesPath, "utf-8"));
+      expect(dz).toHaveProperty("generated");
+      expect(dz).toHaveProperty("files");
+      expect(typeof dz.files).toBe("object");
+
+      const conv = JSON.parse(fs.readFileSync(conventionsPath, "utf-8"));
+      expect(conv).toHaveProperty("generated");
+      expect(conv).toHaveProperty("files");
+
+      const br = JSON.parse(fs.readFileSync(blastRadiusPath, "utf-8"));
+      expect(br).toHaveProperty("generated");
+      expect(br).toHaveProperty("files");
+    });
+  });
 });

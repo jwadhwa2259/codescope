@@ -24,6 +24,7 @@ import { invalidateCache } from "./cache.js";
 import { BatchWriter, processBatchFiles } from "./batch-writer.js";
 import { createTypeScriptResolver, resolveTypeScriptImport } from "../resolver/typescript.js";
 import { resolvePythonImport } from "../resolver/python.js";
+import { generateInjectionArtifacts } from "../artifacts/generator.js";
 
 export interface RebuildResult {
   rebuilt: number;
@@ -283,6 +284,13 @@ export async function rebuildStaleFiles(
 
     // Invalidate graphology cache after all rebuilds
     invalidateCache();
+
+    // Generate fresh injection artifacts for hooks (D-11, D-12)
+    try {
+      await generateInjectionArtifacts(projectRoot, db);
+    } catch {
+      // Artifact generation failure is non-fatal for incremental rebuild
+    }
   } finally {
     pool.destroy();
 
