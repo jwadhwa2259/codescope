@@ -32,9 +32,8 @@ import { getCodescopePath, getGraphDbPath } from "../utils/paths.js";
 // Argument parsing
 // ---------------------------------------------------------------------------
 
-function parseArgs(): Record<string, string | boolean> {
+export function parseArgsExported(argv: string[]): Record<string, string | boolean> {
   const args: Record<string, string | boolean> = {};
-  const argv = process.argv.slice(2);
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -44,6 +43,8 @@ function parseArgs(): Record<string, string | boolean> {
       args.noConfirm = true;
     } else if (arg === "--no-clarify") {
       args.noClarify = true;
+    } else if (arg === "--resume" && i + 1 < argv.length) {
+      args.resume = argv[++i];
     } else if (arg.startsWith("--") && i + 1 < argv.length) {
       const key = arg.slice(2).replace(/-([a-z])/g, (_, c) => c.toUpperCase());
       args[key] = argv[++i];
@@ -51,6 +52,35 @@ function parseArgs(): Record<string, string | boolean> {
   }
 
   return args;
+}
+
+function parseArgs(): Record<string, string | boolean> {
+  return parseArgsExported(process.argv.slice(2));
+}
+
+// ---------------------------------------------------------------------------
+// Resume phase detection
+// ---------------------------------------------------------------------------
+
+export function determineResumePhase(executionDir: string): { phase: string; skipped: string[] } {
+  const phases = [
+    { name: "clarification", artifact: "clarification.json" },
+    { name: "scope-contract", artifact: "scope-contract.md" },
+    { name: "research", artifact: "research.md" },
+    { name: "analysis-and-planning", artifact: "analysis.json" },
+    { name: "execution", artifact: "coordination.md" },
+  ];
+
+  const skipped: string[] = [];
+  for (const p of phases) {
+    if (fs.existsSync(path.join(executionDir, p.artifact))) {
+      skipped.push(p.name);
+    } else {
+      return { phase: p.name, skipped };
+    }
+  }
+  // All artifacts exist -- resume at execution (may need to continue waves)
+  return { phase: "execution", skipped };
 }
 
 // ---------------------------------------------------------------------------
@@ -73,6 +103,26 @@ async function main(): Promise<void> {
   if (checkOnly) {
     const bootstrapped = fs.existsSync(getGraphDbPath(projectRoot));
     console.log(JSON.stringify({ bootstrapped }));
+    process.exit(0);
+  }
+
+  // --resume: determine resume point from existing artifacts
+  const resumeSlug = args.resume as string;
+  if (resumeSlug) {
+    const codescopePathResume = getCodescopePath(projectRoot);
+    const resumeExecDir = path.join(codescopePathResume, "execution", resumeSlug);
+    if (!fs.existsSync(resumeExecDir)) {
+      console.error(JSON.stringify({ error: `No execution state found for task: ${resumeSlug}` }));
+      process.exit(1);
+    }
+    const resumeInfo = determineResumePhase(resumeExecDir);
+    console.log(JSON.stringify({
+      status: "resuming",
+      taskSlug: resumeSlug,
+      resumeAt: resumeInfo.phase,
+      skipped: resumeInfo.skipped,
+      executionDir: resumeExecDir,
+    }));
     process.exit(0);
   }
 
@@ -321,4 +371,14 @@ async function main(): Promise<void> {
   }
 }
 
-main();
+// Guard against auto-execution when imported as a module (e.g., in tests).
+// Only run main() when this file is the CLI entry point.
+const isDirectExecution =
+  process.argv[1] &&
+  (process.argv[1].endsWith("run-orient.ts") ||
+    process.argv[1].endsWith("run-orient.js") ||
+    process.argv[1].endsWith("run-orient.mjs"));
+
+if (isDirectExecution) {
+  main();
+}
