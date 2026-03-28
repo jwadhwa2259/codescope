@@ -66,11 +66,11 @@ Plans:
   3. Injection never exceeds 500 tokens per file, with danger zones prioritized over general context
   4. Files with low centrality and no detected conventions produce zero injection overhead
   5. On a fresh project with no bootstrap data, hooks silently no-op -- no errors, no warnings, no degraded experience
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
+- [ ] 10-01-PLAN.md -- Artifact generation pipeline (JSON indexes for danger zones, conventions, blast radius) with bootstrap and incremental rebuild integration
+- [ ] 10-02-PLAN.md -- Hook scripts (PreToolUse/PostToolUse), budget-composed injection, hooks.json registration, build system wiring
 
 ### Phase 11: PR Review + Impact Prediction
 **Goal**: Users can get structural impact analysis on any PR or proposed change, with risk scores, dependency edge changes, and convention compliance -- before committing
@@ -166,8 +166,8 @@ Phases execute in numeric order: 9 > 10 > 11 > 12 > 13 > 14 > 15
 | 6. Eval, User Gate, and Debug | v1.0 | 4/4 | Complete | 2026-03-26 |
 | 7. Learning System and Settings | v1.0 | 4/4 | Complete | 2026-03-26 |
 | 8. Tech Debt Cleanup | v1.0 | 2/2 | Complete | 2026-03-27 |
-| 9. Graph Foundation + Debt Tracking | v2.0 | 0/3 | Planning complete | - |
-| 10. Auto-Injection | v2.0 | 0/0 | Not started | - |
+| 9. Graph Foundation + Debt Tracking | v2.0 | 3/3 | Complete | 2026-03-28 |
+| 10. Auto-Injection | v2.0 | 0/2 | Planning complete | - |
 | 11. PR Review + Impact Prediction | v2.0 | 0/0 | Not started | - |
 | 12. Convention Enforcement + Session Continuity | v2.0 | 0/0 | Not started | - |
 | 13. Pipeline Evolution | v2.0 | 0/0 | Not started | - |
