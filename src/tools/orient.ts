@@ -157,7 +157,7 @@ export async function handleOrient(
   // Load cached graph
   let cached;
   try {
-    cached = getGraph(projectRoot);
+    cached = await getGraph(projectRoot);
   } catch (err) {
     return errorResponse(
       "GRAPH_LOAD_FAILED",

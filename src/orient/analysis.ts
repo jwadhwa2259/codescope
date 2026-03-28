@@ -113,7 +113,7 @@ export async function runAnalysis(
   options: AnalysisOptions,
 ): Promise<AnalysisResult> {
   const startMs = Date.now();
-  const { graph, centralities } = getGraph(options.projectRoot);
+  const { graph, centralities } = await getGraph(options.projectRoot);
 
   // ---- Step 1: Affected files ----
   // Walk all graph nodes, match keywords against node name and filePath

@@ -33,7 +33,7 @@ export async function handleBlastRadius(
   }
 
   try {
-    const cached = getGraph(projectRoot);
+    const cached = await getGraph(projectRoot);
     const graph = cached.graph;
 
     // Find the file node

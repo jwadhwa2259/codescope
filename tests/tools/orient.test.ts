@@ -55,7 +55,7 @@ vi.mock("../../src/graph/cache.js", () => {
   }
 
   return {
-    getGraph: vi.fn(() => {
+    getGraph: vi.fn(async () => {
       const mock = buildMockGraph();
       return {
         graph: mock.graph,

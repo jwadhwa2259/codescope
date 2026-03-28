@@ -120,7 +120,7 @@ describe("codescope_graph_query (src/tools/graph-query.ts)", () => {
 
     // Default: bootstrapped and graph available
     isBootstrapped.mockReturnValue(true);
-    getGraph.mockReturnValue({
+    getGraph.mockResolvedValue({
       graph: testGraph,
       centralities: new Map([
         ["1", 0.0],

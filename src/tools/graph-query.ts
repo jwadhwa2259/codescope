@@ -51,7 +51,7 @@ export async function handleGraphQuery(
   }
 
   try {
-    const cached = getGraph(projectRoot);
+    const cached = await getGraph(projectRoot);
     const graph = cached.graph;
 
     // Resolve source node

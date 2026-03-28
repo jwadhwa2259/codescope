@@ -80,7 +80,7 @@ export async function handleSearch(
   }
 
   try {
-    const cached = getGraph(projectRoot);
+    const cached = await getGraph(projectRoot);
     const graph = cached.graph;
     const centralities = cached.centralities;
 

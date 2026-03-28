@@ -13,6 +13,12 @@ import {
 import { getGraph, invalidateCache } from "../../src/graph/cache.js";
 import { buildGraph } from "../../src/graph/builder.js";
 
+// Check if grammar WASM files exist (needed for tree-sitter parsing)
+const grammarDir = path.resolve("grammars");
+const grammarsExist =
+  fs.existsSync(path.join(grammarDir, "tree-sitter-typescript.wasm")) &&
+  fs.existsSync(path.join(grammarDir, "tree-sitter-javascript.wasm"));
+
 function cleanupDir(dirPath: string): void {
   try {
     if (dirPath && fs.existsSync(dirPath)) {
@@ -23,7 +29,7 @@ function cleanupDir(dirPath: string): void {
   }
 }
 
-describe("Staleness integration (end-to-end)", () => {
+describe.skipIf(!grammarsExist)("Staleness integration (end-to-end)", () => {
   let tmpDir: string;
 
   beforeEach(() => {

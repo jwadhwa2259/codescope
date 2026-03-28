@@ -41,11 +41,11 @@ export interface ResearchOptions {
  * centrality of importing file * number of files that import this library.
  * Deduplicates by library name, takes max impactScore.
  */
-export function extractResearchTopics(
+export async function extractResearchTopics(
   projectRoot: string,
   affectedFiles: AffectedFile[],
-): ResearchTopic[] {
-  const { graph, centralities } = getGraph(projectRoot);
+): Promise<ResearchTopic[]> {
+  const { graph, centralities } = await getGraph(projectRoot);
   const affectedPaths = new Set(affectedFiles.map((f) => f.filePath));
 
   // Map: library name -> { maxScore, fileCount }
@@ -491,7 +491,7 @@ export async function runResearch(
   const startMs = Date.now();
 
   // Extract topics from graph
-  const topics = extractResearchTopics(
+  const topics = await extractResearchTopics(
     options.projectRoot,
     options.analysisResult.affectedFiles,
   );

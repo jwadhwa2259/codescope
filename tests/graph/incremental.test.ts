@@ -17,6 +17,12 @@ import {
 } from "../../src/graph/incremental.js";
 import { invalidateCache } from "../../src/graph/cache.js";
 
+// Check if grammar WASM files exist (needed for tree-sitter parsing)
+const grammarDir = path.resolve("grammars");
+const grammarsExist =
+  fs.existsSync(path.join(grammarDir, "tree-sitter-typescript.wasm")) &&
+  fs.existsSync(path.join(grammarDir, "tree-sitter-javascript.wasm"));
+
 function tmpDbPath(): string {
   return path.join(os.tmpdir(), `codescope-incr-test-${crypto.randomUUID()}.db`);
 }
@@ -85,7 +91,7 @@ describe("Incremental reparse engine (src/graph/incremental.ts)", () => {
     }
   });
 
-  it("rebuildStaleFiles for a changed file deletes old nodes/edges and inserts fresh ones", async () => {
+  it.skipIf(!grammarsExist)("rebuildStaleFiles for a changed file deletes old nodes/edges and inserts fresh ones", async () => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "incr-test-"));
     dbPath = path.join(tmpDir, ".claude", "codescope", "graph.db");
     fs.mkdirSync(path.dirname(dbPath), { recursive: true });
@@ -120,7 +126,7 @@ describe("Incremental reparse engine (src/graph/incremental.ts)", () => {
     expect(newFunc).toBeDefined();
   });
 
-  it("rebuildStaleFiles preserves nodes/edges for unchanged files", async () => {
+  it.skipIf(!grammarsExist)("rebuildStaleFiles preserves nodes/edges for unchanged files", async () => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "incr-test-"));
     dbPath = path.join(tmpDir, ".claude", "codescope", "graph.db");
     fs.mkdirSync(path.dirname(dbPath), { recursive: true });
@@ -144,7 +150,7 @@ describe("Incremental reparse engine (src/graph/incremental.ts)", () => {
     expect(preserved).toBeDefined();
   });
 
-  it("rebuildStaleFiles updates the file hash in file_hashes after rebuild", async () => {
+  it.skipIf(!grammarsExist)("rebuildStaleFiles updates the file hash in file_hashes after rebuild", async () => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "incr-test-"));
     dbPath = path.join(tmpDir, ".claude", "codescope", "graph.db");
     fs.mkdirSync(path.dirname(dbPath), { recursive: true });
@@ -195,7 +201,7 @@ describe("Incremental reparse engine (src/graph/incremental.ts)", () => {
     expect(hash).toBeUndefined();
   });
 
-  it("rebuildStaleFiles completes in under 2 seconds for a single file", async () => {
+  it.skipIf(!grammarsExist)("rebuildStaleFiles completes in under 2 seconds for a single file", async () => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "incr-test-"));
     dbPath = path.join(tmpDir, ".claude", "codescope", "graph.db");
     fs.mkdirSync(path.dirname(dbPath), { recursive: true });

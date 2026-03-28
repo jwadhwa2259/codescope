@@ -52,7 +52,7 @@ vi.mock("../../src/graph/cache.js", () => {
   }
 
   return {
-    getGraph: vi.fn(() => {
+    getGraph: vi.fn(async () => {
       const mock = buildMockGraph();
       return {
         graph: mock.graph,
@@ -187,8 +187,8 @@ Use \`app.use()\` for middleware registration.
 // ---------------------------------------------------------------------------
 
 describe("extractResearchTopics", () => {
-  it("identifies external libraries from affected file imports in graph", () => {
-    const topics = extractResearchTopics("/fake/project", makeAffectedFiles());
+  it("identifies external libraries from affected file imports in graph", async () => {
+    const topics = await extractResearchTopics("/fake/project", makeAffectedFiles());
     const names = topics.map((t) => t.name);
     // auth.ts imports jsonwebtoken, router.ts/user.ts/database.ts import express, utils.ts imports lodash
     expect(names).toContain("jsonwebtoken");
@@ -196,8 +196,8 @@ describe("extractResearchTopics", () => {
     expect(names).toContain("lodash");
   });
 
-  it("does not include internal modules as research topics", () => {
-    const topics = extractResearchTopics("/fake/project", makeAffectedFiles());
+  it("does not include internal modules as research topics", async () => {
+    const topics = await extractResearchTopics("/fake/project", makeAffectedFiles());
     const names = topics.map((t) => t.name);
     // Internal files should NOT appear
     expect(names).not.toContain("auth.ts");
@@ -205,8 +205,8 @@ describe("extractResearchTopics", () => {
     expect(names).not.toContain("database.ts");
   });
 
-  it("deduplicates libraries and takes max impactScore", () => {
-    const topics = extractResearchTopics("/fake/project", makeAffectedFiles());
+  it("deduplicates libraries and takes max impactScore", async () => {
+    const topics = await extractResearchTopics("/fake/project", makeAffectedFiles());
     const expressTopics = topics.filter((t) => t.name === "express");
     expect(expressTopics).toHaveLength(1);
     // express is imported by 3 files (router 0.3, user 0.5, database 0.9),
@@ -214,8 +214,8 @@ describe("extractResearchTopics", () => {
     expect(expressTopics[0].impactScore).toBeGreaterThan(0);
   });
 
-  it("sorts topics by impactScore descending", () => {
-    const topics = extractResearchTopics("/fake/project", makeAffectedFiles());
+  it("sorts topics by impactScore descending", async () => {
+    const topics = await extractResearchTopics("/fake/project", makeAffectedFiles());
     for (let i = 1; i < topics.length; i++) {
       expect(topics[i].impactScore).toBeLessThanOrEqual(topics[i - 1].impactScore);
     }

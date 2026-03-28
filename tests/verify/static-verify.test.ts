@@ -20,7 +20,7 @@ const mockBlastRadiusDiff: BlastRadiusDiffResult = {
 };
 
 vi.mock("../../src/verify/blast-radius-diff.js", () => ({
-  computeBlastRadiusDiff: vi.fn(() => mockBlastRadiusDiff),
+  computeBlastRadiusDiff: vi.fn(async () => mockBlastRadiusDiff),
 }));
 
 // Mock getCodescopePath
