@@ -101,7 +101,7 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 12-01-PLAN.md -- Convention enforcement core: types, VERIFIED rule filter, pre-commit check with severity mapping
+- [x] 12-01-PLAN.md -- Convention enforcement core: types, VERIFIED rule filter, pre-commit check with severity mapping
 - [x] 12-02-PLAN.md -- Session continuity core: types, handoff generator, handoff parser, session cleanup
 - [ ] 12-03-PLAN.md -- Hook installation/uninstallation CLIs, shell wrapper script, tsdown build wiring
 - [ ] 12-04-PLAN.md -- PreCompact and SessionStart Claude Code hooks, lightweight handoff builder, hooks.json registration
