@@ -15,10 +15,10 @@ export function registerInstallHooksCommand(program: Command): void {
       const projectRoot = process.cwd();
 
       try {
-        const { installHooks } = await import(
+        const { installPreCommitHook } = await import(
           "../../enforcement/install-hooks.js"
         );
-        const result = installHooks(projectRoot);
+        const result = installPreCommitHook(projectRoot);
 
         if (result.installed) {
           console.log(
