@@ -2,7 +2,7 @@
 
 ## Current State
 
-**Version:** v1.0 MVP shipped 2026-03-27 | v2.0 Phase 12 complete 2026-03-28
+**Version:** v1.0 MVP shipped 2026-03-27 | v2.0 Phase 13 complete 2026-03-29
 **Codebase:** 21,742 LOC TypeScript (source) + 20,759 LOC TypeScript (tests, 917 passing)
 **Stack:** TypeScript, web-tree-sitter WASM, ast-grep CLI, better-sqlite3, graphology, enhanced-resolve, @modelcontextprotocol/sdk, vitest
 
@@ -58,6 +58,10 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - `/codescope:pause` — save pipeline state as structured handoff document — Phase 12
 - `/codescope:resume` — restore pipeline state with artifact validation and phase skipping — Phase 12
 - Orient `--resume` flag — artifact-based phase detection for interrupted workflows — Phase 12
+- Post-execution qualification gate (git diff + optional convention scan) — Phase 13
+- Failure classifier (criterion-to-classification mapping, priority-based debug routing) — Phase 13
+- Plan-vs-actual reconciliation reports (set-difference analysis, per-agent breakdown) — Phase 13
+- Token budget awareness (cost tier tagging, configurable threshold warning) — Phase 13
 - Verify-to-eval JSON sidecar pipeline — v1.0
 - Type consolidation (no local type copies or unsafe casts) — v1.0
 
