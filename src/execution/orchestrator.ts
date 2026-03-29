@@ -31,6 +31,27 @@ import {
   generateReconciliationReport,
 } from "./reconciliation.js";
 import { loadConfig } from "../config/loader.js";
+import { getCodescopePath } from "../utils/paths.js";
+
+// ---------------------------------------------------------------------------
+// Event emission helper (inline for build isolation per D-33)
+// ---------------------------------------------------------------------------
+
+/**
+ * Append a JSON-line event to events.log for dashboard WebSocket broadcasting.
+ * Events are observability, not critical path -- errors are swallowed.
+ */
+function emitEvent(projectRoot: string, event: Record<string, unknown>): void {
+  try {
+    const eventsPath = path.join(getCodescopePath(projectRoot), "events.log");
+    fs.appendFileSync(
+      eventsPath,
+      JSON.stringify({ ...event, ts: new Date().toISOString() }) + "\n",
+    );
+  } catch {
+    // Dashboard events are observability, not critical path. Swallow errors.
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -261,6 +282,13 @@ export async function runExecution(
       `Executing wave ${wave.waveNumber}/${plan.waves.length}: [${wave.agents.join(", ")}]...`,
     );
 
+    // Emit orient:phase event for dashboard WebSocket feed (D-32)
+    emitEvent(projectRoot, {
+      type: "orient:phase",
+      phase: `wave-${wave.waveNumber}`,
+      agents: wave.agents,
+    });
+
     const waveMode =
       wave.mode === "parallel" && teamsAvailability.available
         ? "parallel"
@@ -369,7 +397,10 @@ export async function runExecution(
     );
   }
 
-  // 10. Write execution summary
+  // 10. Emit graph:updated event for dashboard after execution (D-32)
+  emitEvent(projectRoot, { type: "graph:updated" });
+
+  // 11. Write execution summary
   const summaryPath = writeExecutionSummary(result, executionDir, taskSlug);
   result.summaryPath = summaryPath;
 
@@ -464,6 +495,13 @@ async function executeAgent(
     detail: `Wave ${assignment.wave}`,
   });
 
+  // Emit agent:spawn event for dashboard WebSocket feed (D-32)
+  emitEvent(options.projectRoot, {
+    type: "agent:spawn",
+    agent: agentName,
+    wave: assignment.wave,
+  });
+
   const agentStartMs = Date.now();
 
   // First attempt
@@ -490,6 +528,15 @@ async function executeAgent(
     if (!dispatchResult.success) {
       // Retry also failed
       const durationMs = Date.now() - agentStartMs;
+
+      // Emit agent:complete (failure) event for dashboard WebSocket feed (D-32)
+      emitEvent(options.projectRoot, {
+        type: "agent:complete",
+        agent: agentName,
+        status: "failure",
+        durationMs,
+      });
+
       onProgress(
         `${agentName} **failed** after retry -- skipping + dependents`,
       );
@@ -551,6 +598,15 @@ async function executeAgent(
     detail: qualification.qualified
       ? `Qualified: +${qualification.linesAdded}/-${qualification.linesRemoved} (${durationSec}s)`
       : `QUALIFICATION ISSUES: ${qualification.issues.join("; ")} (${durationSec}s)`,
+  });
+
+  // Emit agent:complete event for dashboard WebSocket feed (D-32)
+  emitEvent(options.projectRoot, {
+    type: "agent:complete",
+    agent: agentName,
+    status: "success",
+    durationMs,
+    filesChanged: qualification.actualFiles.length,
   });
 
   onProgress(

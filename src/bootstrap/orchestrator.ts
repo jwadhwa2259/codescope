@@ -17,6 +17,26 @@ import { openDatabase, closeDatabase } from "../graph/database.js";
 import { generateInjectionArtifacts } from "../artifacts/generator.js";
 
 // ---------------------------------------------------------------------------
+// Event emission helper (inline for build isolation per D-33)
+// ---------------------------------------------------------------------------
+
+/**
+ * Append a JSON-line event to events.log for dashboard WebSocket broadcasting.
+ * Events are observability, not critical path -- errors are swallowed.
+ */
+function emitEvent(projectRoot: string, event: Record<string, unknown>): void {
+  try {
+    const eventsPath = path.join(getCodescopePath(projectRoot), "events.log");
+    fs.appendFileSync(
+      eventsPath,
+      JSON.stringify({ ...event, ts: new Date().toISOString() }) + "\n",
+    );
+  } catch {
+    // Dashboard events are observability, not critical path. Swallow errors.
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Public types
 // ---------------------------------------------------------------------------
 
@@ -162,6 +182,7 @@ export async function runBootstrap(
 
   // ---- Step 3: Service discovery ----
   progress("## Scanning services...");
+  emitEvent(projectRoot, { type: "bootstrap:progress", stage: "Scanning services", percentage: 10 });
   const scoutStartMs = Date.now();
   const scoutResult = await runScout({
     projectRoot,
@@ -210,6 +231,7 @@ export async function runBootstrap(
   for (const service of servicesToAnalyze) {
     const serviceStartMs = Date.now();
     progress(`## Running analysis squad: ${service.name}`);
+    emitEvent(projectRoot, { type: "bootstrap:progress", stage: `Running squad: ${service.name}`, percentage: 25 });
 
     // Resolve service path with symlink safety per Pitfall 3
     const rawServicePath = path.resolve(projectRoot, service.path);
@@ -297,6 +319,7 @@ export async function runBootstrap(
 
   // ---- Step 6: Cross-service synthesis ----
   progress("## Synthesizing cross-service intelligence...");
+  emitEvent(projectRoot, { type: "bootstrap:progress", stage: "Building graph", percentage: 60 });
   const synthStartMs = Date.now();
   const synthResult = await runSynthesis({
     projectRoot,
@@ -320,6 +343,7 @@ export async function runBootstrap(
 
   // ---- Step 7: AI readiness scoring ----
   progress("## Computing AI readiness score...");
+  emitEvent(projectRoot, { type: "bootstrap:progress", stage: "Computing analytics", percentage: 75 });
   const readinessStartMs = Date.now();
 
   // Gather readiness input from results
@@ -355,6 +379,8 @@ export async function runBootstrap(
     description: "AI readiness score",
   });
 
+  emitEvent(projectRoot, { type: "bootstrap:progress", stage: "Generating artifacts", percentage: 85 });
+
   // ---- Step 7b: Store readiness snapshot per DEBT-01 ----
   try {
     const graphDbPath = getGraphDbPath(projectRoot);
@@ -385,6 +411,7 @@ export async function runBootstrap(
   });
 
   // ---- Step 9: Invalidate graph cache per Pitfall 2 ----
+  emitEvent(projectRoot, { type: "bootstrap:progress", stage: "Storing readiness", percentage: 95 });
   invalidateCache();
 
   // ---- Step 9b: Generate injection artifacts for hooks (D-11, D-12) ----
@@ -437,6 +464,11 @@ export async function runBootstrap(
     (sum, s) => sum + s.conventionsDetected,
     0,
   );
+
+  // Emit completion events for dashboard WebSocket feed (D-32)
+  emitEvent(projectRoot, { type: "bootstrap:progress", stage: "Complete", percentage: 100 });
+  emitEvent(projectRoot, { type: "graph:updated" });
+  emitEvent(projectRoot, { type: "readiness:snapshot" });
 
   return {
     services: serviceResults.map((s) => ({
