@@ -2,7 +2,7 @@
 
 ## Current State
 
-**Version:** v1.0 MVP shipped 2026-03-27 | v2.0 Phase 13 complete 2026-03-29
+**Version:** v1.0 MVP shipped 2026-03-27 | v2.0 Phase 14 complete 2026-03-29
 **Codebase:** 21,742 LOC TypeScript (source) + 20,759 LOC TypeScript (tests, 917 passing)
 **Stack:** TypeScript, web-tree-sitter WASM, ast-grep CLI, better-sqlite3, graphology, enhanced-resolve, @modelcontextprotocol/sdk, vitest
 
@@ -153,4 +153,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 10 (auto-injection) complete*
+*Last updated: 2026-03-29 after Phase 14 (visualization-dashboard) complete*
