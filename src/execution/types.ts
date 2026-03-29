@@ -60,6 +60,8 @@ export interface AgentResult {
   error?: string;
   retried: boolean;
   changeReportPath?: string;
+  qualified?: boolean;
+  qualificationIssues?: string[];
 }
 
 /**
@@ -100,4 +102,5 @@ export interface ExecutionResult {
   durationMs: number;
   mode: "sequential" | "parallel" | "wave-based";
   tokensEstimate: number;
+  reconciliationPath?: string;
 }

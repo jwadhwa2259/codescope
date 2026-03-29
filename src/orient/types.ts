@@ -1,6 +1,11 @@
 // ---------------------------------------------------------------------------
 // Orient Pipeline Shared Types
 // ---------------------------------------------------------------------------
+
+import type { CostTier } from "../utils/tokens.js";
+
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // All types exported from this module are consumed by clarification.ts,
 // analysis.ts, research.ts, planner.ts, validation.ts, and pipeline.ts.
 // ---------------------------------------------------------------------------
@@ -116,6 +121,7 @@ export interface AgentAssignment {
   dependsOn: string[];
   estimatedTokens: number;
   timeoutSeconds: number;
+  costTier?: CostTier;
 }
 
 export interface ExecutionWave {

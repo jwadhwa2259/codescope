@@ -45,6 +45,7 @@ export const ConfigSchema = z.object({
   execute: z.object({
     parallel: z.enum(["auto", "sequential", "parallel"]).optional(), // D-44: deprecated, planner picks strategy. Kept optional for backward compat with existing config.yml files.
     max_agents_concurrent: z.number().int().min(1).max(10),
+    token_budget_threshold: z.number().int().positive().optional(),
   }),
 
   verify: z.object({

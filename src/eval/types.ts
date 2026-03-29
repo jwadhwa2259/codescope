@@ -8,6 +8,7 @@
 // ---------------------------------------------------------------------------
 
 import type { Severity, StaticVerifyResult, RuntimeVerifyResult } from "../verify/types.js";
+import type { FailureClassification } from "./classifier.js";
 
 // ---- Eval Criteria & Finding Categories ----
 
@@ -34,6 +35,7 @@ export interface EvalFinding {
   severity: Severity;
   evidence: string;
   goldenFileRef?: string;
+  classification?: FailureClassification;
 }
 
 // ---- EvalCriterionResult (D-02) ----
