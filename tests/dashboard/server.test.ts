@@ -1,37 +1,63 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
+import { app, startDashboard, broadcast } from "../../src/dashboard/server.js";
 
-describe('Dashboard Server', () => {
-  describe('startDashboard', () => {
-    it.skip('starts Hono server on default port 7463', () => {
-      // Enable after Plan 01 creates src/dashboard/server.ts
+describe("Dashboard Server", () => {
+  describe("startDashboard", () => {
+    it("exports startDashboard as a function", () => {
+      expect(typeof startDashboard).toBe("function");
     });
 
-    it.skip('starts on custom port when specified', () => {
-      // Enable after Plan 01 creates src/dashboard/server.ts
-    });
-
-    it.skip('serves index.html at root path', () => {
-      // Enable after Plan 01 creates src/dashboard/server.ts
-    });
-
-    it.skip('serves /dashboard.js static file mapped to dist/dashboard/app.mjs', () => {
-      // Enable after Plan 01: validates the /dashboard.js -> dist/dashboard/app.mjs path alignment
+    it("exports app as a Hono instance", () => {
+      expect(app).toBeDefined();
+      expect(typeof app.fetch).toBe("function");
     });
   });
 
-  describe('WebSocket endpoint', () => {
-    it.skip('accepts WebSocket upgrade at /ws', () => {
-      // Enable after Plan 01 creates src/dashboard/server.ts
+  describe("broadcast", () => {
+    it("exports broadcast as a function", () => {
+      expect(typeof broadcast).toBe("function");
+    });
+
+    it("does not throw when called with no connected clients", () => {
+      expect(() => broadcast({ type: "test" })).not.toThrow();
     });
   });
 
-  describe('event log tailing', () => {
-    it.skip('watches events.log and broadcasts new lines via WebSocket', () => {
-      // Enable after Plan 01 creates src/dashboard/server.ts
+  describe("API route registration", () => {
+    it("responds to GET /api/status", async () => {
+      // Without a real database, should still respond (with error or data)
+      const res = await app.request("/api/status");
+      expect(res.status).toBeLessThan(500);
     });
 
-    it.skip('handles missing events.log file gracefully', () => {
-      // Enable after Plan 01 creates src/dashboard/server.ts
+    it("responds to GET /api/graph", async () => {
+      const res = await app.request("/api/graph");
+      // 404 expected without database
+      expect([200, 404]).toContain(res.status);
+    });
+
+    it("responds to GET /api/conventions", async () => {
+      const res = await app.request("/api/conventions");
+      expect([200, 404]).toContain(res.status);
+    });
+
+    it("responds to GET /api/readiness", async () => {
+      const res = await app.request("/api/readiness");
+      expect([200, 404]).toContain(res.status);
+    });
+  });
+
+  describe("SPA fallback", () => {
+    it("serves HTML at root path", async () => {
+      const res = await app.request("/");
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("text/html");
+    });
+
+    it("serves HTML at unknown paths (SPA fallback)", async () => {
+      const res = await app.request("/some/unknown/path");
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("text/html");
     });
   });
 });
