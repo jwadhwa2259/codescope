@@ -36,7 +36,7 @@ v2.0 transforms CodeScope from a one-time analysis tool into an always-on intell
 - [x] **Phase 13: Pipeline Evolution** - Per-task qualification, diagnostic failure routing, and plan-vs-actual reconciliation (completed 2026-03-29)
 - [x] **Phase 14: Visualization Dashboard** - Interactive sigma.js graph explorer, convention heatmap, readiness trends, and command center (completed 2026-03-29)
 - [x] **Phase 15: Distribution** - npx codescope install experience and npm package for marketplace launch (completed 2026-03-29)
-- [ ] **Phase 16: Tech Debt Closure** - Fix MCP path mismatch, TypeScript errors, hook fork bomb, SUMMARY frontmatter gaps, and platform packages
+- [x] **Phase 16: Tech Debt Closure** - Fix MCP path mismatch, TypeScript errors, hook fork bomb, SUMMARY frontmatter gaps, and platform packages (completed 2026-03-29)
 
 ## Phase Details
 
@@ -174,7 +174,7 @@ Plans:
 Plans:
 - [x] 16-01-PLAN.md -- Fix MCP path mismatch (.mcp.json, package.json, plugin-wiring.ts) and install-hooks fork bomb with regression test
 - [x] 16-02-PLAN.md -- Resolve all 24 TypeScript tsc --noEmit errors: Hono AppEnv typing, dashboard API argument fixes, DbHandle widening, ambient declarations, html2canvas union types
-- [ ] 16-03-PLAN.md -- Build darwin-arm64 platform package binary and run full verification suite (build + tsc + tests + server smoke test)
+- [x] 16-03-PLAN.md -- Build darwin-arm64 platform package binary and run full verification suite (build + tsc + tests + server smoke test)
 
 ## Progress
 
@@ -198,4 +198,4 @@ Phases execute in numeric order: 9 > 10 > 11 > 12 > 13 > 14 > 15 > 16
 | 13. Pipeline Evolution | v2.0 | 2/2 | Complete    | 2026-03-29 |
 | 14. Visualization Dashboard | v2.0 | 5/5 | Complete    | 2026-03-29 |
 | 15. Distribution | v2.0 | 2/2 | Complete    | 2026-03-29 |
-| 16. Tech Debt Closure | v2.0 | 1/3 | In Progress|  |
+| 16. Tech Debt Closure | v2.0 | 3/3 | Complete   | 2026-03-29 |

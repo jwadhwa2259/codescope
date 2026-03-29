@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Layer + Interactive Dashboard
 status: executing
-stopped_at: Completed 16-01-PLAN.md and 16-02-PLAN.md
-last_updated: "2026-03-29T21:35:24.399Z"
+stopped_at: Completed 16-03-PLAN.md
+last_updated: "2026-03-29T21:42:58.008Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 8
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 25
-  completed_plans: 23
+  completed_plans: 25
   percent: 92
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 ## Current Position
 
 Phase: 16 (tech-debt-closure) -- EXECUTING
-Plan: 2 of 3
-Status: Executing Phase 16
-Last activity: 2026-03-29 -- Completed Wave 1 (16-01 + 16-02)
+Plan: 3 of 3
+Status: Ready to execute
+Last activity: 2026-03-29
 
 Progress: [█████████░] 92%
 
@@ -76,6 +76,7 @@ Progress: [█████████░] 92%
 | Phase 15-distribution P02 | 3min | 2 tasks | 10 files |
 | Phase 16-tech-debt-closure P01 | 5min | 2 tasks | 5 files |
 | Phase 16-tech-debt-closure P02 | 4min | 2 tasks | 11 files |
+| Phase 16-tech-debt-closure P03 | 3min | 1 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -135,6 +136,7 @@ All v1.0 decisions validated -- see PROJECT.md for outcomes.
 - [Phase 16-tech-debt-closure]: Detect CodeScope wrapper by content marker string for reliable idempotency in install-hooks
 - [Phase 16-tech-debt-closure]: Read pre-computed communities from SQLite instead of calling runCommunityDetection in graph API route
 - [Phase 16-tech-debt-closure]: Use any[] in DbHandle for better-sqlite3 compatibility; type assertion for html2canvas CJS default export
+- [Phase 16-tech-debt-closure]: ESM deep imports to CJS packages need .js extension (graphology-metrics/centrality/degree.js)
 
 ### Pending Todos
 
@@ -156,6 +158,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T21:35:24.397Z
-Stopped at: Completed Wave 1 (16-01 + 16-02)
+Last session: 2026-03-29T21:42:58.006Z
+Stopped at: Completed 16-03-PLAN.md
 Resume file: None

@@ -155,7 +155,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DIST-01 | Phase 15 + 16 | Pending |
 | DIST-02 | Phase 15 + 16 | Pending |
 | DIST-03 | Phase 15 + 16 | Complete |
-| DIST-04 | Phase 15 + 16 | Pending |
+| DIST-04 | Phase 15 + 16 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 42 total
