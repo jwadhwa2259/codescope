@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CodeScope Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Fira+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* ---- CSS Custom Properties ---- */
+    :root {
+      --color-bg-primary: #0F172A;
+      --color-bg-secondary: #1E293B;
+      --color-bg-tertiary: #334155;
+      --color-text-primary: #F8FAFC;
+      --color-text-muted: #94A3B8;
+      --color-accent: #22C55E;
+      --color-warning: #F59E0B;
+      --color-danger: #EF4444;
+      --color-info: #3B82F6;
+      --font-sans: 'Fira Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'Fira Code', ui-monospace, 'Cascadia Code', monospace;
+      --text-xs: 12px;
+      --text-sm: 14px;
+      --text-lg: 18px;
+      --text-2xl: 28px;
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+      --space-3xl: 64px;
+      --sidebar-width: 56px;
+      --header-height: 40px;
+      --status-bar-height: 28px;
+      --drawer-width: 480px;
+      --transition-fast: 200ms ease-out;
+      --transition-medium: 300ms ease-out;
+      --glow-accent: 0 0 8px #22C55E;
+    }
+
+    /* ---- Global Reset ---- */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--color-bg-primary);
+      color: var(--color-text-primary);
+      font-family: var(--font-sans);
+      font-size: var(--text-sm);
+      line-height: 1.5;
+      overflow: hidden;
+    }
+
+    /* ---- Focus & Accessibility ---- */
+    *:focus-visible {
+      outline: 2px solid var(--color-info);
+      outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      border: 0;
+    }
+
+    /* ---- App Layout Grid ---- */
+    .app {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      grid-template-rows: var(--header-height) 1fr var(--status-bar-height);
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      grid-column: 1 / -1;
+      background: var(--color-bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-md);
+      border-bottom: 1px solid var(--color-bg-tertiary);
+    }
+
+    .header-brand {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      font-weight: 600;
+      color: var(--color-accent);
+    }
+
+    .header-project {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+    }
+
+    /* ---- Sidebar ---- */
+    .sidebar {
+      grid-row: 2;
+      background: var(--color-bg-secondary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: var(--space-sm);
+      border-right: 1px solid var(--color-bg-tertiary);
+    }
+
+    .sidebar-btn {
+      width: 56px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      position: relative;
+      transition: color var(--transition-fast);
+    }
+
+    .sidebar-btn:hover,
+    .sidebar-btn[aria-current="true"] {
+      color: var(--color-text-primary);
+    }
+
+    .sidebar-btn[aria-current="true"]::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--color-accent);
+    }
+
+    /* ---- Main Panel Area ---- */
+    .main {
+      grid-row: 2;
+      overflow: auto;
+      position: relative;
+    }
+
+    /* ---- Status Bar ---- */
+    .status-bar {
+      grid-column: 1 / -1;
+      background: var(--color-bg-secondary);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--space-sm);
+      gap: var(--space-md);
+      border-top: 1px solid var(--color-bg-tertiary);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+    }
+
+    .status-divider {
+      width: 1px;
+      height: 16px;
+      background: var(--color-bg-tertiary);
+    }
+
+    /* ---- Connection Status Dot ---- */
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .status-dot.connected {
+      background: var(--color-accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-dot.disconnected {
+      background: var(--color-danger);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ---- Drawer ---- */
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition-fast);
+    }
+
+    .drawer-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .drawer {
+      position: fixed;
+      top: var(--header-height);
+      right: 0;
+      bottom: var(--status-bar-height);
+      width: var(--drawer-width);
+      background: var(--color-bg-secondary);
+      z-index: 101;
+      transform: translateX(100%);
+      transition: transform var(--transition-medium);
+      overflow-y: auto;
+      padding: var(--space-lg);
+    }
+
+    .drawer.open {
+      transform: translateX(0);
+    }
+
+    /* ---- Progress Banner ---- */
+    .progress-banner {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--color-bg-tertiary);
+      padding: var(--space-sm) var(--space-md);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      z-index: 50;
+    }
+
+    .progress-bar {
+      flex: 1;
+      height: 4px;
+      background: var(--color-bg-secondary);
+      border-radius: 2px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--color-accent);
+      border-radius: 2px;
+      transition: width var(--transition-fast);
+    }
+
+    /* ---- Tooltip ---- */
+    .tooltip {
+      position: fixed;
+      background: var(--color-bg-tertiary);
+      color: var(--color-text-primary);
+      padding: var(--space-xs) var(--space-sm);
+      border-radius: 4px;
+      font-size: var(--text-xs);
+      pointer-events: none;
+      z-index: 200;
+      white-space: nowrap;
+    }
+
+    /* ---- Search ---- */
+    .search-input {
+      width: 100%;
+      padding: var(--space-sm) var(--space-md);
+      background: var(--color-bg-tertiary);
+      border: 1px solid transparent;
+      border-radius: 4px;
+      color: var(--color-text-primary);
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+    }
+
+    .search-input:focus {
+      border-color: var(--color-info);
+    }
+
+    .search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--color-bg-tertiary);
+      border-radius: 0 0 4px 4px;
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 50;
+    }
+
+    .search-result {
+      padding: var(--space-sm) var(--space-md);
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+    }
+
+    .search-result:hover,
+    .search-result.active {
+      background: var(--color-bg-secondary);
+    }
+
+    /* ---- Empty State ---- */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: var(--space-md);
+      color: var(--color-text-muted);
+      text-align: center;
+      padding: var(--space-xl);
+    }
+
+    .empty-state h2 {
+      font-size: var(--text-lg);
+      color: var(--color-text-primary);
+      font-weight: 600;
+    }
+
+    .empty-state p {
+      max-width: 400px;
+      font-size: var(--text-sm);
+      line-height: 1.6;
+    }
+
+    /* ---- Responsive: Sidebar collapsed state ---- */
+    @media (max-width: 1199px) {
+      .sidebar-label {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <span class="header-brand">CodeScope</span>
+      <span class="header-project" id="project-name"></span>
+      <div class="header-status">
+        <span class="status-dot disconnected" id="ws-status-dot"></span>
+        <span id="ws-status-text">disconnected</span>
+        <span id="last-update"></span>
+      </div>
+    </header>
+    <nav class="sidebar" id="sidebar"></nav>
+    <main class="main" id="panel-container"></main>
+    <footer class="status-bar" id="status-bar" role="status"></footer>
+  </div>
+  <div class="drawer-overlay" id="drawer-overlay"></div>
+  <div class="drawer" id="drawer"></div>
+  <div id="aria-live" aria-live="polite" class="sr-only"></div>
+  <script type="module" src="/dashboard.js"></script>
+</body>
+</html>
