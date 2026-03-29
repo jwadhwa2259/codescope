@@ -34,7 +34,7 @@ v2.0 transforms CodeScope from a one-time analysis tool into an always-on intell
 - [x] **Phase 11: PR Review + Impact Prediction** - Structural impact analysis for PRs and pre-change blast radius prediction (completed 2026-03-28)
 - [x] **Phase 12: Convention Enforcement + Session Continuity** - Opt-in pre-commit convention blocking and pause/resume workflow (completed 2026-03-28)
 - [x] **Phase 13: Pipeline Evolution** - Per-task qualification, diagnostic failure routing, and plan-vs-actual reconciliation (completed 2026-03-29)
-- [ ] **Phase 14: Visualization Dashboard** - Interactive sigma.js graph explorer, convention heatmap, readiness trends, and command center
+- [x] **Phase 14: Visualization Dashboard** - Interactive sigma.js graph explorer, convention heatmap, readiness trends, and command center (completed 2026-03-29)
 - [ ] **Phase 15: Distribution** - npx codescope install experience and npm package for marketplace launch
 
 ## Phase Details
@@ -140,7 +140,7 @@ Plans:
 - [x] 14-01-PLAN.md -- Server foundation: Hono HTTP server, all JSON API routes, WebSocket endpoint, HTML shell with CSS design system, tsdown dual-build config
 - [x] 14-02-PLAN.md -- Client foundation: app entry, shared components (sidebar, status bar, drawer, search, tooltip), API/WS clients, sigma.js Graph panel
 - [x] 14-03-PLAN.md -- Remaining panels: Heatmap, Trends (SVG gauges + trend line), Blast Radius (concentric rings), Command Center, progress banner
-- [ ] 14-04-PLAN.md -- Integration: screenshot export (Playwright), /codescope:viz skill, plugin wiring, event emission in bootstrap/execution pipelines
+- [x] 14-04-PLAN.md -- Integration: screenshot export (Playwright), /codescope:viz skill, plugin wiring, event emission in bootstrap/execution pipelines
 
 ### Phase 15: Distribution
 **Goal**: Users can install and set up CodeScope with a single npx command -- project detection, config creation, bootstrap, and Claude Code plugin wiring all happen automatically
@@ -177,5 +177,5 @@ Phases execute in numeric order: 9 > 10 > 11 > 12 > 13 > 14 > 15
 | 11. PR Review + Impact Prediction | v2.0 | 3/3 | Complete    | 2026-03-28 |
 | 12. Convention Enforcement + Session Continuity | v2.0 | 5/5 | Complete    | 2026-03-28 |
 | 13. Pipeline Evolution | v2.0 | 2/2 | Complete    | 2026-03-29 |
-| 14. Visualization Dashboard | v2.0 | 4/5 | In Progress|  |
+| 14. Visualization Dashboard | v2.0 | 5/5 | Complete   | 2026-03-29 |
 | 15. Distribution | v2.0 | 0/0 | Not started | - |

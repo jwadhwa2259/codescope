@@ -64,8 +64,8 @@ Requirements for v2.0 Intelligence Layer + Interactive Dashboard. Each maps to r
 - [x] **VIZ-05**: Blast radius explorer panel shows concentric ring visualization for selected file
 - [x] **VIZ-06**: WebSocket pushes real-time updates during bootstrap/orient execution (agent progress, wave completion)
 - [x] **VIZ-07**: Interactive command center -- click file to trigger review or impact prediction from the UI
-- [ ] **VIZ-08**: Screenshot export mode for marketing (`npx codescope viz --screenshot output.png`)
-- [ ] **VIZ-09**: `/codescope:viz` skill launches dashboard and opens browser
+- [x] **VIZ-08**: Screenshot export mode for marketing (`npx codescope viz --screenshot output.png`)
+- [x] **VIZ-09**: `/codescope:viz` skill launches dashboard and opens browser
 
 ### Technical Debt Tracking
 
@@ -148,8 +148,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIZ-05 | Phase 14 | Complete |
 | VIZ-06 | Phase 14 | Complete |
 | VIZ-07 | Phase 14 | Complete |
-| VIZ-08 | Phase 14 | Pending |
-| VIZ-09 | Phase 14 | Pending |
+| VIZ-08 | Phase 14 | Complete |
+| VIZ-09 | Phase 14 | Complete |
 | DEBT-01 | Phase 9 | Complete |
 | DEBT-02 | Phase 9 | Complete |
 | DIST-01 | Phase 15 | Pending |
