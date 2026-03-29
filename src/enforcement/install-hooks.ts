@@ -159,9 +159,22 @@ function installGitHooks(projectRoot: string): InstallResult {
     mkdirSync(hooksDir, { recursive: true });
   }
 
-  // Backup existing hook
+  // Backup existing hook (with idempotency check to prevent fork bomb)
   let backedUp = false;
   if (existsSync(hookPath)) {
+    const existing = readFileSync(hookPath, "utf-8");
+    // If the existing hook IS the CodeScope wrapper, skip backup (idempotent reinstall)
+    if (
+      existing.includes("CodeScope convention enforcement pre-commit hook") ||
+      existing.includes("pre-commit-check.mjs")
+    ) {
+      return {
+        installed: true,
+        method: "git-hooks",
+        backedUp: false,
+        message: "CodeScope enforcement hook already installed.",
+      };
+    }
     renameSync(hookPath, backupPath);
     backedUp = true;
   }
