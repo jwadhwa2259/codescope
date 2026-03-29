@@ -56,13 +56,13 @@ Exceptions:
 | Role | Size | Weight | Line Height | Font Family |
 |------|------|--------|-------------|-------------|
 | Body | 14px | 400 (regular) | 1.5 | Fira Sans |
-| Label / Caption | 12px | 500 (medium) | 1.4 | Fira Sans |
+| Label / Caption | 12px | 400 (regular) | 1.4 | Fira Sans |
 | Heading | 18px | 600 (semibold) | 1.2 | Fira Sans |
 | Data Value | 14px | 400 (regular) | 1.0 | Fira Code |
 | Data Value Large | 28px | 600 (semibold) | 1.0 | Fira Code |
 
 Font sizes declared: 12, 14, 18, 28 (4 sizes).
-Font weights declared: 400 (regular) + 600 (semibold), with 500 (medium) used only for labels.
+Font weights declared: 400 (regular) + 600 (semibold).
 
 **Rationale:**
 - 14px body: dense data dashboard with many values on screen simultaneously
@@ -172,7 +172,7 @@ Accent reserved for:
 |-------------|----------|
 | Panel switching (sidebar click) | Instant swap -- no transition animation between panels. Active indicator slides to new position (200ms ease-out). |
 | Panel switching (keyboard 1-5) | Same as sidebar click. Keys `1` through `5` map to Graph, Heatmap, Trends, Blast, Command respectively. |
-| Hover on sidebar icon | Show tooltip with panel name (right of icon, 200ms delay). |
+| Hover on sidebar icon | Show tooltip with panel name (right of icon, 200ms delay) at all viewport widths, including collapsed sidebar below 1200px. Each sidebar icon button must have `aria-label="{Panel Name}"` so screen readers and browser native tooltips surface the panel name even without the custom tooltip. |
 | Header connection dot | Green pulsing dot (2s infinite) when WebSocket connected. Red static dot when disconnected. |
 | Status bar | Always visible. Updates reactively when graph data refreshes. |
 | Drawer open | Slide in from right edge, 480px wide, 300ms ease-out. Semi-transparent scrim overlay on background panel (`rgba(0,0,0,0.5)`). Click scrim or press Escape to dismiss. |
@@ -269,7 +269,7 @@ Accent reserved for:
 | Property | Value |
 |----------|-------|
 | Minimum width | 1024px |
-| Sidebar collapse breakpoint | <1200px (icons only, no tooltips on hover -- just icon) |
+| Sidebar collapse breakpoint | <1200px (icons only, tooltips retained on hover, `aria-label` on each icon button) |
 | Panel area | 100vw - 56px (sidebar width) |
 | Header height | 40px |
 | Status bar height | 28px |
@@ -292,6 +292,8 @@ Accent reserved for:
 - Active indicator: 3px wide, `#22C55E`, left edge, full height of icon row
 - Background: `#1E293B`
 - Icon color: `#94A3B8` (muted), `#F8FAFC` (active)
+- Each icon button: `aria-label="{Panel Name}"` (e.g., `aria-label="Graph"`, `aria-label="Heatmap"`, etc.)
+- Tooltip on hover at all viewport widths (including collapsed sidebar below 1200px)
 
 ### Header Bar (40px)
 
@@ -379,7 +381,7 @@ Vanilla JS modules -- no framework components. Each module exports a `render(con
 
 | Module | Purpose | Key Elements |
 |--------|---------|--------------|
-| `sidebar.ts` | Navigation sidebar | 5 icon buttons, active indicator bar, keyboard shortcut binding |
+| `sidebar.ts` | Navigation sidebar | 5 icon buttons (each with `aria-label`), active indicator bar, keyboard shortcut binding, tooltip on hover at all widths |
 | `status-bar.ts` | Bottom status bar | Node/edge/community counts, bootstrap date, readiness grade |
 | `modal.ts` | Modal overlay | Centered modal for confirmations (if needed in future) |
 | `drawer.ts` | Right slide-out drawer | 480px panel for convention details, review results. Scrim overlay + Escape to close. |
@@ -431,10 +433,11 @@ Vanilla JS modules -- no framework components. Each module exports a `render(con
 | Focus indicators | All interactive elements show `outline: 2px solid #3B82F6` on `:focus-visible` |
 | Reduced motion | `prefers-reduced-motion: reduce` disables all animations (pulse, transitions, FA2 animation). Static alternatives provided. |
 | Minimum contrast | Primary text `#F8FAFC` on `#0F172A` = 15.4:1 ratio. Muted text `#94A3B8` on `#0F172A` = 5.6:1 ratio. Both exceed WCAG AA (4.5:1). |
-| Screen reader | Panel switches announced via `aria-live` region. Graph node details in drawer are focusable. Status bar uses `role="status"`. |
+| Screen reader | Panel switches announced via `aria-live` region. Graph node details in drawer are focusable. Status bar uses `role="status"`. Sidebar icon buttons use `aria-label="{Panel Name}"` for screen reader identification. |
 | Minimum target size | All clickable elements minimum 32x32px (WCAG 2.2 Target Size minimum for non-inline targets) |
+| Sidebar tooltips | Tooltip on hover retained at all viewport widths including collapsed sidebar (<1200px). `aria-label` on each icon button ensures panel names are always discoverable by assistive technology. |
 
-**Source:** CONTEXT.md D-25 (numerical values alongside color), D-04 (reduced motion), defaults for accessibility
+**Source:** CONTEXT.md D-25 (numerical values alongside color), D-04 (reduced motion), D-18 (sidebar collapse), defaults for accessibility
 
 ---
 
