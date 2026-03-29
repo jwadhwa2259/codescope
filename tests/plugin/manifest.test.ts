@@ -68,14 +68,14 @@ describe("Plugin Manifest", () => {
       expect(manifest.version).toBe("0.1.0");
     });
 
-    it("has exactly 6 skills registered", () => {
+    it("has exactly 9 skills registered", () => {
       const manifest = JSON.parse(
         fs.readFileSync(
           path.join(PROJECT_ROOT, ".claude-plugin", "plugin.json"),
           "utf-8"
         )
       );
-      expect(manifest.skills).toHaveLength(8);
+      expect(manifest.skills).toHaveLength(9);
     });
 
     it("each skill path file exists on disk", () => {
