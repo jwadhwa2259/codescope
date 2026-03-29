@@ -24,10 +24,10 @@ Requirements for v2.0 Intelligence Layer + Interactive Dashboard. Each maps to r
 
 ### Pipeline Evolution
 
-- [ ] **PIPE-01**: Per-task qualification after each agent execution verifies files actually changed via git diff and runs scoped convention check
-- [ ] **PIPE-02**: Diagnostic failure routing classifies eval findings as SCOPE_DRIFT / PLAN_GAP / CODE_BUG / CONVENTION_MISS before attempting debug fixes
-- [ ] **PIPE-03**: Plan-vs-actual reconciliation report compares planned files against actual git changes, surfaces unexpected changes and scope drift
-- [ ] **PIPE-04**: Planner estimates token cost per agent and tags as LIGHT/MODERATE/HEAVY, orchestrator warns when context exceeds safe threshold
+- [x] **PIPE-01**: Per-task qualification after each agent execution verifies files actually changed via git diff and runs scoped convention check
+- [x] **PIPE-02**: Diagnostic failure routing classifies eval findings as SCOPE_DRIFT / PLAN_GAP / CODE_BUG / CONVENTION_MISS before attempting debug fixes
+- [x] **PIPE-03**: Plan-vs-actual reconciliation report compares planned files against actual git changes, surfaces unexpected changes and scope drift
+- [x] **PIPE-04**: Planner estimates token cost per agent and tags as LIGHT/MODERATE/HEAVY, orchestrator warns when context exceeds safe threshold
 
 ### Session Continuity
 
@@ -123,10 +123,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INJECT-03 | Phase 10 | Complete |
 | INJECT-04 | Phase 10 | Complete |
 | INJECT-05 | Phase 10 | Complete |
-| PIPE-01 | Phase 13 | Pending |
-| PIPE-02 | Phase 13 | Pending |
-| PIPE-03 | Phase 13 | Pending |
-| PIPE-04 | Phase 13 | Pending |
+| PIPE-01 | Phase 13 | Complete |
+| PIPE-02 | Phase 13 | Complete |
+| PIPE-03 | Phase 13 | Complete |
+| PIPE-04 | Phase 13 | Complete |
 | SESS-01 | Phase 12 | Complete |
 | SESS-02 | Phase 12 | Complete |
 | SESS-03 | Phase 12 | Complete |
