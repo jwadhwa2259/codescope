@@ -9,6 +9,15 @@ import { createWebSocketClient, type ConnectionStatus } from './lib/ws-client.js
 import { renderSidebar, type PanelId } from './components/sidebar.js';
 import { renderStatusBar, type StatusData } from './components/status-bar.js';
 import { renderGraphPanel } from './panels/graph.js';
+import { renderHeatmapPanel } from './panels/heatmap.js';
+import { renderTrendsPanel } from './panels/trends.js';
+import { renderBlastRadiusPanel } from './panels/blast-radius.js';
+import { renderCommandPanel } from './panels/command.js';
+import {
+  showProgressBanner,
+  updateProgressBanner,
+  hideProgressBanner,
+} from './components/progress-banner.js';
 import type { ApiClient } from './lib/api-client.js';
 import type { WebSocketClient } from './lib/ws-client.js';
 
@@ -26,31 +35,6 @@ interface PanelInstance {
 }
 
 type PanelRenderer = (ctx: PanelContext) => PanelInstance;
-
-// ---- Placeholder panel factory ----
-
-function renderPlaceholderPanel(name: string): PanelRenderer {
-  return (ctx: PanelContext): PanelInstance => {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'empty-state';
-
-    const heading = document.createElement('h2');
-    heading.textContent = 'Coming soon';
-
-    const body = document.createElement('p');
-    body.textContent = `${name} panel will be available after next update.`;
-
-    wrapper.appendChild(heading);
-    wrapper.appendChild(body);
-    ctx.container.appendChild(wrapper);
-
-    return {
-      destroy() {
-        wrapper.remove();
-      },
-    };
-  };
-}
 
 // ---- App initialization ----
 
@@ -81,10 +65,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const panels: Record<PanelId, PanelRenderer> = {
     graph: renderGraphPanel,
-    heatmap: renderPlaceholderPanel('Heatmap'),
-    trends: renderPlaceholderPanel('Trends'),
-    blast: renderPlaceholderPanel('Blast Radius'),
-    command: renderPlaceholderPanel('Command Center'),
+    heatmap: renderHeatmapPanel,
+    trends: renderTrendsPanel,
+    blast: renderBlastRadiusPanel,
+    command: renderCommandPanel,
   };
 
   function onPanelSwitch(panelId: PanelId): void {
@@ -108,7 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
       api,
       ws,
       onSelectFile,
-    });
+      selectedFile,
+    } as any);
     activePanelId = panelId;
 
     // Update sidebar active indicator
@@ -200,8 +185,32 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 7. WebSocket event handling
+  const panelContainer = document.getElementById('panel-container')!;
   ws.onEvent((event) => {
-    if (event.type === 'graph:updated' || event.type === 'readiness:snapshot') {
+    if (event.type === 'bootstrap:progress') {
+      showProgressBanner(panelContainer, event.stage, event.percentage);
+    } else if (event.type === 'orient:phase') {
+      updateProgressBanner(`Orient: ${event.phase}`, 0);
+    } else if (event.type === 'agent:spawn') {
+      updateProgressBanner(`Agent: ${event.agent} (wave ${event.wave})`, 0);
+    } else if (event.type === 'agent:complete') {
+      updateProgressBanner(`${event.agent}: ${event.status}`, 100);
+    } else if (event.type === 'graph:updated') {
+      hideProgressBanner();
+      // Refresh status bar
+      api.fetchStatus().then((res) => {
+        if (res.status === 'ok') {
+          statusBar.update({
+            nodeCount: res.data.nodeCount,
+            edgeCount: res.data.edgeCount,
+            communityCount: res.data.communityCount,
+            bootstrapDate: res.data.bootstrapDate,
+            readinessGrade: null,
+          });
+        }
+      });
+      refreshAllData();
+    } else if (event.type === 'readiness:snapshot') {
       refreshAllData();
     }
   });
