@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { handlePredictImpact } from "../../tools/impact-prediction.js";
+import type { AppEnv } from "../server.js";
 
-export const impactRouter = new Hono();
+export const impactRouter = new Hono<AppEnv>();
 
 /**
  * POST /impact
@@ -10,7 +11,7 @@ export const impactRouter = new Hono();
  * Accepts file_paths and optional max_hops, returns impact prediction results.
  */
 impactRouter.post("/", async (c) => {
-  const projectRoot = c.get("projectRoot") as string;
+  const projectRoot = c.get("projectRoot");
 
   try {
     const body = await c.req.json();

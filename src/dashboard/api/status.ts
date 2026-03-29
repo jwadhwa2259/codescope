@@ -4,7 +4,9 @@ import * as path from "node:path";
 import { openDatabase, closeDatabase } from "../../graph/database.js";
 import { getGraphDbPath, getCodescopePath } from "../../utils/paths.js";
 
-export const statusRouter = new Hono();
+import type { AppEnv } from "../server.js";
+
+export const statusRouter = new Hono<AppEnv>();
 
 /**
  * GET /status
@@ -13,7 +15,7 @@ export const statusRouter = new Hono();
  * Used by the status bar and header to show connection/data state.
  */
 statusRouter.get("/", (c) => {
-  const projectRoot = c.get("projectRoot") as string;
+  const projectRoot = c.get("projectRoot");
   const dbPath = getGraphDbPath(projectRoot);
   const metaPath = path.join(getCodescopePath(projectRoot), "meta.json");
 

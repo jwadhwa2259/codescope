@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { handleReview } from "../../tools/review/index.js";
+import type { AppEnv } from "../server.js";
 
-export const reviewRouter = new Hono();
+export const reviewRouter = new Hono<AppEnv>();
 
 /**
  * POST /review
@@ -10,7 +11,7 @@ export const reviewRouter = new Hono();
  * Accepts file_paths and optional branch, returns structured review results.
  */
 reviewRouter.post("/", async (c) => {
-  const projectRoot = c.get("projectRoot") as string;
+  const projectRoot = c.get("projectRoot");
 
   try {
     const body = await c.req.json();

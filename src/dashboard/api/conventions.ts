@@ -4,7 +4,9 @@ import * as path from "node:path";
 import { getCodescopePath } from "../../utils/paths.js";
 import type { ConventionIndex, ConventionFileEntry } from "../../artifacts/types.js";
 
-export const conventionsRouter = new Hono();
+import type { AppEnv } from "../server.js";
+
+export const conventionsRouter = new Hono<AppEnv>();
 
 /**
  * Compute per-file compliance percentage and color bucket.
@@ -33,7 +35,7 @@ function enrichFile(conventions: ConventionFileEntry[]): {
  * Reads from the pre-computed convention index JSON.
  */
 conventionsRouter.get("/", (c) => {
-  const projectRoot = c.get("projectRoot") as string;
+  const projectRoot = c.get("projectRoot");
   const indexPath = path.join(
     getCodescopePath(projectRoot),
     "injection",

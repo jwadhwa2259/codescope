@@ -4,12 +4,12 @@ import { openDatabase, closeDatabase } from "../../graph/database.js";
 import {
   loadGraphFromSQLite,
   computeCentrality,
-  runCommunityDetection,
   computeDangerZones,
 } from "../../graph/analytics.js";
 import { getGraphDbPath } from "../../utils/paths.js";
+import type { AppEnv } from "../server.js";
 
-export const graphRouter = new Hono();
+export const graphRouter = new Hono<AppEnv>();
 
 /**
  * GET /graph
@@ -19,7 +19,7 @@ export const graphRouter = new Hono();
  * community for immediate rendering (D-20).
  */
 graphRouter.get("/", (c) => {
-  const projectRoot = c.get("projectRoot") as string;
+  const projectRoot = c.get("projectRoot");
   const dbPath = getGraphDbPath(projectRoot);
 
   if (!fs.existsSync(dbPath)) {
@@ -37,7 +37,30 @@ graphRouter.get("/", (c) => {
   try {
     const graph = loadGraphFromSQLite(db);
     const { centralities } = computeCentrality(graph);
-    const communityResult = runCommunityDetection(graph);
+
+    // Read pre-computed communities from SQLite (computed during bootstrap)
+    const communityRows = db
+      .prepare(
+        "SELECT node_id, community_id, modularity_class FROM communities",
+      )
+      .all() as Array<{
+      node_id: string;
+      community_id: number;
+      modularity_class: string;
+    }>;
+
+    const communities: Record<string, number> = {};
+    for (const row of communityRows) {
+      communities[String(row.node_id)] = row.community_id;
+    }
+
+    const communitySet = new Set(Object.values(communities));
+    const communityResult = {
+      communityCount: communitySet.size,
+      modularity: 0, // Not stored separately; 0 is acceptable for display
+      communities,
+    };
+
     const dangerZones = computeDangerZones(
       graph,
       centralities,

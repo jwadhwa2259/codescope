@@ -3,14 +3,14 @@ import * as fs from "node:fs";
 import { openDatabase, closeDatabase } from "../../graph/database.js";
 import {
   loadGraphFromSQLite,
-  computeCentrality,
   blastRadius,
   reverseBlastRadius,
   type BlastRadiusNode,
 } from "../../graph/analytics.js";
 import { getGraphDbPath } from "../../utils/paths.js";
+import type { AppEnv } from "../server.js";
 
-export const blastRadiusRouter = new Hono();
+export const blastRadiusRouter = new Hono<AppEnv>();
 
 /**
  * Group blast radius nodes by hop distance for concentric ring visualization.
@@ -38,7 +38,7 @@ function groupByRing(
  * - direction: "forward" (default) | "reverse"
  */
 blastRadiusRouter.get("/:file", (c) => {
-  const projectRoot = c.get("projectRoot") as string;
+  const projectRoot = c.get("projectRoot");
   const dbPath = getGraphDbPath(projectRoot);
   const filePath = decodeURIComponent(c.req.param("file"));
   const direction = c.req.query("direction") ?? "forward";
@@ -57,12 +57,30 @@ blastRadiusRouter.get("/:file", (c) => {
   const db = openDatabase(dbPath);
   try {
     const graph = loadGraphFromSQLite(db);
-    const { centralities } = computeCentrality(graph);
+
+    // Find graph node ID for the given file path
+    let nodeId: string | undefined;
+    graph.forEachNode((id: string, attrs: Record<string, unknown>) => {
+      if (attrs.filePath === filePath) {
+        nodeId = id;
+      }
+    });
+
+    if (!nodeId) {
+      return c.json(
+        {
+          status: "error",
+          code: "FILE_NOT_FOUND",
+          message: `File ${filePath} not found in graph`,
+        },
+        404,
+      );
+    }
 
     const radiusNodes =
       direction === "reverse"
-        ? reverseBlastRadius(graph, centralities, filePath, 4)
-        : blastRadius(graph, centralities, filePath, 4);
+        ? reverseBlastRadius(graph, nodeId, 4)
+        : blastRadius(graph, nodeId, 4);
 
     const rings = groupByRing(radiusNodes);
 

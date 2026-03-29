@@ -15,9 +15,17 @@ import { statusRouter } from "./api/status.js";
 import { reviewRouter } from "./api/review.js";
 import { impactRouter } from "./api/impact.js";
 
+// ---- App Env ----
+
+export type AppEnv = {
+  Variables: {
+    projectRoot: string;
+  };
+};
+
 // ---- App Setup ----
 
-const app = new Hono();
+const app = new Hono<AppEnv>();
 const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 
 // ---- Middleware ----
@@ -32,7 +40,7 @@ app.use("*", async (c, next) => {
 
 // ---- API Routes ----
 
-const apiRouter = new Hono();
+const apiRouter = new Hono<AppEnv>();
 apiRouter.route("/graph", graphRouter);
 apiRouter.route("/conventions", conventionsRouter);
 apiRouter.route("/readiness", readinessRouter);

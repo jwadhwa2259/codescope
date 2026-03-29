@@ -5,7 +5,9 @@ import { getLatestSnapshot } from "../../graph/readiness-history.js";
 import { getGraphDbPath } from "../../utils/paths.js";
 import type { ReadinessSnapshot } from "../../graph/readiness-history.js";
 
-export const readinessRouter = new Hono();
+import type { AppEnv } from "../server.js";
+
+export const readinessRouter = new Hono<AppEnv>();
 
 /**
  * Convert a numeric score (0-100) to a letter grade.
@@ -35,7 +37,7 @@ interface ReadinessWithGrades extends ReadinessSnapshot {
  * dimension plus the full history array for trend visualization.
  */
 readinessRouter.get("/", (c) => {
-  const projectRoot = c.get("projectRoot") as string;
+  const projectRoot = c.get("projectRoot");
   const dbPath = getGraphDbPath(projectRoot);
 
   if (!fs.existsSync(dbPath)) {
