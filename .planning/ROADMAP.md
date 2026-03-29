@@ -176,7 +176,7 @@ Plans:
 - [x] 16-02-PLAN.md -- Resolve all 24 TypeScript tsc --noEmit errors: Hono AppEnv typing, dashboard API argument fixes, DbHandle widening, ambient declarations, html2canvas union types
 - [x] 16-03-PLAN.md -- Build darwin-arm64 platform package binary and run full verification suite (build + tsc + tests + server smoke test)
 - [x] 16-04-PLAN.md -- Gap closure: Add postinstall build script to prevent stale dist, update traceability table (6 Pending to Complete)
-- [ ] 16-05-PLAN.md -- Gap closure: GitHub Actions workflow for cross-platform binary builds, platform packages documentation
+- [x] 16-05-PLAN.md -- Gap closure: GitHub Actions workflow for cross-platform binary builds, platform packages documentation
 
 ## Progress
 

@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Layer + Interactive Dashboard
 status: verifying
-stopped_at: Completed 16-04-PLAN.md
+stopped_at: Completed 16-05-PLAN.md (wave 1 complete)
 last_updated: "2026-03-29T22:23:04.404Z"
 last_activity: 2026-03-29
 progress:
@@ -78,6 +78,7 @@ Progress: [█████████░] 92%
 | Phase 16-tech-debt-closure P02 | 4min | 2 tasks | 11 files |
 | Phase 16-tech-debt-closure P03 | 3min | 1 tasks | 4 files |
 | Phase 16-tech-debt-closure P04 | 2min | 2 tasks | 2 files |
+| Phase 16-tech-debt-closure P05 | 1min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -139,6 +140,7 @@ All v1.0 decisions validated -- see PROJECT.md for outcomes.
 - [Phase 16-tech-debt-closure]: Use any[] in DbHandle for better-sqlite3 compatibility; type assertion for html2canvas CJS default export
 - [Phase 16-tech-debt-closure]: ESM deep imports to CJS packages need .js extension (graphology-metrics/centrality/degree.js)
 - [Phase 16-tech-debt-closure]: postinstall uses --ignore-scripts flag to prevent infinite npm install recursion
+- [Phase 16-tech-debt-closure]: macos-14 maps to darwin-arm64, macos-13 maps to darwin-x64 in GitHub Actions CI matrix
 
 ### Pending Todos
 
@@ -161,5 +163,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-29T22:23:04.402Z
-Stopped at: Completed 16-04-PLAN.md
+Stopped at: Completed 16-05-PLAN.md (wave 1 complete)
 Resume file: None
