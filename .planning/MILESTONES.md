@@ -1,5 +1,41 @@
 # Milestones
 
+## v2.0 Intelligence Layer + Interactive Dashboard (Shipped: 2026-03-29)
+
+**Phases completed:** 8 phases, 27 plans, 53 tasks
+
+**Key accomplishments:**
+
+- SQLite v2 schema with ON DELETE CASCADE via 12-step table recreation, auto-migration using PRAGMA user_version, file_hashes and readiness_history tables, busy_timeout(5000) for concurrent access
+- SHA-256 file hashing with scoped staleness detection, per-file delete-and-rebuild reparse engine, and async getGraph that blocks on stale files until reparsed -- every MCP query now serves fresh data
+- Readiness trend tracking with snapshot storage on every bootstrap and codescope_trends MCP tool returning 3 period comparisons with per-dimension deltas and trend directions
+- Pre-computed JSON injection artifacts (danger-zones, conventions, blast-radius) generated atomically after every bootstrap and incremental rebuild for sub-50ms hook consumption
+- PreToolUse/PostToolUse hooks reading pre-computed artifact files with 500-token priority-budgeted context injection on every Edit/Write, zero heavy dependencies, graceful no-op when unbootstrapped
+- Reverse BFS graph traversal via bfsFromNode inbound mode, plus codescope_predict_impact MCP tool returning per-file risk tiers with centrality-based classification
+- codescope_review MCP tool with diff resolution, per-file risk scoring, dependency edge reporting, DFS cycle detection, convention compliance checking, and cross-community boundary flagging
+- /codescope:review skill with argument parsing (PR/branch/working tree), markdown report formatting, and both Phase 11 tools registered in the tool index (15 total)
+- VERIFIED-only rule filter and pre-commit check engine with sg scan, severity-to-exit-code mapping, and compact terminal output
+- Handoff document generator/parser with pipeline phase detection from filesystem artifacts, D-17 artifact validation, and 7-day session cleanup
+- Git hook install/uninstall CLIs with husky detection, existing hook chaining via backup, and marker-block-based husky integration
+- PreCompact and SessionStart Claude Code hooks for auto-saving pipeline state before compaction and injecting handoff context on session resume, plus complete tsdown build config with all 9 entry points
+- Pause/resume skills wired to dist/ session modules with orient --resume artifact-based phase detection and 6 unit tests
+- Four standalone pipeline modules -- token utility, failure classifier, qualification gate, reconciliation reporter -- with 46 tests establishing contracts for Plan 02 integration
+- Four PIPE requirements wired into live pipeline -- qualification gates, failure classification, reconciliation reports, and token budget warnings active in orchestrator/eval/debug/planner
+- Vitest test stubs for dashboard server, API routes, and WebSocket with 22 skipped + 1 real assertion covering all server-side concerns
+- Hono HTTP server with 7 JSON API routes, WebSocket live updates, event log tailing, and complete dark-theme CSS design system for the visualization dashboard
+- Typed API/WebSocket clients, 5 shared UI components, panel routing, and sigma.js dependency graph with FA2 layout, community coloring, danger zone borders, and full node interactions
+- Convention heatmap, readiness gauges with trend charts, blast radius rings, and command center action cards -- completing the 5-panel dashboard with real-time WebSocket progress feedback
+- Playwright headless screenshot capture, /codescope:viz skill with browser launch, and event emission wired into bootstrap/execution pipelines for real-time WebSocket dashboard updates
+- Complete `npx codescope` CLI with 6 subcommands, init flow with plugin auto-setup, UI helpers with JSON mode, and 17 tests
+- Cross-platform npm distribution config with optionalDependencies for better-sqlite3 binaries, native loader with graceful fallback, and README with quickstart
+- Fixed MCP server path mismatch (dist/server.js -> dist/server.mjs) in 3 locations and install-hooks fork bomb with idempotency guard and regression test
+- Resolved all 24 tsc --noEmit errors across 11 files: Hono AppEnv context typing, function argument corrections, DbHandle widening, ambient module declarations, and html2canvas type assertions
+- darwin-arm64 native binary extracted, ESM deep import fix for graphology-metrics, full build pipeline verified (tsc clean, 1124 tests pass, MCP server starts)
+- Added postinstall build script to package.json and marked all 42 v2.0 requirements Complete in REQUIREMENTS.md traceability table
+- GitHub Actions 4-platform matrix workflow for better-sqlite3 native binary builds with build process documentation
+
+---
+
 ## v1.0 MVP (Shipped: 2026-03-27)
 
 **Phases completed:** 8 phases, 34 plans, 65 tasks

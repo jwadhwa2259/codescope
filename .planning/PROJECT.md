@@ -2,120 +2,90 @@
 
 ## Current State
 
-**Version:** v1.0 MVP shipped 2026-03-27 | v2.0 Phase 16 complete 2026-03-29 — all milestone phases done, tech debt closed
-**Codebase:** 21,742 LOC TypeScript (source) + 20,759 LOC TypeScript (tests, 917 passing)
-**Stack:** TypeScript, web-tree-sitter WASM, ast-grep CLI, better-sqlite3, graphology, enhanced-resolve, @modelcontextprotocol/sdk, vitest
+**Version:** v2.0 shipped 2026-03-29
+**Codebase:** 33,657 LOC TypeScript (source + tests, 1,124 passing)
+**Stack:** TypeScript, web-tree-sitter WASM, ast-grep CLI, better-sqlite3, graphology, enhanced-resolve, @modelcontextprotocol/sdk, Hono, sigma.js, vitest
 
 ## What This Is
 
-CodeScope is a Claude Code plugin that deeply analyzes brownfield codebases once, then autonomously researches, plans, executes, verifies, evaluates, and self-corrects code changes using coordinated sub-agents. The user only steps in twice: to describe what they want, and to approve what gets shipped. It solves the core problem that AI tools write code that doesn't fit into existing systems — every session starts from zero. CodeScope gives AI persistent understanding.
+CodeScope is a Claude Code plugin that deeply analyzes brownfield codebases once, then autonomously researches, plans, executes, verifies, evaluates, and self-corrects code changes using coordinated sub-agents. The user only steps in twice: to describe what they want, and to approve what gets shipped.
+
+v2.0 transforms CodeScope from a one-time analysis tool into an always-on intelligence layer with auto-injection, graph-aware PR review, interactive visualization, convention enforcement, and self-improving pipeline -- ready for `npx codescope` distribution.
 
 ## Core Value
 
-AI-generated code changes that respect existing conventions, stay within safe blast radius, and actually work in the codebase — verified end-to-end before the user sees them.
+AI-generated code changes that respect existing conventions, stay within safe blast radius, and actually work in the codebase -- verified end-to-end before the user sees them.
 
 ## Requirements
 
 ### Validated
 
-- Plugin skeleton with manifest, skills, hooks, and scripts — v1.0
-- `/codescope:onboard` — interactive config creation (project detection, agent model selection, workflow preferences) — v1.0
-- SQLite knowledge graph (better-sqlite3) with nodes, edges, communities tables — v1.0
-- web-tree-sitter WASM parsing for TS/JS/Python — v1.0
-- Import resolution: enhanced-resolve + tsconfig-paths (TS/JS), filesystem-based (Python ~80%) — v1.0
-- Persistent file structure under .claude/codescope/ — v1.0
-- Graph analysis: graphology (in-degree centrality, Louvain community detection, BFS blast radius) — v1.0
-- Scout agent: service-manifest.md with LOC, frameworks, entry points, CI/CD — v1.0
-- Researcher agent: overview.md covering structure, frameworks, entry points, key directories — v1.0
-- Convention Detector: ast-grep frequency analysis, conflict detection, golden files — v1.0
-- Risk Analyzer: knowledge graph construction, centrality, communities, danger zones — v1.0
-- Learning Synthesizer: learnings.md schema initialization — v1.0
-- `/codescope:bootstrap` — full autonomous codebase analysis pipeline with monorepo squad scaling, cross-service synthesis, AI readiness scoring — v1.0
-- MCP server with 12 operational tools — v1.0 (13 tools after Phase 9, 15 tools after Phase 11: codescope_predict_impact + codescope_review added)
-- Graph cache with 5-min TTL for sub-100ms tool queries — v1.0 (async staleness-aware cache after Phase 9)
-- MCP response contract (ok/error/partial envelopes with staleness metadata) — v1.0
-- Auto-injection artifact pipeline (danger-zones, conventions, blast-radius JSON indexes) — Phase 10
-- PreToolUse/PostToolUse hooks with 500-token budget composer for invisible context injection — Phase 10
-- AI readiness score (4 dimensions, A-F grades, delta tracking) — v1.0
-- Incremental re-bootstrap via git diff with 50% threshold — v1.0
-- Bootstrap --force confirmation — v1.0
-- `/codescope:orient [task]` — full orient pipeline with graph-informed clarification, research, hybrid execution — v1.0
-- Execution engine with wave-based scheduling, agent teams detection, file overlap validation — v1.0
-- Agent teams onboarding detection — v1.0
-- Static verify agent — convention compliance, blast radius diff, code review — v1.0
-- Runtime verify agent — build, tests, E2E auto-detection, auto-smoke generation — v1.0
-- Eval agent — LLM-as-judge 4-criteria scoring — v1.0
-- User gate — interactive finding selection (3 modes) — v1.0
-- Debug agent — targeted fix plans, max 3 cycles, design decision escalation — v1.0
-- Learning system — project memory with decay, contradiction detection, global memory — v1.0
-- `/codescope:review-learnings` — review and confirm/reject learnings — v1.0
-- `/codescope:settings` — interactive configuration — v1.0
-- `codescope_predict_impact` — reverse blast radius impact prediction with centrality-based risk — Phase 11
-- `codescope_review` — structural impact analysis for PRs/diffs (risk scores, dependency changes, cycle detection, convention compliance, cross-community flagging) — Phase 11
-- `/codescope:review` — user-facing review skill formatting review tool output as markdown — Phase 11
-- Convention enforcement: VERIFIED-only rule filtering, pre-commit check with configurable severity (suggest-only/warn/block), hook install/uninstall with husky detection — Phase 12
-- Session continuity: handoff generation/parsing, PreCompact/SessionStart hooks, 7-day cleanup — Phase 12
-- `/codescope:pause` — save pipeline state as structured handoff document — Phase 12
-- `/codescope:resume` — restore pipeline state with artifact validation and phase skipping — Phase 12
-- Orient `--resume` flag — artifact-based phase detection for interrupted workflows — Phase 12
-- Post-execution qualification gate (git diff + optional convention scan) — Phase 13
-- Failure classifier (criterion-to-classification mapping, priority-based debug routing) — Phase 13
-- Plan-vs-actual reconciliation reports (set-difference analysis, per-agent breakdown) — Phase 13
-- Token budget awareness (cost tier tagging, configurable threshold warning) — Phase 13
-- Verify-to-eval JSON sidecar pipeline — v1.0
-- Type consolidation (no local type copies or unsafe casts) — v1.0
-
-- CLI entry point (`codescope` binary via commander): init, bootstrap, viz, review, install-hooks, status — Phase 15
-- Plugin auto-wiring: generates .claude-plugin/plugin.json, .mcp.json, hooks/hooks.json from templates — Phase 15
-- npm distribution packaging: files array, optionalDependencies for cross-platform better-sqlite3, native loader with graceful fallback — Phase 15
-- Platform package scaffolding: darwin-arm64/x64, linux-x64, win32-x64 with build script — Phase 15
+- Plugin skeleton with manifest, skills, hooks, and scripts -- v1.0
+- `/codescope:onboard` -- interactive config creation -- v1.0
+- SQLite knowledge graph (better-sqlite3) with nodes, edges, communities tables -- v1.0
+- web-tree-sitter WASM parsing for TS/JS/Python -- v1.0
+- Import resolution: enhanced-resolve + tsconfig-paths (TS/JS), filesystem-based (Python ~80%) -- v1.0
+- Graph analysis: graphology (centrality, Louvain community detection, BFS blast radius) -- v1.0
+- Scout + Researcher + Convention Detector + Risk Analyzer + Learning Synthesizer agents -- v1.0
+- `/codescope:bootstrap` -- full autonomous analysis pipeline with monorepo squad scaling -- v1.0
+- MCP server with 15 operational tools -- v2.0
+- Graph cache with async staleness-aware cache -- v2.0
+- AI readiness score (4 dimensions, A-F grades, delta tracking) -- v1.0
+- Incremental re-bootstrap via git diff with 50% threshold -- v1.0
+- `/codescope:orient [task]` -- full orient pipeline with graph-informed clarification -- v1.0
+- Execution engine with wave-based scheduling, agent teams detection -- v1.0
+- Static + Runtime verify agents, Eval agent, User gate, Debug agent -- v1.0
+- Learning system with decay, contradiction detection, global memory -- v1.0
+- Incremental delta reparse with SHA-256 staleness detection (<2s updates) -- v2.0
+- Schema migration (v1-to-v2) with ON DELETE CASCADE, busy_timeout concurrency -- v2.0
+- Readiness trend tracking with snapshot storage and period comparisons -- v2.0
+- Auto-injection hooks (PreToolUse/PostToolUse) with 500-token budget composer -- v2.0
+- Pre-computed JSON injection artifacts for sub-50ms hook consumption -- v2.0
+- `codescope_predict_impact` -- reverse BFS blast radius prediction -- v2.0
+- `codescope_review` -- structural PR impact analysis with risk scoring -- v2.0
+- `/codescope:review` skill -- PR/branch/working tree review formatting -- v2.0
+- Convention enforcement: VERIFIED-only pre-commit hooks with configurable severity -- v2.0
+- Session continuity: pause/resume with handoff documents and PreCompact hooks -- v2.0
+- Pipeline evolution: qualification gates, failure classification, reconciliation, token budget -- v2.0
+- Visualization dashboard: sigma.js graph, convention heatmap, readiness trends, blast radius, command center -- v2.0
+- WebSocket real-time updates during bootstrap/execution -- v2.0
+- Screenshot export via Playwright -- v2.0
+- CLI entry point (`npx codescope`): init, bootstrap, viz, review, install-hooks, status -- v2.0
+- Plugin auto-wiring for Claude Code integration -- v2.0
+- Cross-platform npm distribution with better-sqlite3 prebuilds -- v2.0
 
 ### Active
 
-(All v2.0 requirements complete)
+(No active requirements -- next milestone not started)
 
 ### Out of Scope
 
-- Semantic search (@lancedb/lancedb + Ollama) — V3, structural + text covers 90% of use cases
-- Cross-project learning / pattern library — V3
-- ADR auto-generation — V3
-- CI/CD integration (GitHub Actions hooks) — V3, different deployment/reliability model
-- Cross-service HTTP linking (route detection + HTTP call matching) — V3
-- Greenfield/ideation features (SEED-like) — Greenfield planning is saturated (25+ tools); CodeScope's moat is brownfield intelligence
-- Session management/restore — 6+ tools in ecosystem do this; not core value
-- IDE extensions — Let community build on MCP tools
-- Usage/cost monitoring — Commodity; 6 tools already exist
-- Own orchestrator/workflow engine — 11+ exist; would compete with potential consumers of the intelligence layer
-
-## Current Milestone: v2.0 Intelligence Layer + Interactive Dashboard
-
-**Goal:** Transform CodeScope from a one-time analysis tool into an always-on intelligence layer with auto-injection, graph-aware PR review, interactive visualization, and self-improving pipeline — ready for npx distribution and marketplace launch.
-
-**Target features:**
-- On-demand incremental graph updates (always-fresh intelligence)
-- Auto-injection hooks (PreToolUse/PostToolUse — invisible codebase context on every edit)
-- Pipeline evolution: per-task qualification, diagnostic failure routing, plan-vs-actual reconciliation, context budget awareness
-- Session continuity with pause/resume skills and handoff documents
-- Graph-aware PR review (structural impact analysis)
-- Change impact prediction (pre-change blast radius)
-- Convention enforcement hooks (opt-in pre-commit blocking)
-- Full interactive visualization dashboard (sigma.js graph, convention heatmap, readiness trends, blast radius explorer, command center)
-- Technical debt tracking (readiness history + trends)
-- `npx codescope` install experience for marketplace readiness
+- Semantic search (@lancedb/lancedb + Ollama) -- V3, structural + text covers 90% of use cases
+- Cross-project learning / pattern library -- V3
+- ADR auto-generation -- V3
+- CI/CD integration (GitHub Actions hooks) -- V3, different deployment/reliability model
+- Cross-service HTTP linking (route detection + HTTP call matching) -- V3
+- Multi-language expansion (Go, Java, Rust, C#) -- V3
+- Greenfield/ideation features -- Greenfield planning is saturated (25+ tools); CodeScope's moat is brownfield intelligence
+- Session management/restore -- 6+ tools in ecosystem do this; not core value
+- IDE extensions -- Let community build on MCP tools
+- Usage/cost monitoring -- Commodity; 6 tools already exist
+- Own orchestrator/workflow engine -- 11+ exist; would compete with potential consumers of the intelligence layer
+- AI-powered auto-fix for convention violations -- Convention auto-fix requires understanding intent; let pipeline handle fixes
 
 ## Context
 
 - **Problem space:** GitClear's 211M-line analysis found AI-assisted code churn doubled while refactoring collapsed. METR RCT showed experienced devs 19% slower with AI in their own repos. Root cause: no persistent codebase understanding.
 - **Competitive landscape:** codebase-context (convention detection, trends, golden files), codebase-memory-mcp (SQLite graph, Louvain, blast radius, detect_changes), Understand Anything (5-agent architecture), Anthropic's feature-dev plugin (official plugin patterns). CodeScope combines the best of these with a full autonomous pipeline nobody else has.
-- **Architecture philosophy:** Thin orchestrator (<15K tokens), all heavy work in isolated sub-agent 200K-token contexts, filesystem coordination (not return values — Issue #5812), no agent nesting. State lives on disk, not in context.
-- **Known platform constraints:** `context: fork` silently ignored on auto-invoked skills (Issue #17283) — use Task tool delegation. Sub-agents cannot return file contents to parent (Issue #5812). web-tree-sitter has memory leaks — periodic parser.delete() and recreate.
-- **Build tooling:** ast-grep CLI for structural pattern matching, web-tree-sitter WASM for AST parsing, better-sqlite3 for graph storage, graphology for graph analysis, enhanced-resolve for TS/JS import resolution.
-- **v1.0 shipped:** 8 phases, 34 plans, 65 tasks, 241 commits over 5 days. 103/103 requirements complete. 865 tests passing. Full pipeline: onboard → bootstrap → orient → execute → verify → eval → gate → debug → learn.
-- **Known tech debt (INFO):** Readiness input approximates typedFiles/testFiles from LOC ratios. DBUG-07 (>80% debug resolution) needs runtime validation with real tasks. ~48/103 requirements have SUMMARY frontmatter metadata gaps (all verified in VERIFICATION.md).
+- **Architecture philosophy:** Thin orchestrator (<15K tokens), all heavy work in isolated sub-agent 200K-token contexts, filesystem coordination (not return values -- Issue #5812), no agent nesting. State lives on disk, not in context.
+- **Known platform constraints:** `context: fork` silently ignored on auto-invoked skills (Issue #17283) -- use Task tool delegation. Sub-agents cannot return file contents to parent (Issue #5812). web-tree-sitter has memory leaks -- periodic parser.delete() and recreate.
+- **v1.0 shipped:** 2026-03-27. 8 phases, 34 plans, 65 tasks. 103/103 requirements. Full pipeline: onboard > bootstrap > orient > execute > verify > eval > gate > debug > learn.
+- **v2.0 shipped:** 2026-03-29. 8 phases, 27 plans, 53 tasks. 42/42 requirements. Always-fresh graph, auto-injection, PR review, convention enforcement, session continuity, pipeline evolution, interactive dashboard, npx distribution.
+- **Total shipped:** 16 phases, 61 plans, 118 tasks over 7 days (2026-03-22 to 2026-03-29).
 
 ## Constraints
 
-- **Tech stack**: TypeScript (same as Claude Code ecosystem), web-tree-sitter WASM (not node-tree-sitter — broken, no maintainer), ast-grep CLI, better-sqlite3, graphology, enhanced-resolve, @modelcontextprotocol/sdk, vitest
+- **Tech stack**: TypeScript (same as Claude Code ecosystem), web-tree-sitter WASM (not node-tree-sitter -- broken, no maintainer), ast-grep CLI, better-sqlite3, graphology, enhanced-resolve, @modelcontextprotocol/sdk, vitest
 - **Performance**: Bootstrap <5 min for 100K LOC, orient <60s after clarification, graph queries <100ms, plugin startup <5K tokens, orchestrator <15K tokens
 - **Quality**: Convention false positive rate <5% (high-confidence), eval finding accuracy >70%, debug resolution >80% within 3 cycles
 - **Language support**: TypeScript/JavaScript + Python for v1. TS/JS import resolution 95-99% accuracy, Python ~80%
@@ -126,19 +96,23 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Thin orchestrator pattern | Main context stays under 15K tokens — compaction either never triggers or doesn't matter because all state is on disk | Good — all orchestrators stay within budget |
-| Filesystem coordination over return values | Issue #5812: sub-agents can't return file contents. Append-only coordination.md pattern. | Good — reliable across all execution modes |
-| Hybrid execution (planner-driven, no user config) | Planner always analyzes dependency graph and picks optimal execution. No user-facing mode setting. | Good — simplified UX, correct mode selection |
-| Task tool delegation over context: fork | Issue #17283: context: fork silently ignored on auto-invoked skills | Good — workaround is stable |
-| web-tree-sitter WASM over node-tree-sitter | node-tree-sitter is broken with no maintainer. web-tree-sitter is what Claude Code uses internally. | Good — 0.25.10 pin avoids ABI breaks |
-| ast-grep for convention detection | Structural pattern matching by syntax, not text. Supports 27 languages. Zero compilation required. | Good — 0% false positive on fixtures |
-| Suggestion-only conventions in v1 | Never block — build trust first. User can dismiss/correct. <5% false positive target. | Good — builds user trust |
-| UNVERIFIED default for learnings | Prevents codifying LLM mistakes. Requires human confirmation. Contradiction detection against actual code. | Good — safe learning accumulation |
-| Skip automated comparison testing | Manual side-by-side testing across terminals sufficient for v1. | Good — testing was adequate |
-| ESM-first with NodeNext module resolution | Claude Code ecosystem is TypeScript/ESM. Consistent with plugin conventions. | Good — established in Phase 1 |
-| Two-pass batch insert for graph edges | Nodes first across all files, then edges resolved, for cross-file edge resolution correctness. | Good — handles cross-file deps |
-| Agent module pattern (Options + Result + async fn + artifact) | Consistent interface across all agent modules from Phase 2 onward. | Good — pattern reused in 10+ modules |
-| JSON sidecar for verify-to-eval pipeline | Structured data transfer between verify and eval stages instead of markdown parsing. | Good — clean data flow |
+| Thin orchestrator pattern | Main context stays under 15K tokens -- compaction either never triggers or doesn't matter because all state is on disk | Good |
+| Filesystem coordination over return values | Issue #5812: sub-agents can't return file contents. Append-only coordination.md pattern. | Good |
+| Hybrid execution (planner-driven, no user config) | Planner always analyzes dependency graph and picks optimal execution. No user-facing mode setting. | Good |
+| Task tool delegation over context: fork | Issue #17283: context: fork silently ignored on auto-invoked skills | Good |
+| web-tree-sitter WASM over node-tree-sitter | node-tree-sitter is broken with no maintainer. web-tree-sitter is what Claude Code uses internally. | Good |
+| ast-grep for convention detection | Structural pattern matching by syntax, not text. Supports 27 languages. Zero compilation required. | Good |
+| Suggestion-only conventions in v1 | Never block -- build trust first. User can dismiss/correct. <5% false positive target. | Good |
+| UNVERIFIED default for learnings | Prevents codifying LLM mistakes. Requires human confirmation. | Good |
+| ESM-first with NodeNext module resolution | Claude Code ecosystem is TypeScript/ESM. Consistent with plugin conventions. | Good |
+| Two-pass batch insert for graph edges | Nodes first across all files, then edges resolved, for cross-file edge resolution correctness. | Good |
+| Agent module pattern (Options + Result + async fn + artifact) | Consistent interface across all agent modules from Phase 2 onward. | Good |
+| JSON sidecar for verify-to-eval pipeline | Structured data transfer between verify and eval stages instead of markdown parsing. | Good |
+| Build isolation for hooks | Hook scripts never transitively import heavy modules (duplicated types/logic in hooks/lib/) | Good |
+| Pre-computed injection artifacts | JSON indexes built at bootstrap/incremental time for sub-50ms hook consumption | Good |
+| Hono for dashboard server | Lightweight, fast, TypeScript-native HTTP framework with built-in WebSocket support | Good |
+| sigma.js for graph visualization | Interactive graph rendering with FA2 layout, community coloring, and hover highlighting | Good |
+| Dynamic imports for heavy CLI deps | Keeps CLI bundle clean and avoids graphology ESM subpath resolution issues | Good |
 
 ## Evolution
 
@@ -153,9 +127,9 @@ This document evolves at phase transitions and milestone boundaries.
 
 **After each milestone** (via `/gsd:complete-milestone`):
 1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
+2. Core Value check -- still the right priority?
+3. Audit Out of Scope -- reasons still valid?
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after Phase 16 (tech-debt-closure) complete — all 42 v2.0 requirements satisfied*
+*Last updated: 2026-03-29 after v2.0 milestone completion*

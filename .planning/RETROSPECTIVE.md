@@ -52,6 +52,58 @@
 
 ---
 
+## Milestone: v2.0 — Intelligence Layer + Interactive Dashboard
+
+**Shipped:** 2026-03-29
+**Phases:** 8 | **Plans:** 27 | **Tasks:** 53 | **Commits:** 177
+
+### What Was Built
+- Always-fresh knowledge graph with SHA-256 staleness detection, incremental delta reparse (<2s), and schema migration with ON DELETE CASCADE
+- Invisible auto-injection via PreToolUse/PostToolUse hooks with 500-token budget composer and pre-computed JSON artifacts
+- PR review and impact prediction: structural diff analysis, reverse BFS blast radius, risk scoring, cycle detection, convention compliance
+- Convention enforcement: VERIFIED-only pre-commit hooks with configurable severity, husky-compatible install/uninstall
+- Session continuity: pause/resume skills, handoff documents, PreCompact/SessionStart hooks
+- Self-improving pipeline: per-task qualification gates, failure classification, plan-vs-actual reconciliation, token budget warnings
+- Interactive dashboard: sigma.js graph explorer, convention heatmap, readiness gauges, blast radius rings, command center with WebSocket live updates
+- `npx codescope` CLI with 6 subcommands, plugin auto-setup, cross-platform npm distribution
+
+### What Worked
+- **Build isolation pattern** — duplicating types/logic in hooks/lib/ and enforcement modules prevented heavy transitive imports. Applied consistently across Phases 10, 12, 14.
+- **Pre-computed artifacts** — JSON indexes built at bootstrap time for sub-50ms hook consumption. Decoupled heavy graph analysis from time-critical hook paths.
+- **Hono sub-router pattern** — each API route as independent Hono() instance mounted via app.route() kept dashboard code modular and testable
+- **PanelContext/PanelInstance contract** — standardized panel interface (api, ws, container, onSelectFile in, destroy() out) made adding 5 panels straightforward
+- **Event log as JSON lines** — decoupled dashboard from orchestrator imports. Events appended to events.log, tailed by server. Simple and reliable.
+- **2-day velocity** — 8 phases, 27 plans, 177 commits in 2 days. Build isolation and pre-computed patterns reduced integration friction.
+
+### What Was Inefficient
+- **Phase 16 added for tech debt (again)** — MCP path mismatch, TypeScript errors, and fork bomb should have been caught during Phase 15 verification, not post-audit
+- **DIST-04 platform binaries** — CI workflow authored but never executed. Hard to verify cross-platform builds without CI access.
+- **VIZ-08 screenshot dependency** — Uses `npx tsx` (devDependency) which won't work in published npm package without source tree. Known tech debt.
+- **SUMMARY frontmatter gaps persisted** — Despite being a v1.0 lesson, 6 requirements needed post-hoc patching in quick task 260329-m4f
+
+### Patterns Established
+- Build isolation: hooks/lib/ never imports from src/ -- types and logic duplicated for independence
+- Pre-computed artifacts: heavy analysis at bootstrap time, lightweight JSON reads at hook time
+- Hono sub-router mounting for modular API routes
+- PanelContext/PanelInstance contract for dashboard panels
+- JSON lines event log for decoupled real-time updates
+- Dynamic imports for CLI bundle size management (graphology ESM subpath issues)
+- Content marker string detection for idempotent hook installation
+
+### Key Lessons
+1. **Tech debt phases keep recurring** — both v1.0 and v2.0 needed a cleanup phase. Consider adding integration verification as a plan completion gate rather than a separate phase.
+2. **SUMMARY frontmatter enforcement still not solved** — despite being lesson #2 from v1.0, gaps recurred. Needs tooling enforcement, not process.
+3. **Cross-platform distribution is hard to verify locally** — CI workflow is the right approach but needs to be run as part of the milestone, not left as "exists but untested."
+4. **Build isolation is a first-class architectural pattern** — hooks, enforcement, and dashboard all independently discovered the need. Should be documented as a project convention.
+5. **Pre-computed artifacts beat runtime computation for hooks** — 50ms budget is too tight for graph queries. Pre-computing at bootstrap time was the right call.
+
+### Cost Observations
+- Model mix: predominantly sonnet for execution, opus for planning/review/milestone-level work
+- Sessions: ~8 sessions over 2 days
+- Notable: Average plan execution was 4.1min (110min total across 27 plans). Fastest phase was Phase 16 at 15min for 5 plans -- well-scoped targeted fixes.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -59,15 +111,19 @@
 | Milestone | Sessions | Phases | Plans | Key Change |
 |-----------|----------|--------|-------|------------|
 | v1.0 | ~15 | 8 | 34 | Established bottom-up phase ordering, agent module pattern, GSD workflow |
+| v2.0 | ~8 | 8 | 27 | Build isolation pattern, pre-computed artifacts, 2x velocity increase |
 
 ### Cumulative Quality
 
 | Milestone | Tests | Test LOC | Source LOC | Test Ratio |
 |-----------|-------|----------|------------|------------|
 | v1.0 | 865 | 20,759 | 21,742 | 0.95:1 |
+| v2.0 | 1,124 | ~25,000 | ~33,657 | ~0.74:1 |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. Design structured data interfaces between pipeline stages from the start
-2. Validate requirement metadata at plan completion, not milestone audit
+2. Validate requirement metadata at plan completion, not milestone audit -- tooling needed, process insufficient
 3. Consolidate parallel-execution type copies in the same phase, not later
+4. Tech debt phases are recurring -- integrate verification as a plan completion gate
+5. Build isolation (duplicated types/logic for independent modules) is a first-class pattern, not a shortcut
