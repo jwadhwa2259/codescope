@@ -2,7 +2,7 @@
 
 ## Current State
 
-**Version:** v1.0 MVP shipped 2026-03-27 | v2.0 Phase 14 complete 2026-03-29
+**Version:** v1.0 MVP shipped 2026-03-27 | v2.0 Phase 15 complete 2026-03-29 — all milestone phases done
 **Codebase:** 21,742 LOC TypeScript (source) + 20,759 LOC TypeScript (tests, 917 passing)
 **Stack:** TypeScript, web-tree-sitter WASM, ast-grep CLI, better-sqlite3, graphology, enhanced-resolve, @modelcontextprotocol/sdk, vitest
 
@@ -65,9 +65,14 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - Verify-to-eval JSON sidecar pipeline — v1.0
 - Type consolidation (no local type copies or unsafe casts) — v1.0
 
+- CLI entry point (`codescope` binary via commander): init, bootstrap, viz, review, install-hooks, status — Phase 15
+- Plugin auto-wiring: generates .claude-plugin/plugin.json, .mcp.json, hooks/hooks.json from templates — Phase 15
+- npm distribution packaging: files array, optionalDependencies for cross-platform better-sqlite3, native loader with graceful fallback — Phase 15
+- Platform package scaffolding: darwin-arm64/x64, linux-x64, win32-x64 with build script — Phase 15
+
 ### Active
 
-(Defined in REQUIREMENTS.md for v2.0)
+(All v2.0 requirements complete)
 
 ### Out of Scope
 
