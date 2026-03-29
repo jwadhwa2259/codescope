@@ -101,6 +101,28 @@ export interface BlastRadiusApiResponse {
   };
 }
 
+export interface ReviewApiResponse {
+  status: string;
+  data?: Record<string, unknown>;
+  error?: string;
+  code?: string;
+  message?: string;
+}
+
+export interface ImpactApiResponse {
+  status: string;
+  data?: {
+    totalAffected?: number;
+    total_affected?: number;
+    maxRisk?: string;
+    max_risk?: string;
+    [key: string]: unknown;
+  };
+  error?: string;
+  code?: string;
+  message?: string;
+}
+
 export interface ApiClient {
   fetchGraph(): Promise<GraphApiResponse>;
   fetchConventions(): Promise<ConventionsApiResponse>;
@@ -110,20 +132,20 @@ export interface ApiClient {
     direction?: 'forward' | 'reverse',
   ): Promise<BlastRadiusApiResponse>;
   fetchStatus(): Promise<StatusApiResponse>;
-  postReview(filePaths: string[], branch?: string): Promise<any>;
-  postImpact(filePaths: string[], maxHops?: number): Promise<any>;
+  postReview(filePaths: string[], branch?: string): Promise<ReviewApiResponse>;
+  postImpact(filePaths: string[], maxHops?: number): Promise<ImpactApiResponse>;
 }
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, options);
   if (response.status >= 400) {
-    let errorBody: any;
+    let errorBody: Record<string, unknown>;
     try {
-      errorBody = await response.json();
+      errorBody = await response.json() as Record<string, unknown>;
     } catch {
       errorBody = { message: response.statusText };
     }
-    throw Object.assign(new Error(errorBody.message || `HTTP ${response.status}`), {
+    throw Object.assign(new Error((errorBody.message as string) || `HTTP ${response.status}`), {
       status: response.status,
       body: errorBody,
     });
@@ -158,7 +180,7 @@ export function createApiClient(): ApiClient {
     },
 
     postReview(filePaths: string[], branch?: string) {
-      return request(`${baseUrl}/api/review`, {
+      return request<ReviewApiResponse>(`${baseUrl}/api/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file_paths: filePaths, branch }),
@@ -166,7 +188,7 @@ export function createApiClient(): ApiClient {
     },
 
     postImpact(filePaths: string[], maxHops?: number) {
-      return request(`${baseUrl}/api/impact`, {
+      return request<ImpactApiResponse>(`${baseUrl}/api/impact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ file_paths: filePaths, max_hops: maxHops }),

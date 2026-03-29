@@ -54,7 +54,7 @@ readinessRouter.get("/", (c) => {
     const latest = getLatestSnapshot(db);
     const history = db
       .prepare(
-        "SELECT * FROM readiness_history ORDER BY timestamp ASC",
+        "SELECT * FROM readiness_history ORDER BY timestamp ASC LIMIT 100",
       )
       .all() as ReadinessSnapshot[];
 
