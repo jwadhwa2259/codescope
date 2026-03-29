@@ -132,13 +132,14 @@ Plans:
   3. Convention heatmap shows per-file compliance (green/yellow/red) and clicking a file reveals specific convention details
   4. Readiness dashboard shows 4 gauge metrics with historical trend lines drawn from the readiness_history table
   5. During bootstrap or orient execution, the dashboard receives real-time progress updates via WebSocket without manual refresh
-**Plans**: TBD
+**Plans**: 4 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 14-01: TBD
-- [ ] 14-02: TBD
-- [ ] 14-03: TBD
+- [ ] 14-01-PLAN.md -- Server foundation: Hono HTTP server, all JSON API routes, WebSocket endpoint, HTML shell with CSS design system, tsdown dual-build config
+- [ ] 14-02-PLAN.md -- Client foundation: app entry, shared components (sidebar, status bar, drawer, search, tooltip), API/WS clients, sigma.js Graph panel
+- [ ] 14-03-PLAN.md -- Remaining panels: Heatmap, Trends (SVG gauges + trend line), Blast Radius (concentric rings), Command Center, progress banner
+- [ ] 14-04-PLAN.md -- Integration: screenshot export (Playwright), /codescope:viz skill, plugin wiring, event emission in bootstrap/execution pipelines
 
 ### Phase 15: Distribution
 **Goal**: Users can install and set up CodeScope with a single npx command -- project detection, config creation, bootstrap, and Claude Code plugin wiring all happen automatically
@@ -175,5 +176,5 @@ Phases execute in numeric order: 9 > 10 > 11 > 12 > 13 > 14 > 15
 | 11. PR Review + Impact Prediction | v2.0 | 3/3 | Complete    | 2026-03-28 |
 | 12. Convention Enforcement + Session Continuity | v2.0 | 5/5 | Complete    | 2026-03-28 |
 | 13. Pipeline Evolution | v2.0 | 2/2 | Complete    | 2026-03-29 |
-| 14. Visualization Dashboard | v2.0 | 0/0 | Not started | - |
+| 14. Visualization Dashboard | v2.0 | 0/4 | In Progress | - |
 | 15. Distribution | v2.0 | 0/0 | Not started | - |
