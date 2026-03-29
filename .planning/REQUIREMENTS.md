@@ -58,7 +58,7 @@ Requirements for v2.0 Intelligence Layer + Interactive Dashboard. Each maps to r
 ### Visualization Dashboard
 
 - [x] **VIZ-01**: Local HTTP server (Hono) on port 7463 serves single-page dashboard with JSON API endpoints
-- [ ] **VIZ-02**: Dependency graph panel renders knowledge graph via sigma.js with nodes sized by centrality, colored by community, danger zones highlighted red
+- [x] **VIZ-02**: Dependency graph panel renders knowledge graph via sigma.js with nodes sized by centrality, colored by community, danger zones highlighted red
 - [ ] **VIZ-03**: Convention heatmap panel shows per-file compliance colored green/yellow/red with click-to-detail
 - [ ] **VIZ-04**: Readiness dashboard panel shows 4 gauges + historical trend line from readiness_history table
 - [ ] **VIZ-05**: Blast radius explorer panel shows concentric ring visualization for selected file
@@ -142,7 +142,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ENFORCE-03 | Phase 12 | Complete |
 | ENFORCE-04 | Phase 12 | Complete |
 | VIZ-01 | Phase 14 | Complete |
-| VIZ-02 | Phase 14 | Pending |
+| VIZ-02 | Phase 14 | Complete |
 | VIZ-03 | Phase 14 | Pending |
 | VIZ-04 | Phase 14 | Pending |
 | VIZ-05 | Phase 14 | Pending |
