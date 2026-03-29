@@ -169,12 +169,14 @@ Plans:
   3. `npx codescope install-hooks` does not create a recursive fork bomb in `.git/hooks/pre-commit.codescope-backup`
   4. All 42 v2.0 requirements show `satisfied` status in 3-source cross-reference (VERIFICATION + SUMMARY frontmatter + REQUIREMENTS.md)
   5. Platform packages contain extracted better-sqlite3 binaries for macOS (Intel + ARM), Linux (x64), and Windows (x64)
-**Plans**: 3 plans
+**Plans**: 5 plans
 
 Plans:
 - [x] 16-01-PLAN.md -- Fix MCP path mismatch (.mcp.json, package.json, plugin-wiring.ts) and install-hooks fork bomb with regression test
 - [x] 16-02-PLAN.md -- Resolve all 24 TypeScript tsc --noEmit errors: Hono AppEnv typing, dashboard API argument fixes, DbHandle widening, ambient declarations, html2canvas union types
 - [x] 16-03-PLAN.md -- Build darwin-arm64 platform package binary and run full verification suite (build + tsc + tests + server smoke test)
+- [ ] 16-04-PLAN.md -- Gap closure: Add postinstall build script to prevent stale dist, update traceability table (6 Pending to Complete)
+- [ ] 16-05-PLAN.md -- Gap closure: GitHub Actions workflow for cross-platform binary builds, platform packages documentation
 
 ## Progress
 
@@ -198,4 +200,4 @@ Phases execute in numeric order: 9 > 10 > 11 > 12 > 13 > 14 > 15 > 16
 | 13. Pipeline Evolution | v2.0 | 2/2 | Complete    | 2026-03-29 |
 | 14. Visualization Dashboard | v2.0 | 5/5 | Complete    | 2026-03-29 |
 | 15. Distribution | v2.0 | 2/2 | Complete    | 2026-03-29 |
-| 16. Tech Debt Closure | v2.0 | 3/3 | Complete   | 2026-03-29 |
+| 16. Tech Debt Closure | v2.0 | 3/5 | Gap Closure | 2026-03-29 |
