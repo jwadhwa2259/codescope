@@ -77,7 +77,7 @@ Requirements for v2.0 Intelligence Layer + Interactive Dashboard. Each maps to r
 - [x] **DIST-01**: `npx codescope init` detects project, creates config, runs bootstrap, shows "what you got" summary
 - [x] **DIST-02**: CLI entry point with subcommands: init, bootstrap, viz, review, install-hooks, status
 - [x] **DIST-03**: Plugin auto-setup configures `.claude-plugin/plugin.json` and `.mcp.json` if Claude Code detected
-- [ ] **DIST-04**: npm package published with bin entry, platform-appropriate better-sqlite3 prebuilds bundled
+- [x] **DIST-04**: npm package published with bin entry, platform-appropriate better-sqlite3 prebuilds bundled
 
 ## v3.0 Requirements
 
@@ -155,7 +155,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DIST-01 | Phase 15 | Complete |
 | DIST-02 | Phase 15 | Complete |
 | DIST-03 | Phase 15 | Complete |
-| DIST-04 | Phase 15 | Pending |
+| DIST-04 | Phase 15 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 42 total

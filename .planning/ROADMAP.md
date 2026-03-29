@@ -35,7 +35,7 @@ v2.0 transforms CodeScope from a one-time analysis tool into an always-on intell
 - [x] **Phase 12: Convention Enforcement + Session Continuity** - Opt-in pre-commit convention blocking and pause/resume workflow (completed 2026-03-28)
 - [x] **Phase 13: Pipeline Evolution** - Per-task qualification, diagnostic failure routing, and plan-vs-actual reconciliation (completed 2026-03-29)
 - [x] **Phase 14: Visualization Dashboard** - Interactive sigma.js graph explorer, convention heatmap, readiness trends, and command center (completed 2026-03-29)
-- [ ] **Phase 15: Distribution** - npx codescope install experience and npm package for marketplace launch
+- [x] **Phase 15: Distribution** - npx codescope install experience and npm package for marketplace launch (completed 2026-03-29)
 
 ## Phase Details
 
@@ -155,7 +155,7 @@ Plans:
 
 Plans:
 - [x] 15-01-PLAN.md -- CLI entry point with all 6 subcommands, init flow with plugin auto-setup, UI helpers, tests
-- [ ] 15-02-PLAN.md -- npm packaging: files array, optionalDependencies, platform package scaffolding, native loader, README
+- [x] 15-02-PLAN.md -- npm packaging: files array, optionalDependencies, platform package scaffolding, native loader, README
 
 ## Progress
 
@@ -178,4 +178,4 @@ Phases execute in numeric order: 9 > 10 > 11 > 12 > 13 > 14 > 15
 | 12. Convention Enforcement + Session Continuity | v2.0 | 5/5 | Complete    | 2026-03-28 |
 | 13. Pipeline Evolution | v2.0 | 2/2 | Complete    | 2026-03-29 |
 | 14. Visualization Dashboard | v2.0 | 5/5 | Complete    | 2026-03-29 |
-| 15. Distribution | v2.0 | 1/2 | In Progress|  |
+| 15. Distribution | v2.0 | 2/2 | Complete   | 2026-03-29 |
