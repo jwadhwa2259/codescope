@@ -116,11 +116,11 @@ Plans:
   2. Eval findings are classified as SCOPE_DRIFT / PLAN_GAP / CODE_BUG / CONVENTION_MISS, and the debug agent receives the classification to inform its fix strategy
   3. After execution completes, a reconciliation report compares planned files against actual git changes and surfaces unexpected modifications
   4. The planner estimates token cost per agent (LIGHT/MODERATE/HEAVY) and the orchestrator warns when cumulative context approaches the safe threshold
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 13-01: TBD
-- [ ] 13-02: TBD
+- [ ] 13-01-PLAN.md -- Standalone modules: qualification gate, failure classifier, reconciliation report, shared token utility with full test coverage
+- [ ] 13-02-PLAN.md -- Pipeline integration: extend types, wire qualification/classification/reconciliation/token budget into orchestrator, planner, eval-agent, debug-agent
 
 ### Phase 14: Visualization Dashboard
 **Goal**: Users can explore their codebase intelligence through an interactive local dashboard -- dependency graph, convention heatmap, readiness trends, blast radius explorer, and a command center that triggers reviews and impact predictions from the UI
@@ -174,6 +174,6 @@ Phases execute in numeric order: 9 > 10 > 11 > 12 > 13 > 14 > 15
 | 10. Auto-Injection | v2.0 | 2/2 | Complete    | 2026-03-28 |
 | 11. PR Review + Impact Prediction | v2.0 | 3/3 | Complete    | 2026-03-28 |
 | 12. Convention Enforcement + Session Continuity | v2.0 | 5/5 | Complete    | 2026-03-28 |
-| 13. Pipeline Evolution | v2.0 | 0/0 | Not started | - |
+| 13. Pipeline Evolution | v2.0 | 0/2 | In progress | - |
 | 14. Visualization Dashboard | v2.0 | 0/0 | Not started | - |
 | 15. Distribution | v2.0 | 0/0 | Not started | - |
