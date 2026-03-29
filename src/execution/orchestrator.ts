@@ -23,6 +23,14 @@ import {
   writeChangeReport,
 } from "./agent-spawner.js";
 import type { AgentInvocation, AgentPromptContext } from "./agent-spawner.js";
+import { runQualification } from "./qualification.js";
+import {
+  getGitHead,
+  getChangedFilesSince,
+  computeReconciliation,
+  generateReconciliationReport,
+} from "./reconciliation.js";
+import { loadConfig } from "../config/loader.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -198,9 +206,22 @@ export async function runExecution(
   // 1. Read plan from disk
   const plan = readPlanFromDisk(planPath);
 
+  // 1b. Token budget warning per D-12, D-13
+  const config = loadConfig(projectRoot);
+  const threshold = config?.execute?.token_budget_threshold ?? 150_000;
+  const totalEstimate = plan.agents.reduce((sum, a) => sum + a.estimatedTokens, 0);
+  if (totalEstimate > threshold) {
+    onProgress(
+      `WARNING: Estimated tokens (~${Math.round(totalEstimate / 1000)}K) exceed safe threshold (~${Math.round(threshold / 1000)}K). Consider splitting the plan.`,
+    );
+  }
+
   // 2. Set up execution directory
   const executionDir = path.join(projectRoot, "execution", taskSlug);
   fs.mkdirSync(executionDir, { recursive: true });
+
+  // 2b. Record git baseline for reconciliation per D-09
+  const baselineCommit = getGitHead(projectRoot);
 
   // 3. Detect agent teams availability (EXEC-04)
   const teamsAvailability = detectAgentTeams();
@@ -326,6 +347,28 @@ export async function runExecution(
     tokensEstimate,
   };
 
+  // 9b. Generate reconciliation report per D-07, D-08, D-09, D-10
+  const actualChanges = getChangedFilesSince(baselineCommit, projectRoot);
+  const reconciliationData = computeReconciliation(
+    plan.agents,
+    agentResults,
+    actualChanges,
+  );
+  reconciliationData.baselineCommit = baselineCommit;
+  const reconciliationPath = generateReconciliationReport(reconciliationData, executionDir);
+  result.reconciliationPath = reconciliationPath;
+
+  if (reconciliationData.unexpected.length > 0) {
+    onProgress(
+      `Reconciliation: ${reconciliationData.unexpected.length} unexpected file(s) modified outside plan scope`,
+    );
+  }
+  if (reconciliationData.missed.length > 0) {
+    onProgress(
+      `Reconciliation: ${reconciliationData.missed.length} planned file(s) not modified`,
+    );
+  }
+
   // 10. Write execution summary
   const summaryPath = writeExecutionSummary(result, executionDir, taskSlug);
   result.summaryPath = summaryPath;
@@ -425,6 +468,7 @@ async function executeAgent(
 
   // First attempt
   let dispatchResult = await dispatchAgent(invocation);
+  let wasRetried = false;
 
   if (!dispatchResult.success) {
     // Retry once per D-36
@@ -441,6 +485,7 @@ async function executeAgent(
     });
 
     dispatchResult = await dispatchAgent(invocation);
+    wasRetried = true;
 
     if (!dispatchResult.success) {
       // Retry also failed
@@ -474,31 +519,44 @@ async function executeAgent(
   const durationMs = Date.now() - agentStartMs;
   const durationSec = Math.round(durationMs / 1000);
 
-  // Write change report
+  // Run qualification gate per D-01, D-02, D-03
+  const qualification = await runQualification(
+    assignment.exclusiveWriteFiles,
+    options.projectRoot,
+  );
+
   const agentResult: AgentResult = {
     name: agentName,
     status: "complete",
     durationMs,
-    filesChanged: assignment.exclusiveWriteFiles,
-    linesAdded: 0,
-    linesRemoved: 0,
-    retried: false,
+    filesChanged: qualification.actualFiles.length > 0
+      ? qualification.actualFiles
+      : assignment.exclusiveWriteFiles,
+    linesAdded: qualification.linesAdded,
+    linesRemoved: qualification.linesRemoved,
+    retried: wasRetried,
+    qualified: qualification.qualified,
+    qualificationIssues: qualification.issues.length > 0 ? qualification.issues : undefined,
   };
 
   const changeReportPath = writeChangeReport(agentResult, executionDir);
   agentResult.changeReportPath = changeReportPath;
 
-  // Append done coordination entry
+  // Coordination entry includes qualification status
   appendCoordinationEntry(coordinationPath, {
     timestamp: new Date().toISOString(),
     agent: agentName,
     signal: "done",
-    files: assignment.exclusiveWriteFiles,
-    detail: `+0/-0 lines (${durationSec}s)`,
+    files: qualification.actualFiles,
+    detail: qualification.qualified
+      ? `Qualified: +${qualification.linesAdded}/-${qualification.linesRemoved} (${durationSec}s)`
+      : `QUALIFICATION ISSUES: ${qualification.issues.join("; ")} (${durationSec}s)`,
   });
 
   onProgress(
-    `${agentName} complete (${durationSec}s, ${assignment.exclusiveWriteFiles.length} files)`,
+    qualification.qualified
+      ? `${agentName} complete (${durationSec}s, ${qualification.actualFiles.length} files)`
+      : `${agentName} complete with qualification issues (${durationSec}s): ${qualification.issues.join("; ")}`,
   );
 
   return agentResult;

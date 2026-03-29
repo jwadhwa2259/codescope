@@ -6,6 +6,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { loadConfig } from "../config/loader.js";
+import { classifyCostTier } from "../utils/tokens.js";
 import type {
   AgentAssignment,
   AnalysisResult,
@@ -322,6 +323,7 @@ function parseAgentSection(
     dependsOn,
     estimatedTokens,
     timeoutSeconds,
+    costTier: classifyCostTier(estimatedTokens),
   };
 }
 

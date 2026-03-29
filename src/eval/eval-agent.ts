@@ -14,6 +14,8 @@ import type {
   EvalCriterionResult,
 } from "./types.js";
 import type { Severity } from "../verify/types.js";
+import { tokenEstimate as sharedTokenEstimate } from "../utils/tokens.js";
+import { classifyFinding } from "./classifier.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -49,11 +51,10 @@ const ALL_CRITERIA: EvalCriterion[] = [
 
 /**
  * Rough token approximation: characters / 4.
+ * Re-exported from shared utility for backward compatibility.
  * Per RESEARCH.md Pitfall 1.
  */
-export function tokenEstimate(text: string): number {
-  return Math.ceil(text.length / 4);
-}
+export const tokenEstimate = sharedTokenEstimate;
 
 // ---------------------------------------------------------------------------
 // chunkVerifyResult
@@ -400,7 +401,7 @@ export function parseEvalFindings(rawResponse: string): EvalFinding[] {
     // Default evidence if missing
     const evidence = typeof r.evidence === "string" ? r.evidence : "";
 
-    findings.push({
+    const finding: EvalFinding = {
       id,
       criterion: r.criterion as EvalCriterion,
       category,
@@ -410,7 +411,9 @@ export function parseEvalFindings(rawResponse: string): EvalFinding[] {
       severity: r.severity as Severity,
       evidence,
       goldenFileRef: typeof r.goldenFileRef === "string" ? r.goldenFileRef : undefined,
-    });
+    };
+    finding.classification = classifyFinding(finding);
+    findings.push(finding);
   }
 
   return findings;

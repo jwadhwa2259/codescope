@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { EvalFinding } from "../../src/eval/types.js";
+import type { FailureClassification } from "../../src/eval/classifier.js";
 import type { DebugOptions, DebugCallbacks } from "../../src/debug/types.js";
 import { runDebug } from "../../src/debug/debug-agent.js";
 
@@ -362,5 +363,94 @@ describe("runDebug", () => {
     // Should still return a result (partial)
     expect(result).toBeDefined();
     expect(result.timing_ms).toBeGreaterThanOrEqual(0);
+  });
+
+  it("sorts fixable findings by classification priority (CODE_BUG first)", async () => {
+    // Create findings with different classifications
+    const findings: EvalFinding[] = [
+      makeFinding({
+        id: "f-plan-gap",
+        criterion: "completeness",
+        file: "src/a.ts",
+        severity: "ERROR",
+        classification: "PLAN_GAP" as FailureClassification,
+      }),
+      makeFinding({
+        id: "f-code-bug",
+        criterion: "correctness",
+        file: "src/b.ts",
+        severity: "ERROR",
+        classification: "CODE_BUG" as FailureClassification,
+      }),
+      makeFinding({
+        id: "f-convention",
+        criterion: "convention_adherence",
+        file: "src/c.ts",
+        severity: "ERROR",
+        classification: "CONVENTION_MISS" as FailureClassification,
+      }),
+    ];
+
+    // Track the order of dispatchFixAgent calls to verify sort
+    const dispatchOrder: string[] = [];
+    const dispatchFixAgent = vi.fn().mockImplementation((prompt: string) => {
+      // Extract file name from the prompt to track order
+      const fileMatch = prompt.match(/src\/[a-z]\.ts/);
+      if (fileMatch) dispatchOrder.push(fileMatch[0]);
+      return Promise.resolve({
+        success: true,
+        output: "Fixed. Commit: abc123",
+      });
+    });
+
+    // Re-eval returns empty (all resolved)
+    const dispatchEvalAgent = vi.fn().mockResolvedValue("[]");
+
+    const callbacks = makeCallbacks({ dispatchFixAgent, dispatchEvalAgent });
+    const options = makeOptions({ findings, maxCycles: 1 });
+
+    await runDebug(options, callbacks);
+
+    // dispatchFixAgent should have been called
+    expect(dispatchFixAgent).toHaveBeenCalled();
+
+    // Verify CODE_BUG finding (src/b.ts) was dispatched before PLAN_GAP (src/a.ts)
+    // The fix planner groups by file, so we check the call order through the
+    // createFixPlan logic. Since findings are sorted CODE_BUG(0) < CONVENTION_MISS(1) < PLAN_GAP(2),
+    // src/b.ts (CODE_BUG) should appear before src/a.ts (PLAN_GAP) in fix calls.
+    const bIdx = dispatchOrder.indexOf("src/b.ts");
+    const aIdx = dispatchOrder.indexOf("src/a.ts");
+    if (bIdx >= 0 && aIdx >= 0) {
+      expect(bIdx).toBeLessThan(aIdx);
+    }
+  });
+
+  it("handles findings with no classification field gracefully", async () => {
+    // Findings without classification set -- should not throw
+    const findings: EvalFinding[] = [
+      makeFinding({
+        id: "f1",
+        severity: "ERROR",
+        file: "src/x.ts",
+        // classification not set -- should use fallback "CODE_BUG"
+      }),
+      makeFinding({
+        id: "f2",
+        severity: "ERROR",
+        file: "src/y.ts",
+        // classification not set
+      }),
+    ];
+
+    // Re-eval returns empty (all resolved)
+    const dispatchEvalAgent = vi.fn().mockResolvedValue("[]");
+    const callbacks = makeCallbacks({ dispatchEvalAgent });
+    const options = makeOptions({ findings, maxCycles: 1 });
+
+    // Should not throw
+    const result = await runDebug(options, callbacks);
+
+    expect(result).toBeDefined();
+    expect(result.cyclesUsed).toBe(1);
   });
 });

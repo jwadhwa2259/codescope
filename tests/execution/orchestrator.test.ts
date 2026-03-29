@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from "vitest";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
@@ -14,6 +14,39 @@ import type {
   AgentResult,
 } from "../../src/execution/types.js";
 import type { ExecutionPlan, AgentAssignment } from "../../src/orient/types.js";
+
+// Mock qualification and reconciliation modules
+vi.mock("../../src/execution/qualification.js", () => ({
+  runQualification: vi.fn().mockResolvedValue({
+    qualified: true,
+    issues: [],
+    actualFiles: ["src/db/schema.ts"],
+    linesAdded: 15,
+    linesRemoved: 3,
+  }),
+}));
+
+vi.mock("../../src/execution/reconciliation.js", () => ({
+  getGitHead: vi.fn().mockReturnValue("abc1234"),
+  getChangedFilesSince: vi.fn().mockReturnValue(["src/db/schema.ts", "src/auth/middleware.ts"]),
+  computeReconciliation: vi.fn().mockReturnValue({
+    baselineCommit: "",
+    plannedCount: 2,
+    actualCount: 2,
+    unexpected: [],
+    missed: [],
+    perAgent: [],
+  }),
+  generateReconciliationReport: vi.fn().mockReturnValue("/tmp/reconciliation.md"),
+}));
+
+vi.mock("../../src/config/loader.js", () => ({
+  loadConfig: vi.fn().mockReturnValue(null),
+}));
+
+import { runQualification } from "../../src/execution/qualification.js";
+import { getGitHead, getChangedFilesSince, computeReconciliation, generateReconciliationReport } from "../../src/execution/reconciliation.js";
+import { loadConfig } from "../../src/config/loader.js";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -607,5 +640,271 @@ describe("writeExecutionSummary", () => {
     expect(content).toContain("db-agent");
     expect(content).toContain("Compilation error");
     expect(content).toContain("auth-agent");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Pipeline Evolution: Qualification, Reconciliation, Token Budget (PIPE-01-04)
+// ---------------------------------------------------------------------------
+
+describe("runExecution - qualification gate (PIPE-01)", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "orch-qual-test-"));
+    const executionDir = path.join(tmpDir, "execution", "add-auth");
+    fs.mkdirSync(executionDir, { recursive: true });
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  function writePlan(plan: ExecutionPlan): string {
+    const planPath = path.join(tmpDir, "plan.json");
+    fs.writeFileSync(planPath, JSON.stringify(plan), "utf-8");
+    return planPath;
+  }
+
+  it("populates agentResult.qualified after executeAgent runs", async () => {
+    const plan = makePlan();
+    const planPath = writePlan(plan);
+
+    (runQualification as Mock).mockResolvedValue({
+      qualified: true,
+      issues: [],
+      actualFiles: ["src/db/schema.ts"],
+      linesAdded: 10,
+      linesRemoved: 2,
+    });
+
+    const result = await runExecution(
+      { ...makeOptions(tmpDir), planPath },
+      makeSuccessCallbacks([]),
+    );
+
+    // All agents that completed should have qualified field set
+    const completedAgents = result.agents.filter((a) => a.status === "complete");
+    expect(completedAgents.length).toBeGreaterThan(0);
+    for (const agent of completedAgents) {
+      expect(agent.qualified).toBe(true);
+    }
+  });
+
+  it("sets qualificationIssues when qualification finds problems", async () => {
+    const plan = makePlan({
+      agents: [makePlan().agents[0]],
+      waves: [{ waveNumber: 1, agents: ["db-agent"], mode: "sequential" }],
+    });
+    const planPath = writePlan(plan);
+
+    (runQualification as Mock).mockResolvedValue({
+      qualified: false,
+      issues: ["No expected files were modified"],
+      actualFiles: [],
+      linesAdded: 0,
+      linesRemoved: 0,
+    });
+
+    const result = await runExecution(
+      { ...makeOptions(tmpDir), planPath },
+      makeSuccessCallbacks([]),
+    );
+
+    const dbResult = result.agents.find((a) => a.name === "db-agent");
+    expect(dbResult?.qualified).toBe(false);
+    expect(dbResult?.qualificationIssues).toContain("No expected files were modified");
+  });
+});
+
+describe("runExecution - reconciliation (PIPE-03)", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "orch-recon-test-"));
+    const executionDir = path.join(tmpDir, "execution", "add-auth");
+    fs.mkdirSync(executionDir, { recursive: true });
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  function writePlan(plan: ExecutionPlan): string {
+    const planPath = path.join(tmpDir, "plan.json");
+    fs.writeFileSync(planPath, JSON.stringify(plan), "utf-8");
+    return planPath;
+  }
+
+  it("populates result.reconciliationPath after runExecution completes", async () => {
+    const plan = makePlan();
+    const planPath = writePlan(plan);
+
+    (runQualification as Mock).mockResolvedValue({
+      qualified: true,
+      issues: [],
+      actualFiles: ["src/db/schema.ts"],
+      linesAdded: 5,
+      linesRemoved: 1,
+    });
+
+    const reconPath = path.join(tmpDir, "execution", "add-auth", "reconciliation.md");
+    (generateReconciliationReport as Mock).mockReturnValue(reconPath);
+    (computeReconciliation as Mock).mockReturnValue({
+      baselineCommit: "",
+      plannedCount: 2,
+      actualCount: 2,
+      unexpected: [],
+      missed: [],
+      perAgent: [],
+    });
+
+    const result = await runExecution(
+      { ...makeOptions(tmpDir), planPath },
+      makeSuccessCallbacks([]),
+    );
+
+    expect(result.reconciliationPath).toBe(reconPath);
+    expect(getGitHead).toHaveBeenCalled();
+    expect(getChangedFilesSince).toHaveBeenCalled();
+    expect(computeReconciliation).toHaveBeenCalled();
+    expect(generateReconciliationReport).toHaveBeenCalled();
+  });
+
+  it("emits warning when reconciliation finds unexpected files", async () => {
+    const plan = makePlan({
+      agents: [makePlan().agents[0]],
+      waves: [{ waveNumber: 1, agents: ["db-agent"], mode: "sequential" }],
+    });
+    const planPath = writePlan(plan);
+
+    (runQualification as Mock).mockResolvedValue({
+      qualified: true,
+      issues: [],
+      actualFiles: ["src/db/schema.ts"],
+      linesAdded: 5,
+      linesRemoved: 1,
+    });
+
+    (computeReconciliation as Mock).mockReturnValue({
+      baselineCommit: "",
+      plannedCount: 1,
+      actualCount: 2,
+      unexpected: ["src/config/extra.ts"],
+      missed: [],
+      perAgent: [],
+    });
+
+    const messages: string[] = [];
+    const callbacks: ExecutionCallbacks = {
+      dispatchAgent: async () => ({ success: true, output: "done" }),
+      onProgress: (msg) => messages.push(msg),
+    };
+
+    await runExecution(
+      { ...makeOptions(tmpDir), planPath },
+      callbacks,
+    );
+
+    const unexpectedMsg = messages.find((m) => m.includes("unexpected"));
+    expect(unexpectedMsg).toBeDefined();
+    expect(unexpectedMsg).toContain("1 unexpected file(s)");
+  });
+});
+
+describe("runExecution - token budget warning (PIPE-04)", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "orch-budget-test-"));
+    const executionDir = path.join(tmpDir, "execution", "add-auth");
+    fs.mkdirSync(executionDir, { recursive: true });
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  function writePlan(plan: ExecutionPlan): string {
+    const planPath = path.join(tmpDir, "plan.json");
+    fs.writeFileSync(planPath, JSON.stringify(plan), "utf-8");
+    return planPath;
+  }
+
+  it("emits token budget warning when totalEstimate > threshold", async () => {
+    // Plan with 200K total tokens (80K default threshold is 150K)
+    const plan = makePlan({
+      estimatedTotalTokens: 200000,
+      agents: [
+        {
+          ...makePlan().agents[0],
+          estimatedTokens: 100000,
+        },
+        {
+          ...makePlan().agents[1],
+          estimatedTokens: 100000,
+        },
+      ],
+    });
+    const planPath = writePlan(plan);
+
+    (runQualification as Mock).mockResolvedValue({
+      qualified: true,
+      issues: [],
+      actualFiles: ["src/db/schema.ts"],
+      linesAdded: 5,
+      linesRemoved: 1,
+    });
+
+    // No config => default threshold of 150K
+    (loadConfig as Mock).mockReturnValue(null);
+
+    const messages: string[] = [];
+    const callbacks: ExecutionCallbacks = {
+      dispatchAgent: async () => ({ success: true, output: "done" }),
+      onProgress: (msg) => messages.push(msg),
+    };
+
+    await runExecution(
+      { ...makeOptions(tmpDir), planPath },
+      callbacks,
+    );
+
+    const warningMsg = messages.find((m) => m.includes("WARNING") && m.includes("exceed"));
+    expect(warningMsg).toBeDefined();
+    expect(warningMsg).toContain("200K");
+    expect(warningMsg).toContain("150K");
+  });
+
+  it("does not emit warning when tokens are within budget", async () => {
+    const plan = makePlan(); // Default 80K total
+    const planPath = writePlan(plan);
+
+    (runQualification as Mock).mockResolvedValue({
+      qualified: true,
+      issues: [],
+      actualFiles: ["src/db/schema.ts"],
+      linesAdded: 5,
+      linesRemoved: 1,
+    });
+
+    (loadConfig as Mock).mockReturnValue(null);
+
+    const messages: string[] = [];
+    const callbacks: ExecutionCallbacks = {
+      dispatchAgent: async () => ({ success: true, output: "done" }),
+      onProgress: (msg) => messages.push(msg),
+    };
+
+    await runExecution(
+      { ...makeOptions(tmpDir), planPath },
+      callbacks,
+    );
+
+    const warningMsg = messages.find((m) => m.includes("WARNING") && m.includes("exceed"));
+    expect(warningMsg).toBeUndefined();
   });
 });

@@ -17,6 +17,8 @@
 // ---------------------------------------------------------------------------
 
 import type { EvalFinding } from "../eval/types.js";
+import { CLASSIFICATION_PRIORITY } from "../eval/classifier.js";
+import type { FailureClassification } from "../eval/classifier.js";
 import type { DebugCycleResult } from "../eval/types.js";
 import type {
   DebugOptions,
@@ -64,6 +66,14 @@ export async function runDebug(
 
   const designDecisions = remaining.filter((f) => isDesignDecision(f));
   let fixable = remaining.filter((f) => !isDesignDecision(f));
+
+  // ---- Step 1b: Sort fixable findings by classification priority (D-06) ----
+  // CODE_BUG first, then CONVENTION_MISS, PLAN_GAP, SCOPE_DRIFT
+  fixable.sort((a, b) => {
+    const aPri = CLASSIFICATION_PRIORITY[(a.classification ?? "CODE_BUG") as FailureClassification] ?? 99;
+    const bPri = CLASSIFICATION_PRIORITY[(b.classification ?? "CODE_BUG") as FailureClassification] ?? 99;
+    return aPri - bPri;
+  });
 
   // ---- Step 2: Escalate design decisions ----
 
