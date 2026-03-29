@@ -36,6 +36,7 @@ v2.0 transforms CodeScope from a one-time analysis tool into an always-on intell
 - [x] **Phase 13: Pipeline Evolution** - Per-task qualification, diagnostic failure routing, and plan-vs-actual reconciliation (completed 2026-03-29)
 - [x] **Phase 14: Visualization Dashboard** - Interactive sigma.js graph explorer, convention heatmap, readiness trends, and command center (completed 2026-03-29)
 - [x] **Phase 15: Distribution** - npx codescope install experience and npm package for marketplace launch (completed 2026-03-29)
+- [ ] **Phase 16: Tech Debt Closure** - Fix MCP path mismatch, TypeScript errors, hook fork bomb, SUMMARY frontmatter gaps, and platform packages
 
 ## Phase Details
 
@@ -157,6 +158,28 @@ Plans:
 - [x] 15-01-PLAN.md -- CLI entry point with all 6 subcommands, init flow with plugin auto-setup, UI helpers, tests
 - [x] 15-02-PLAN.md -- npm packaging: files array, optionalDependencies, platform package scaffolding, native loader, README
 
+### Phase 16: Tech Debt Closure
+**Goal**: Close all audit gaps -- fix the MCP server startup blocker, TypeScript errors, hook fork bomb, SUMMARY frontmatter gaps, and platform package build so the milestone is clean for completion
+**Depends on**: Phase 15
+**Requirements**: REVIEW-01, REVIEW-02, REVIEW-03, REVIEW-04, IMPACT-01, IMPACT-02, DEBT-02, DIST-03, DIST-04
+**Gap Closure:** Closes all gaps from v2.0 milestone audit
+**Success Criteria** (what must be TRUE):
+  1. `node dist/server.mjs` starts the MCP server successfully -- all 15 tools are available at runtime
+  2. `tsc --noEmit` passes with zero errors
+  3. `npx codescope install-hooks` does not create a recursive fork bomb in `.git/hooks/pre-commit.codescope-backup`
+  4. All 42 v2.0 requirements show `satisfied` status in 3-source cross-reference (VERIFICATION + SUMMARY frontmatter + REQUIREMENTS.md)
+  5. Platform packages contain extracted better-sqlite3 binaries for macOS (Intel + ARM), Linux (x64), and Windows (x64)
+**Plans**: TBD
+
+Tasks:
+1. Fix `.mcp.json` and `package.json "main"` to reference `dist/server.mjs`
+2. Fix `plugin-wiring.ts` and `wirePlugin()` to generate `.mcp.json` with correct extension
+3. Fix 3 TypeScript `tsc --noEmit` errors in `src/tools/review.ts` and `src/graph/analytics.ts`
+4. Fix `install-hooks` to not copy CodeScope hook as its own backup (fork bomb)
+5. Add `requirements_completed` frontmatter to Phase 9 SUMMARY files (GRAPH-01–04)
+6. Add `requirements_completed` frontmatter to Phase 11 SUMMARY files (REVIEW-04, IMPACT-01–02)
+7. Add `requirements_completed` frontmatter to Phase 15 SUMMARY files (DIST-01–04) + build platform packages
+
 ## Progress
 
 **Execution Order:**
@@ -179,3 +202,4 @@ Phases execute in numeric order: 9 > 10 > 11 > 12 > 13 > 14 > 15
 | 13. Pipeline Evolution | v2.0 | 2/2 | Complete    | 2026-03-29 |
 | 14. Visualization Dashboard | v2.0 | 5/5 | Complete    | 2026-03-29 |
 | 15. Distribution | v2.0 | 2/2 | Complete    | 2026-03-29 |
+| 16. Tech Debt Closure | v2.0 | 0/0 | Pending | -- |

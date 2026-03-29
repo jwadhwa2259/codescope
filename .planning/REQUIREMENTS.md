@@ -114,10 +114,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GRAPH-01 | Phase 9 | Complete |
-| GRAPH-02 | Phase 9 | Complete |
-| GRAPH-03 | Phase 9 | Complete |
-| GRAPH-04 | Phase 9 | Complete |
+| GRAPH-01 | Phase 9 + 16 | Pending |
+| GRAPH-02 | Phase 9 + 16 | Pending |
+| GRAPH-03 | Phase 9 + 16 | Pending |
+| GRAPH-04 | Phase 9 + 16 | Pending |
 | INJECT-01 | Phase 10 | Complete |
 | INJECT-02 | Phase 10 | Complete |
 | INJECT-03 | Phase 10 | Complete |
@@ -131,12 +131,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SESS-02 | Phase 12 | Complete |
 | SESS-03 | Phase 12 | Complete |
 | SESS-04 | Phase 12 | Complete |
-| REVIEW-01 | Phase 11 | Complete |
-| REVIEW-02 | Phase 11 | Complete |
-| REVIEW-03 | Phase 11 | Complete |
-| REVIEW-04 | Phase 11 | Complete |
-| IMPACT-01 | Phase 11 | Complete |
-| IMPACT-02 | Phase 11 | Complete |
+| REVIEW-01 | Phase 11 + 16 | Pending |
+| REVIEW-02 | Phase 11 + 16 | Pending |
+| REVIEW-03 | Phase 11 + 16 | Pending |
+| REVIEW-04 | Phase 11 + 16 | Pending |
+| IMPACT-01 | Phase 11 + 16 | Pending |
+| IMPACT-02 | Phase 11 + 16 | Pending |
 | ENFORCE-01 | Phase 12 | Complete |
 | ENFORCE-02 | Phase 12 | Complete |
 | ENFORCE-03 | Phase 12 | Complete |
@@ -151,17 +151,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIZ-08 | Phase 14 | Complete |
 | VIZ-09 | Phase 14 | Complete |
 | DEBT-01 | Phase 9 | Complete |
-| DEBT-02 | Phase 9 | Complete |
-| DIST-01 | Phase 15 | Complete |
-| DIST-02 | Phase 15 | Complete |
-| DIST-03 | Phase 15 | Complete |
-| DIST-04 | Phase 15 | Complete |
+| DEBT-02 | Phase 9 + 16 | Pending |
+| DIST-01 | Phase 15 + 16 | Pending |
+| DIST-02 | Phase 15 + 16 | Pending |
+| DIST-03 | Phase 15 + 16 | Pending |
+| DIST-04 | Phase 15 + 16 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 42 total
 - Mapped to phases: 42/42
 - Unmapped: 0
+- Pending (Phase 16 gap closure): 15
 
 ---
 *Requirements defined: 2026-03-27*
-*Last updated: 2026-03-27 after roadmap creation (all 42 requirements mapped to Phases 9-15)*
+*Last updated: 2026-03-29 after gap closure phase creation (15 requirements assigned to Phase 16)*
