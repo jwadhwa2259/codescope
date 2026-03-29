@@ -193,13 +193,13 @@ describe("Plugin Manifest", () => {
   });
 
   describe(".mcp.json", () => {
-    it("references dist/server.js with CODESCOPE_GRAMMAR_DIR env var", () => {
+    it("references dist/server.mjs with CODESCOPE_GRAMMAR_DIR env var", () => {
       const mcpConfig = JSON.parse(
         fs.readFileSync(path.join(PROJECT_ROOT, ".mcp.json"), "utf-8")
       );
       expect(mcpConfig.mcpServers.codescope.command).toBe("node");
       expect(mcpConfig.mcpServers.codescope.args).toContain(
-        "${CLAUDE_PLUGIN_ROOT}/dist/server.js"
+        "${CLAUDE_PLUGIN_ROOT}/dist/server.mjs"
       );
       expect(
         mcpConfig.mcpServers.codescope.env.CODESCOPE_GRAMMAR_DIR

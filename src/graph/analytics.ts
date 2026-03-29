@@ -1,6 +1,6 @@
 import { DirectedGraph } from "graphology";
 import louvain from "graphology-communities-louvain";
-import { inDegreeCentrality } from "graphology-metrics/centrality/degree";
+import { inDegreeCentrality } from "graphology-metrics/centrality/degree.js";
 import { bfsFromNode } from "graphology-traversal";
 import * as path from "node:path";
 import type { Database as DatabaseType } from "better-sqlite3";

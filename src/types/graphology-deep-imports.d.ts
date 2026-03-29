@@ -8,7 +8,7 @@
  * can't resolve the types for subpath imports or default CJS exports.
  */
 
-declare module "graphology-metrics/centrality/degree" {
+declare module "graphology-metrics/centrality/degree.js" {
   import type Graph from "graphology-types";
 
   interface DegreeCentralityOptions {
