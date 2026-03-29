@@ -27,7 +27,7 @@ export default defineConfig([
     clean: false,
   },
   {
-    entry: ["src/cli/cli.ts"],
+    entry: { cli: "src/cli/cli.ts" },
     format: "esm",
     outDir: "dist",
     external: ["better-sqlite3"],

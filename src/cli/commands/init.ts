@@ -1,9 +1,5 @@
 import type { Command } from "commander";
-import { detectProject } from "../../onboard/detect.js";
-import { createDirectoryTree } from "../../onboard/filesystem.js";
-import { writeConfig } from "../../config/writer.js";
 import type { Config } from "../../config/schema.js";
-import { runBootstrap } from "../../bootstrap/orchestrator.js";
 import { wirePlugin } from "../setup/plugin-wiring.js";
 import { createSpinner } from "../ui/spinner.js";
 import {
@@ -34,6 +30,7 @@ export function registerInitCommand(program: Command): void {
 
       let info;
       try {
+        const { detectProject } = await import("../../onboard/detect.js");
         info = await detectProject(projectRoot);
       } catch (err) {
         detectSpinner.fail("Project detection failed");
@@ -75,6 +72,9 @@ export function registerInitCommand(program: Command): void {
       configSpinner.start();
 
       try {
+        const { createDirectoryTree } = await import(
+          "../../onboard/filesystem.js"
+        );
         createDirectoryTree(projectRoot);
 
         const config: Config = {
@@ -154,6 +154,7 @@ export function registerInitCommand(program: Command): void {
           },
         };
 
+        const { writeConfig } = await import("../../config/writer.js");
         writeConfig(projectRoot, config);
       } catch (err) {
         configSpinner.fail("Config creation failed");
@@ -169,6 +170,9 @@ export function registerInitCommand(program: Command): void {
 
       let bootstrapResult;
       try {
+        const { runBootstrap } = await import(
+          "../../bootstrap/orchestrator.js"
+        );
         bootstrapResult = await runBootstrap({
           projectRoot,
           force: force,
