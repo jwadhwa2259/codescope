@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { handleReview } from "../../tools/review.js";
+import { handleReview } from "../../tools/review/index.js";
 
 export const reviewRouter = new Hono();
 

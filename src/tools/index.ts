@@ -13,7 +13,7 @@ import { registerServiceMapTool } from "./service-map.js";
 import { registerEvalTool } from "./eval.js";
 import { registerTrendsTool } from "./trends-tool.js";
 import { registerPredictImpactTool } from "./impact-prediction.js";
-import { registerReviewTool } from "./review.js";
+import { registerReviewTool } from "./review/index.js";
 
 /**
  * Register all 15 CodeScope MCP tools on the server.

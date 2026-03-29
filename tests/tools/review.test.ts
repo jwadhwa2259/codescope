@@ -159,7 +159,7 @@ describe("codescope_review (src/tools/review.ts)", () => {
     const cpModule = await import("node:child_process");
     mockExecFileSync = cpModule.execFileSync as unknown as ReturnType<typeof vi.fn>;
 
-    const reviewModule = await import("../../src/tools/review.js");
+    const reviewModule = await import("../../src/tools/review/index.js");
     handleReview = reviewModule.handleReview;
 
     // Default: bootstrapped and graph available
