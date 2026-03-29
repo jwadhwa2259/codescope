@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Layer + Interactive Dashboard
 status: executing
-stopped_at: Phase 15 context gathered
-last_updated: "2026-03-29T16:12:36.504Z"
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-29T17:31:01.854Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 20
-  completed_plans: 20
+  total_plans: 22
+  completed_plans: 21
   percent: 50
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** AI-generated code changes that respect existing conventions, stay within safe blast radius, and actually work in the codebase -- verified end-to-end before the user sees them.
-**Current focus:** Phase 14 — visualization-dashboard
+**Current focus:** Phase 15 — distribution
 
 ## Current Position
 
-Phase: 15
-Plan: Not started
+Phase: 15 (distribution) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
 Last activity: 2026-03-29
 
@@ -72,6 +72,7 @@ Progress: [#####░░░░░] 50%
 | Phase 14-visualization-dashboard PP02 | 4min | 2 tasks | 11 files |
 | Phase 14-visualization-dashboard P03 | 6min | 3 tasks | 6 files |
 | Phase 14-visualization-dashboard PP04 | 4min | 2 tasks | 5 files |
+| Phase 15-distribution P01 | 14min | 3 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -123,6 +124,9 @@ All v1.0 decisions validated -- see PROJECT.md for outcomes.
 - [Phase 14-visualization-dashboard]: Inline emitEvent helper duplicated in both orchestrators for build isolation (consistent with Phase 10/12 pattern)
 - [Phase 14-visualization-dashboard]: Events appended to events.log as JSON lines -- decoupled from dashboard server imports (D-33)
 - [Phase 14-visualization-dashboard]: Playwright as dynamic import to gracefully fail if not installed as dev dependency
+- [Phase 15-distribution]: Dynamic imports for heavy deps to keep CLI bundle clean and avoid graphology ESM subpath resolution issues
+- [Phase 15-distribution]: CLI source named cli.ts (not index.ts) so tsdown produces dist/cli.mjs matching package.json bin field
+- [Phase 15-distribution]: Review command delegates to Claude Code skill since codescope_review MCP tool requires Claude Code context
 
 ### Pending Todos
 
@@ -142,6 +146,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T16:12:36.501Z
-Stopped at: Phase 15 context gathered
-Resume file: .planning/phases/15-distribution/15-CONTEXT.md
+Last session: 2026-03-29T17:31:01.852Z
+Stopped at: Completed 15-01-PLAN.md
+Resume file: None
