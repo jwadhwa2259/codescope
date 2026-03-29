@@ -23,6 +23,7 @@ export default defineConfig([
     format: "esm",
     outDir: "dist/dashboard",
     platform: "browser",
+    noExternal: [/(.*)/],
     clean: false,
   },
 ]);
