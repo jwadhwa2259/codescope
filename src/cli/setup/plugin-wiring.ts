@@ -32,7 +32,7 @@ const MCP_JSON = {
   mcpServers: {
     codescope: {
       command: "node",
-      args: ["${CLAUDE_PLUGIN_ROOT}/dist/server.js"],
+      args: ["${CLAUDE_PLUGIN_ROOT}/dist/server.mjs"],
       env: {
         CODESCOPE_GRAMMAR_DIR: "${CLAUDE_PLUGIN_ROOT}/grammars",
       },

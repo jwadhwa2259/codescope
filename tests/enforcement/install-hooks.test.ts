@@ -161,6 +161,29 @@ describe("installPreCommitHook", () => {
     expect(content).toContain("# codescope-enforcement-start");
   });
 
+  // Test: running install twice on git-hooks path does not create fork bomb
+  it("is idempotent on git-hooks path -- does not backup own wrapper (fork bomb prevention)", () => {
+    tmpDir = createTempProject();
+
+    // First install
+    const result1 = installPreCommitHook(tmpDir);
+    expect(result1.installed).toBe(true);
+    expect(result1.method).toBe("git-hooks");
+
+    // Second install -- should detect own wrapper and skip
+    const result2 = installPreCommitHook(tmpDir);
+    expect(result2.installed).toBe(true);
+    expect(result2.backedUp).toBe(false);
+    expect(result2.message).toContain("already installed");
+
+    // Verify no backup was created (or if it was, it's not the CodeScope wrapper)
+    const backupPath = join(tmpDir, ".git", "hooks", "pre-commit.codescope-backup");
+    if (existsSync(backupPath)) {
+      const backupContent = readFileSync(backupPath, "utf-8");
+      expect(backupContent).not.toContain("CodeScope convention enforcement pre-commit hook");
+    }
+  });
+
   // Additional: creates .git/hooks/ directory if it doesn't exist
   it("creates .git/hooks/ directory if it does not exist", () => {
     tmpDir = mkdtempSync(join(tmpdir(), "codescope-install-hooks-"));

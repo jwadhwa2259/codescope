@@ -172,7 +172,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 16-01-PLAN.md -- Fix MCP path mismatch (.mcp.json, package.json, plugin-wiring.ts) and install-hooks fork bomb with regression test
+- [x] 16-01-PLAN.md -- Fix MCP path mismatch (.mcp.json, package.json, plugin-wiring.ts) and install-hooks fork bomb with regression test
 - [x] 16-02-PLAN.md -- Resolve all 24 TypeScript tsc --noEmit errors: Hono AppEnv typing, dashboard API argument fixes, DbHandle widening, ambient declarations, html2canvas union types
 - [ ] 16-03-PLAN.md -- Build darwin-arm64 platform package binary and run full verification suite (build + tsc + tests + server smoke test)
 
