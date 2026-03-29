@@ -59,11 +59,11 @@ Requirements for v2.0 Intelligence Layer + Interactive Dashboard. Each maps to r
 
 - [x] **VIZ-01**: Local HTTP server (Hono) on port 7463 serves single-page dashboard with JSON API endpoints
 - [x] **VIZ-02**: Dependency graph panel renders knowledge graph via sigma.js with nodes sized by centrality, colored by community, danger zones highlighted red
-- [ ] **VIZ-03**: Convention heatmap panel shows per-file compliance colored green/yellow/red with click-to-detail
-- [ ] **VIZ-04**: Readiness dashboard panel shows 4 gauges + historical trend line from readiness_history table
-- [ ] **VIZ-05**: Blast radius explorer panel shows concentric ring visualization for selected file
+- [x] **VIZ-03**: Convention heatmap panel shows per-file compliance colored green/yellow/red with click-to-detail
+- [x] **VIZ-04**: Readiness dashboard panel shows 4 gauges + historical trend line from readiness_history table
+- [x] **VIZ-05**: Blast radius explorer panel shows concentric ring visualization for selected file
 - [x] **VIZ-06**: WebSocket pushes real-time updates during bootstrap/orient execution (agent progress, wave completion)
-- [ ] **VIZ-07**: Interactive command center -- click file to trigger review or impact prediction from the UI
+- [x] **VIZ-07**: Interactive command center -- click file to trigger review or impact prediction from the UI
 - [ ] **VIZ-08**: Screenshot export mode for marketing (`npx codescope viz --screenshot output.png`)
 - [ ] **VIZ-09**: `/codescope:viz` skill launches dashboard and opens browser
 
@@ -143,11 +143,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ENFORCE-04 | Phase 12 | Complete |
 | VIZ-01 | Phase 14 | Complete |
 | VIZ-02 | Phase 14 | Complete |
-| VIZ-03 | Phase 14 | Pending |
-| VIZ-04 | Phase 14 | Pending |
-| VIZ-05 | Phase 14 | Pending |
+| VIZ-03 | Phase 14 | Complete |
+| VIZ-04 | Phase 14 | Complete |
+| VIZ-05 | Phase 14 | Complete |
 | VIZ-06 | Phase 14 | Complete |
-| VIZ-07 | Phase 14 | Pending |
+| VIZ-07 | Phase 14 | Complete |
 | VIZ-08 | Phase 14 | Pending |
 | VIZ-09 | Phase 14 | Pending |
 | DEBT-01 | Phase 9 | Complete |
