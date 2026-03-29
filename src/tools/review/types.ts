@@ -22,7 +22,14 @@ export interface DiffError {
   recovery: string;
 }
 
-/** Minimal db interface matching better-sqlite3 prepare/all pattern used by graph query functions */
+/** Minimal db interface compatible with better-sqlite3 Database.
+ *  Uses `any` parameter types to accept both `{}` (better-sqlite3 default)
+ *  and `unknown[]` without type conflict. */
 export interface DbHandle {
-  prepare: (sql: string) => { all: (...args: unknown[]) => unknown[] };
+  prepare: (sql: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    all: (...args: any[]) => unknown[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    run: (...args: any[]) => unknown;
+  };
 }

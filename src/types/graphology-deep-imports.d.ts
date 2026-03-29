@@ -81,11 +81,21 @@ declare module "graphology-traversal" {
     depth: number
   ) => boolean | void;
 
+  interface TraversalOptions {
+    mode?: "directed" | "undirected" | "inbound" | "outbound";
+  }
+
   export function bfs(graph: Graph, callback: TraversalCallback): void;
   export function bfsFromNode(
     graph: Graph,
     node: string,
     callback: TraversalCallback
+  ): void;
+  export function bfsFromNode(
+    graph: Graph,
+    node: string,
+    callback: TraversalCallback,
+    options: TraversalOptions
   ): void;
   export function dfs(graph: Graph, callback: TraversalCallback): void;
   export function dfsFromNode(
@@ -93,4 +103,55 @@ declare module "graphology-traversal" {
     node: string,
     callback: TraversalCallback
   ): void;
+}
+
+declare module "graphology-layout-forceatlas2/worker" {
+  import type Graph from "graphology-types";
+
+  interface FA2LayoutSettings {
+    linLogMode?: boolean;
+    outboundAttractionDistribution?: boolean;
+    adjustSizes?: boolean;
+    edgeWeightInfluence?: number;
+    scalingRatio?: number;
+    strongGravityMode?: boolean;
+    gravity?: number;
+    slowDown?: number;
+    barnesHutOptimize?: boolean;
+    barnesHutTheta?: number;
+    [key: string]: unknown;
+  }
+
+  export default class FA2Layout {
+    constructor(graph: Graph, params?: { settings?: FA2LayoutSettings });
+    isRunning(): boolean;
+    start(): void;
+    stop(): void;
+    kill(): void;
+  }
+}
+
+declare module "playwright" {
+  interface BrowserType {
+    launch(options?: Record<string, unknown>): Promise<Browser>;
+  }
+
+  interface Browser {
+    newPage(options?: Record<string, unknown>): Promise<Page>;
+    close(): Promise<void>;
+  }
+
+  interface Page {
+    goto(url: string, options?: Record<string, unknown>): Promise<unknown>;
+    waitForSelector(
+      selector: string,
+      options?: Record<string, unknown>,
+    ): Promise<unknown>;
+    screenshot(options?: Record<string, unknown>): Promise<Buffer>;
+    close(): Promise<void>;
+  }
+
+  export const chromium: BrowserType;
+  export const firefox: BrowserType;
+  export const webkit: BrowserType;
 }

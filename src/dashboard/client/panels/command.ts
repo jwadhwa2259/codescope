@@ -164,13 +164,14 @@ export function renderCommandPanel(ctx: PanelContext): PanelInstance {
       action: async (_card, button) => {
         setCardLoading(button, true);
         try {
-          const html2canvas = (await import('html2canvas')).default;
+          const html2canvasModule = await import('html2canvas');
+          const html2canvas = html2canvasModule.default as unknown as (element: HTMLElement, options?: Record<string, unknown>) => Promise<HTMLCanvasElement>;
           const mainEl = document.querySelector('.main') || document.querySelector('#panel-container') || document.body;
           const canvas = await html2canvas(mainEl as HTMLElement, {
             backgroundColor: '#0F172A',
             scale: 2,
           });
-          canvas.toBlob((blob) => {
+          canvas.toBlob((blob: Blob | null) => {
             if (!blob) return;
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -455,9 +456,9 @@ export function renderCommandPanel(ctx: PanelContext): PanelInstance {
       badge.style.color = '#fff';
       badge.textContent = 'Error';
     } else {
-      const data = result.data || result;
-      const affected = data.totalAffected || data.total_affected || '?';
-      const maxRisk = data.maxRisk || data.max_risk || 'unknown';
+      const data = result.data;
+      const affected = data?.totalAffected ?? data?.total_affected ?? '?';
+      const maxRisk = data?.maxRisk ?? data?.max_risk ?? 'unknown';
       badge.style.background = '#F59E0B';
       badge.style.color = '#000';
       badge.textContent = `${affected} affected - ${maxRisk} risk`;
