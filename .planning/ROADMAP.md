@@ -151,11 +151,11 @@ Plans:
   2. The CLI supports subcommands (init, bootstrap, viz, review, install-hooks, status) with help text and error handling
   3. If Claude Code is detected, plugin manifest and MCP config are auto-generated without manual setup
   4. The npm package installs successfully on macOS (Intel + ARM), Linux (x64), and Windows (x64) with pre-bundled better-sqlite3 binaries
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 15-01: TBD
-- [ ] 15-02: TBD
+- [ ] 15-01-PLAN.md -- CLI entry point with all 6 subcommands, init flow with plugin auto-setup, UI helpers, tests
+- [ ] 15-02-PLAN.md -- npm packaging: files array, optionalDependencies, platform package scaffolding, native loader, README
 
 ## Progress
 
@@ -178,4 +178,4 @@ Phases execute in numeric order: 9 > 10 > 11 > 12 > 13 > 14 > 15
 | 12. Convention Enforcement + Session Continuity | v2.0 | 5/5 | Complete    | 2026-03-28 |
 | 13. Pipeline Evolution | v2.0 | 2/2 | Complete    | 2026-03-29 |
 | 14. Visualization Dashboard | v2.0 | 5/5 | Complete    | 2026-03-29 |
-| 15. Distribution | v2.0 | 0/0 | Not started | - |
+| 15. Distribution | v2.0 | 0/2 | Not started | - |
