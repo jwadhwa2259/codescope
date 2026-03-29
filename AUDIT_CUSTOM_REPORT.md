@@ -1,10 +1,10 @@
 # CodeScope Codebase Audit Report
 
-**Date:** 2026-03-27 (updated post-remediation)
+**Date:** 2026-03-29
 **Project:** CodeScope v0.1.0
-**Tech Stack:** TypeScript, Node.js 22+, MCP SDK, better-sqlite3, web-tree-sitter, graphology, ast-grep
-**Total LOC:** ~21,700 (source) + ~20,000 (tests)
-**Files:** 92 source, 78 test files
+**Tech Stack:** TypeScript, Node.js 22+, MCP SDK, better-sqlite3, graphology, web-tree-sitter, Hono
+**Total Source Files:** 163 (src/) + 114 test files
+**Lines of Code:** ~483K (including tests and config)
 
 ---
 
@@ -13,164 +13,186 @@
 | Severity | Count |
 |----------|-------|
 | CRITICAL | 0 |
-| HIGH     | 0 |
-| MEDIUM   | 0 |
-| LOW      | 0 |
-| **Total** | **0** |
+| HIGH | 1 |
+| MEDIUM | 1 |
+| LOW | 2 |
 
-**Health Score: 100/100 — Grade A**
+**Health Score: 85/100 (B)**
 
-All 6 findings from the initial audit have been remediated:
-- 3 command injection vectors eliminated (`execSync` -> `execFileSync` with array args)
-- 10 `any` types replaced with proper `SyntaxNode` typing
-- 2 dependency advisories resolved via package.json overrides
-- 848 tests pass, TypeScript compiles cleanly, `npm audit` reports 0 vulnerabilities
+**Top 3 Issues:**
+1. `src/tools/review.ts` is a 736-line god file with 8 distinct responsibilities
+2. Unbounded `SELECT *` query in dashboard readiness API with no LIMIT
+3. Excessive `any` type usage in dashboard client panels (2 files)
+
+**Overall Assessment:** The codebase is well-structured with strong fundamentals. No security vulnerabilities were found. Parameterized queries are used consistently, no hardcoded secrets, no injection vectors. Test coverage ratio is excellent (114 test files for 163 source files). No TS suppressions (@ts-ignore etc.) anywhere. The issues found are limited to code organization and minor type safety gaps in the dashboard client.
 
 ---
 
 ## Phase 1: Project Discovery
 
-| Metric | Value |
-|--------|-------|
-| Primary Language | TypeScript |
-| Source Files | 92 (.ts) |
-| Test Files | 78 (.test.ts) |
-| Source LOC | 21,694 |
-| Test LOC | 20,048 |
-| Test:Source Ratio | 0.92:1 |
-| Dependencies (runtime) | 12 |
-| Dependencies (dev) | 11 |
-| Framework | MCP Server (StdioServerTransport) |
-
-**Architecture:** Modular TypeScript project organized by domain — `bootstrap/`, `orient/`, `verify/`, `eval/`, `debug/`, `execution/`, `learning/`, `agents/`, `parser/`, `graph/`, `conventions/`, `tools/`, `config/`, `onboard/`, `resolver/`, `utils/`. Each domain has matching test directories. MCP tools are registered in `src/tools/`. Sub-agent scripts live in `src/*/run-*.ts` (CLI entry points that output JSON to stdout/stderr).
+- **Framework:** MCP server (stdio transport) + Hono dashboard server + CLI (commander)
+- **Language:** TypeScript 5.9, ESM modules
+- **Database:** better-sqlite3 (synchronous, local)
+- **Build:** tsdown (Rolldown-powered)
+- **Test:** vitest 4.1
+- **Key modules:** bootstrap, orient, execution, verify, eval, tools (11 MCP tools), dashboard (sigma.js visualization), CLI
+- **Directory count:** 50+ well-organized directories under src/
+- **Dependencies:** 191 prod, 331 dev, 521 total
 
 ---
 
 ## Phase 2: Security Scan
 
-### No Issues Found
+### 2.1 Hardcoded Secrets
+**Result: CLEAN** - No hardcoded API keys, passwords, or tokens found.
 
-- **Command injection:** All `sg scan` invocations use `execFileSync` with argument arrays — shell interpolation bypassed
-- **Hardcoded secrets:** None detected
-- **SQL injection:** All SQLite queries use `db.prepare()` with static SQL strings or parameterized queries — safe
-- **XSS:** No browser-rendered code
-- **CORS:** Not applicable (CLI/MCP tool, no HTTP server)
-- **Sensitive data logging:** Console output is structured JSON for sub-agent communication — by design
+### 2.2 Injection Vulnerabilities
+**Result: CLEAN**
 
-### Dependencies
+- **SQL:** All database access uses better-sqlite3's parameterized API (`db.prepare().get/all/run()` with `?` placeholders). Static DDL in migration.ts uses `db.exec()` with hardcoded SQL strings only.
+- **Command Injection:** `spawn("sh", ["-c", command])` in `src/verify/server-lifecycle.ts:80` uses a command from `config.start_command` (user's own codescope config file), not untrusted input. `execFileSync` calls in `src/tools/review.ts` use array-form arguments with input validation (branch name regex at line 191).
+- **XSS:** No `dangerouslySetInnerHTML` or `v-html`. The `innerHTML` assignments in dashboard panels use internal graph data (from SQLite), not untrusted user input.
+- **Prompt Injection:** No LLM prompt construction with unsanitized user input.
 
-`npm audit` reports **0 vulnerabilities**. Package.json overrides pin `picomatch>=4.0.4` and `brace-expansion>=1.1.13` to resolve transitive advisories from dev dependencies.
+### 2.3 Authentication & Authorization
+N/A - Local CLI tool with stdio MCP transport. No HTTP auth surface.
+
+### 2.4 Dependency Vulnerabilities
+- `path-to-regexp@8.3.0` (HIGH severity, ReDoS via sequential optional groups) - transitive dependency of `@modelcontextprotocol/sdk` -> `express` -> `router`. CodeScope uses `StdioServerTransport` (not HTTP/SSE), so this vulnerability is **not exploitable** in production. Fix available via `npm audit fix`.
+
+### 2.5 Sensitive Data Handling
+**Result: CLEAN** - No passwords, tokens, or PII found in console.log/logger output.
 
 ---
 
 ## Phase 3: Code Structure Analysis
 
-### Largest Source Files
+### Finding 1: God File
 
-| File | Lines | Assessment |
-|------|-------|------------|
-| `src/agents/researcher.ts` | 648 | Single responsibility: project overview generation. Clean. |
-| `src/eval/eval-agent.ts` | 635 | Single responsibility: eval prompt assembly, chunking, scoring. Clean. |
-| `src/parser/extract.ts` | 604 | Single responsibility: AST extraction (imports, exports, classes, functions). Clean. |
-| `src/tools/verify.ts` | 594 | Runs multiple check types but all are "verification" — cohesive. Clean. |
-| `src/orient/research.ts` | 568 | Single responsibility: research topic extraction and prompt building. Clean. |
-| `src/agents/scout.ts` | 563 | Single responsibility: service manifest discovery. Clean. |
-| `src/orient/planner.ts` | 528 | Single responsibility: execution plan generation. Clean. |
+| | |
+|---|---|
+| **Severity** | HIGH |
+| **Category** | God File |
+| **File** | `src/tools/review.ts:1-736` |
 
-No god files detected. All large files maintain single-responsibility focus despite their size.
+**What:** This 736-line file contains 8 distinct responsibilities:
+1. Git diff resolution (lines 70-235): `parseFilesFromDiff`, `getWorkingDirChanges`, `detectDefaultBranch`, `resolveDiff`
+2. Convention parsing (lines 241-301): `parseConventions`
+3. SQLite community queries (lines 306-334): `getFileCommunities`
+4. SQLite edge queries (lines 339-374): `getEdgesForFiles`
+5. SQLite node ID queries (lines 379-399): `getNodeIdsForFiles`
+6. Graph cycle detection (lines 410-479): `detectCycles`
+7. Main review handler (lines 494-699): `handleReview`
+8. MCP tool registration (lines 711-736): `registerReviewTool`
 
-### Duplication
+**Why it matters:** Files this large with this many responsibilities are hard to test in isolation, prone to merge conflicts, and difficult to navigate. The diff resolution logic (parsing git output, branch validation) is reused from `detect-changes.ts` (the file itself notes "duplicated from detect-changes.ts for isolation" at line 54).
 
-No significant file name duplication detected in source.
+**Fix:** Extract into focused modules:
+```
+src/tools/review/
+  diff-resolver.ts    # resolveDiff, parseFilesFromDiff, getWorkingDirChanges, detectDefaultBranch
+  convention-parser.ts # parseConventions (or reuse from conventions.ts)
+  graph-queries.ts    # getFileCommunities, getEdgesForFiles, getNodeIdsForFiles
+  cycle-detector.ts   # detectCycles
+  handler.ts          # handleReview
+  register.ts         # registerReviewTool
+```
 
 ---
 
 ## Phase 4: Performance Scan
 
-### Database Queries
+### Finding 2: Unbounded Query
 
-All SQLite access uses `better-sqlite3`'s synchronous `prepare().get()`/`prepare().all()` pattern with static SQL strings. No string-built queries. The `loadGraphFromSQLite` function (`src/graph/analytics.ts:48-95`) loads all nodes and edges into an in-memory graphology graph — this full-table scan is by design for graph analysis and bounded by the project size being analyzed.
+| | |
+|---|---|
+| **Severity** | MEDIUM |
+| **Category** | Unbounded Query |
+| **File** | `src/dashboard/api/readiness.ts:57` |
 
-### No N+1 Patterns
+**What:** `SELECT * FROM readiness_history ORDER BY timestamp ASC` retrieves the entire readiness history table with no LIMIT clause. This is loaded into memory as an array and sent in a JSON API response.
 
-No database-query-inside-loop patterns detected. Graph queries load data once, then iterate in-memory.
+**Why it matters:** As readiness snapshots accumulate over time (one per bootstrap run), this query will return an ever-growing dataset. For long-lived projects, this means increasing memory usage and larger API responses.
 
-### No Frontend Code
+**Fix:** Add a LIMIT or time-window filter:
+```typescript
+// Option A: Limit to last N snapshots
+.prepare("SELECT * FROM readiness_history ORDER BY timestamp ASC LIMIT 100")
 
-Project is a CLI/MCP tool with no browser-rendered UI. Frontend performance checks not applicable.
+// Option B: Time window (last 30 days)
+.prepare("SELECT * FROM readiness_history WHERE timestamp > datetime('now', '-30 days') ORDER BY timestamp ASC")
+```
 
 ---
 
 ## Phase 5: Reliability Check
 
-### Type Safety
+### Finding 3: Type Safety - command.ts
 
-| Location | Count | Notes |
-|----------|-------|-------|
-| `src/tools/status.ts` | 2 | SQLite result casting — acceptable |
-| `src/verify/runtime-verify.ts` | 1 | Error handling — acceptable |
-| `src/tools/verify.ts` | 1 | Error handling — acceptable |
-| `src/eval/eval-agent.ts` | 1 | Error handling — acceptable |
-| **Total (src/)** | **5** | All acceptable uses (error casts, SQLite row typing) |
+| | |
+|---|---|
+| **Severity** | LOW |
+| **Category** | Type Safety |
+| **File** | `src/dashboard/client/panels/command.ts` |
 
-No `@ts-ignore`, `@ts-expect-error`, or `@ts-nocheck` directives found anywhere in the codebase.
+**What:** 4 instances of `any` type usage:
+- Lines 97, 120: `catch (err: any)` -- use `unknown` and narrow with `instanceof Error`
+- Line 321: `result: any` parameter -- define a `ReviewResult` interface
+- Line 435: `result: any` parameter -- define an `ImpactResult` interface
 
-### Error Handling
+**Fix:**
+```typescript
+// Replace catch (err: any) with:
+catch (err: unknown) {
+  const message = err instanceof Error ? err.message : 'Review failed';
+  showReviewDrawer(filePath, { error: message });
+}
 
-- No empty catch blocks found
-- All catch blocks either return default values, rethrow, or log structured errors
-- Sub-agent entry points (`run-*.ts`) properly catch and output JSON errors to stderr
+// Define result types:
+interface ReviewResult { summary?: object; error?: string; }
+interface ImpactResult { affected_count?: number; error?: string; }
+```
 
-### Test Coverage
+### Finding 4: Type Safety - blast-radius.ts
 
-Excellent test infrastructure:
-- 78 test files covering 92 source files (85% file coverage)
-- Near 1:1 source-to-test LOC ratio (21.7K source : 20K test)
-- Test framework: vitest 4.1.0
-- Tests organized to mirror source directory structure
-- All 848 tests passing
+| | |
+|---|---|
+| **Severity** | LOW |
+| **Category** | Type Safety |
+| **File** | `src/dashboard/client/panels/blast-radius.ts` |
 
-### Logging
+**What:** 4 instances of `any`/`as any`:
+- Line 185: `catch (err: any)`
+- Lines 457, 504, 505: `(svg as any).__cleanupZoom` -- attaching a cleanup function to an SVG element via dynamic property
 
-No formal logging framework (winston, pino, etc.). Console output is structured JSON for MCP communication and sub-agent stdio protocol. This is appropriate for a CLI plugin — the MCP transport handles logging concerns. Not flagged.
-
----
-
-## Remediation Log
-
-All 6 findings from the initial audit (2026-03-27) have been fixed:
-
-| # | Original Finding | Severity | Fix | Commit |
-|---|-----------------|----------|-----|--------|
-| 1 | Command Injection in `src/tools/verify.ts:144` | MEDIUM | Replaced `execSync` template literal with `execFileSync` array args | d2af217 |
-| 2 | Command Injection in `src/verify/static-verify.ts:98` | MEDIUM | Replaced `execSync` template literal with `execFileSync` array args | d2af217 |
-| 3 | Command Injection in `src/conventions/runner.ts:128` | MEDIUM | Replaced `execSync` template literal with `execFileSync` array args | d2af217 |
-| 4 | Type Safety in `src/verify/smoke-generator.ts` (10 `any`) | MEDIUM | Replaced all with `SyntaxNode` from web-tree-sitter | b7eeb74 |
-| 5 | picomatch@4.0.3 HIGH advisory (dev-only) | LOW | Added `overrides` in package.json: `picomatch>=4.0.4` | b7eeb74 |
-| 6 | brace-expansion@1.1.12 MODERATE advisory (dev-only) | LOW | Added `overrides` in package.json: `brace-expansion>=1.1.13` | b7eeb74 |
-
----
-
-## Health Score Breakdown
-
-| Starting Score | 100 |
-|----------------|-----|
-| CRITICAL (x25) | -0 |
-| HIGH (x10) | -0 |
-| MEDIUM (x3) | -0 |
-| LOW (x1) | -0 |
-| **Final Score** | **100 — Grade A** |
+**Fix:**
+```typescript
+// For the SVG cleanup pattern, use a WeakMap:
+const svgCleanup = new WeakMap<SVGElement, () => void>();
+svgCleanup.set(svg, () => { ... });
+// Later:
+svgCleanup.get(svg)?.();
+```
 
 ---
 
-## Overall Assessment
+## Findings Not Reported (Verified False Positives)
 
-CodeScope is a well-structured, well-tested TypeScript project with clean architecture and zero audit findings. The codebase demonstrates strong engineering practices:
+- **`db.exec()` in migration.ts:** Static SQL strings only, no user input interpolation
+- **`spawn("sh", ["-c", command])` in server-lifecycle.ts:** Command sourced from user's own config file, not untrusted input
+- **`execFileSync` calls in review.ts:** Uses array-form arguments with branch name validation regex
+- **`readFileSync` in MCP tool handlers:** MCP uses stdio transport (single-threaded), sync reads don't block concurrent requests
+- **`appendFileSync` in orchestrator.ts:** Used for event logging in non-request context, explicitly documented as "not critical path"
+- **`innerHTML` in dashboard panels:** Internal graph data from SQLite, not untrusted user input
+- **console.log usage (58 instances):** Concentrated in CLI command files (init, status, review) -- appropriate for a CLI tool
+- **path-to-regexp vulnerability:** Transitive dep, CodeScope uses stdio transport not HTTP express
 
-- **Modular design** with clear domain boundaries
-- **Excellent test coverage** (85% file coverage, near 1:1 LOC ratio, 848 tests passing)
-- **Minimal type safety escapes** (5 `any` in 21.7K lines — all acceptable error/SQL casts)
-- **No hardcoded secrets**, no SQL injection, no command injection, no empty catch blocks
-- **Proper error handling** throughout with structured JSON output
-- **Zero dependency vulnerabilities** (`npm audit` clean)
-- **Shell-safe command execution** — all `sg` CLI invocations use `execFileSync` with array arguments
+---
+
+## Quick Wins
+
+1. **Add LIMIT to readiness history query** (`src/dashboard/api/readiness.ts:57`) -- 1 line change, prevents unbounded memory growth
+2. **Replace `catch (err: any)` with `catch (err: unknown)`** (command.ts:97,120 + blast-radius.ts:185) -- 3 lines, improves type safety
+3. **Define result interfaces for dashboard callbacks** (command.ts:321,435) -- replace `any` with typed interfaces already known from API responses
+4. **Use WeakMap for SVG cleanup** (blast-radius.ts:457) -- eliminates `as any` cast for dynamic property attachment
+5. **Extract diff resolution from review.ts** -- the file itself documents it as "duplicated from detect-changes.ts", making it the lowest-hanging fruit for the god file refactor
