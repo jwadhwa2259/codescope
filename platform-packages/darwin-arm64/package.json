@@ -1,0 +1,10 @@
+{
+  "name": "@codescope/better-sqlite3-darwin-arm64",
+  "version": "12.8.0",
+  "description": "better-sqlite3 prebuilt binary for macOS ARM64",
+  "os": ["darwin"],
+  "cpu": ["arm64"],
+  "main": "better_sqlite3.node",
+  "files": ["better_sqlite3.node", "package.json"],
+  "license": "MIT"
+}

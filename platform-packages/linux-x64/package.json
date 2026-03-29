@@ -1,0 +1,10 @@
+{
+  "name": "@codescope/better-sqlite3-linux-x64",
+  "version": "12.8.0",
+  "description": "better-sqlite3 prebuilt binary for Linux x64",
+  "os": ["linux"],
+  "cpu": ["x64"],
+  "main": "better_sqlite3.node",
+  "files": ["better_sqlite3.node", "package.json"],
+  "license": "MIT"
+}

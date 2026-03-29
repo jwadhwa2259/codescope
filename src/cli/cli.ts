@@ -7,6 +7,10 @@ if (nodeMajor < 22) {
   process.exit(1);
 }
 
+import { ensureNativeBindings } from "./native-loader.js";
+
+ensureNativeBindings();
+
 import { Command } from "commander";
 import { registerInitCommand } from "./commands/init.js";
 import { registerBootstrapCommand } from "./commands/bootstrap.js";
