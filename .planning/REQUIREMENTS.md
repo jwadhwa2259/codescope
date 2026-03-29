@@ -131,12 +131,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SESS-02 | Phase 12 | Complete |
 | SESS-03 | Phase 12 | Complete |
 | SESS-04 | Phase 12 | Complete |
-| REVIEW-01 | Phase 11 + 16 | Pending |
-| REVIEW-02 | Phase 11 + 16 | Pending |
-| REVIEW-03 | Phase 11 + 16 | Pending |
+| REVIEW-01 | Phase 11 + 16 | Complete |
+| REVIEW-02 | Phase 11 + 16 | Complete |
+| REVIEW-03 | Phase 11 + 16 | Complete |
 | REVIEW-04 | Phase 11 + 16 | Pending |
 | IMPACT-01 | Phase 11 + 16 | Pending |
-| IMPACT-02 | Phase 11 + 16 | Pending |
+| IMPACT-02 | Phase 11 + 16 | Complete |
 | ENFORCE-01 | Phase 12 | Complete |
 | ENFORCE-02 | Phase 12 | Complete |
 | ENFORCE-03 | Phase 12 | Complete |
