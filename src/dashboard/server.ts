@@ -100,7 +100,11 @@ function startEventTail(eventsLogPath: string): void {
 
         const lines = buffer.toString("utf-8").split("\n").filter(Boolean);
         for (const line of lines) {
-          broadcast({ type: "event", data: line });
+          try {
+            broadcast(JSON.parse(line));
+          } catch {
+            broadcast({ type: "event", data: line });
+          }
         }
       }
     } catch {
@@ -147,7 +151,7 @@ function startEventTail(eventsLogPath: string): void {
 // Serve the bundled client JS at /dashboard.js
 app.use(
   "/dashboard.js",
-  serveStatic({ path: "./dist/dashboard/app.mjs" }),
+  serveStatic({ path: "./dist/dashboard/app.js" }),
 );
 
 // ---- SPA Fallback ----
