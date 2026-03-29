@@ -24,6 +24,8 @@ interface PanelInstance {
   destroy: () => void;
 }
 
+const svgCleanupMap = new WeakMap<SVGElement, () => void>();
+
 const RISK_COLORS: Record<string, string> = {
   Red: '#EF4444',
   Orange: '#F97316',
@@ -182,11 +184,12 @@ export function renderBlastRadiusPanel(ctx: PanelContext): PanelInstance {
       const response = await api.fetchBlastRadius(filePath, direction);
       svgArea.innerHTML = '';
       renderRings(response.data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       svgArea.innerHTML = '';
       const error = document.createElement('div');
       error.className = 'empty-state';
-      error.innerHTML = `<p style="color: var(--color-text-muted);">Failed to load blast radius: ${err.message || 'Unknown error'}</p>`;
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      error.innerHTML = `<p style="color: var(--color-text-muted);">Failed to load blast radius: ${message}</p>`;
       svgArea.appendChild(error);
     }
   }
@@ -453,11 +456,11 @@ export function renderBlastRadiusPanel(ctx: PanelContext): PanelInstance {
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
 
-    // Store cleanup refs
-    (svg as any).__cleanupZoom = () => {
+    // Store cleanup refs via WeakMap (avoids `as any` cast)
+    svgCleanupMap.set(svg, () => {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
-    };
+    });
   }
 
   function showNodeInfo(
@@ -501,8 +504,9 @@ export function renderBlastRadiusPanel(ctx: PanelContext): PanelInstance {
     destroy() {
       // Clean up zoom/pan handlers
       const svg = svgArea.querySelector('svg');
-      if (svg && (svg as any).__cleanupZoom) {
-        (svg as any).__cleanupZoom();
+      if (svg) {
+        const cleanup = svgCleanupMap.get(svg);
+        if (cleanup) cleanup();
       }
       if (searchInstance) {
         searchInstance.destroy();

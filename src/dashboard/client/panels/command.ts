@@ -6,7 +6,7 @@
  * VIZ-07, D-36 through D-39, D-41.
  */
 
-import type { ApiClient } from '../lib/api-client.js';
+import type { ApiClient, ReviewApiResponse, ImpactApiResponse } from '../lib/api-client.js';
 import type { WebSocketClient } from '../lib/ws-client.js';
 import { renderSearch } from '../components/search.js';
 import { openDrawer } from '../components/drawer.js';
@@ -94,8 +94,9 @@ export function renderCommandPanel(ctx: PanelContext): PanelInstance {
           try {
             const result = await api.postReview([filePath]);
             showReviewDrawer(filePath, result);
-          } catch (err: any) {
-            showReviewDrawer(filePath, { error: err.message || 'Review failed' });
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Review failed';
+            showReviewDrawer(filePath, { status: 'error', error: message });
           } finally {
             setCardLoading(button, false);
           }
@@ -117,8 +118,9 @@ export function renderCommandPanel(ctx: PanelContext): PanelInstance {
             showImpactBadge(card, result);
             // Cross-panel: switch to graph/blast for the file
             ctx.onSelectFile(filePath);
-          } catch (err: any) {
-            showImpactBadge(card, { error: err.message || 'Impact prediction failed' });
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Impact prediction failed';
+            showImpactBadge(card, { status: 'error', error: message });
           } finally {
             setCardLoading(button, false);
           }
@@ -318,7 +320,7 @@ export function renderCommandPanel(ctx: PanelContext): PanelInstance {
     card.insertBefore(searchContainer, button);
   }
 
-  function showReviewDrawer(filePath: string, result: any): void {
+  function showReviewDrawer(filePath: string, result: ReviewApiResponse): void {
     const content = document.createElement('div');
 
     if (result.error) {
@@ -331,7 +333,7 @@ export function renderCommandPanel(ctx: PanelContext): PanelInstance {
     }
 
     // Format review results into readable HTML
-    const data = result.data || result;
+    const data: Record<string, unknown> = result.data || (result as unknown as Record<string, unknown>);
 
     // Risk summary
     if (data.risk_summary || data.riskSummary) {
@@ -432,7 +434,7 @@ export function renderCommandPanel(ctx: PanelContext): PanelInstance {
     return section;
   }
 
-  function showImpactBadge(card: HTMLElement, result: any): void {
+  function showImpactBadge(card: HTMLElement, result: ImpactApiResponse): void {
     // Remove existing badge
     const existing = card.querySelector('.impact-badge');
     if (existing) existing.remove();
