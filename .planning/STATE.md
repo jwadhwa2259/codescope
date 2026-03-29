@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Layer + Interactive Dashboard
-status: verifying
-stopped_at: Completed 15-02-PLAN.md
-last_updated: "2026-03-29T17:41:25.749Z"
-last_activity: 2026-03-29
+status: executing
+stopped_at: Completed 16-01-PLAN.md
+last_updated: "2026-03-29T21:35:24.399Z"
+last_activity: 2026-03-29 -- Completed 16-01-PLAN.md
 progress:
-  total_phases: 7
+  total_phases: 8
   completed_phases: 7
-  total_plans: 22
-  completed_plans: 22
-  percent: 50
+  total_plans: 25
+  completed_plans: 23
+  percent: 92
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 
 ## Current Position
 
-Phase: 15
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-29
+Phase: 16 (tech-debt-closure) -- EXECUTING
+Plan: 2 of 3
+Status: Executing Phase 16
+Last activity: 2026-03-29 -- Completed 16-01-PLAN.md
 
-Progress: [#####░░░░░] 50%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -74,6 +74,7 @@ Progress: [#####░░░░░] 50%
 | Phase 14-visualization-dashboard PP04 | 4min | 2 tasks | 5 files |
 | Phase 15-distribution P01 | 14min | 3 tasks | 16 files |
 | Phase 15-distribution P02 | 3min | 2 tasks | 10 files |
+| Phase 16-tech-debt-closure P01 | 5min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -130,6 +131,7 @@ All v1.0 decisions validated -- see PROJECT.md for outcomes.
 - [Phase 15-distribution]: Review command delegates to Claude Code skill since codescope_review MCP tool requires Claude Code context
 - [Phase 15-distribution]: Native loader warns but does not exit on missing platform package -- better-sqlite3 from dependencies may compile from source
 - [Phase 15-distribution]: WASM grammar test checks directory existence only since .wasm files are build artifacts not tracked in git
+- [Phase 16-tech-debt-closure]: Detect CodeScope wrapper by content marker string for reliable idempotency in install-hooks
 
 ### Pending Todos
 
@@ -151,6 +153,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T18:19:47Z
-Stopped at: Completed quick task 260329-fkb
+Last session: 2026-03-29T21:35:24.397Z
+Stopped at: Completed 16-01-PLAN.md
 Resume file: None

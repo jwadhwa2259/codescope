@@ -131,12 +131,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SESS-02 | Phase 12 | Complete |
 | SESS-03 | Phase 12 | Complete |
 | SESS-04 | Phase 12 | Complete |
-| REVIEW-01 | Phase 11 + 16 | Pending |
-| REVIEW-02 | Phase 11 + 16 | Pending |
-| REVIEW-03 | Phase 11 + 16 | Pending |
-| REVIEW-04 | Phase 11 + 16 | Pending |
-| IMPACT-01 | Phase 11 + 16 | Pending |
-| IMPACT-02 | Phase 11 + 16 | Pending |
+| REVIEW-01 | Phase 11 + 16 | Complete |
+| REVIEW-02 | Phase 11 + 16 | Complete |
+| REVIEW-03 | Phase 11 + 16 | Complete |
+| REVIEW-04 | Phase 11 + 16 | Complete |
+| IMPACT-01 | Phase 11 + 16 | Complete |
+| IMPACT-02 | Phase 11 + 16 | Complete |
 | ENFORCE-01 | Phase 12 | Complete |
 | ENFORCE-02 | Phase 12 | Complete |
 | ENFORCE-03 | Phase 12 | Complete |
@@ -151,10 +151,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIZ-08 | Phase 14 | Complete |
 | VIZ-09 | Phase 14 | Complete |
 | DEBT-01 | Phase 9 | Complete |
-| DEBT-02 | Phase 9 + 16 | Pending |
+| DEBT-02 | Phase 9 + 16 | Complete |
 | DIST-01 | Phase 15 + 16 | Pending |
 | DIST-02 | Phase 15 + 16 | Pending |
-| DIST-03 | Phase 15 + 16 | Pending |
+| DIST-03 | Phase 15 + 16 | Complete |
 | DIST-04 | Phase 15 + 16 | Pending |
 
 **Coverage:**
