@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Intelligence Layer + Interactive Dashboard
-status: executing
-stopped_at: Completed 16-03-PLAN.md
-last_updated: "2026-03-29T21:42:58.008Z"
+status: verifying
+stopped_at: Completed 16-05-PLAN.md
+last_updated: "2026-03-29T22:22:47.214Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 8
-  completed_phases: 8
-  total_plans: 25
-  completed_plans: 25
+  completed_phases: 7
+  total_plans: 27
+  completed_plans: 26
   percent: 92
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 
 Phase: 16 (tech-debt-closure) -- EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-29
 
 Progress: [█████████░] 92%
@@ -77,6 +77,7 @@ Progress: [█████████░] 92%
 | Phase 16-tech-debt-closure P01 | 5min | 2 tasks | 5 files |
 | Phase 16-tech-debt-closure P02 | 4min | 2 tasks | 11 files |
 | Phase 16-tech-debt-closure P03 | 3min | 1 tasks | 4 files |
+| Phase 16-tech-debt-closure PP05 | 1min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -137,6 +138,7 @@ All v1.0 decisions validated -- see PROJECT.md for outcomes.
 - [Phase 16-tech-debt-closure]: Read pre-computed communities from SQLite instead of calling runCommunityDetection in graph API route
 - [Phase 16-tech-debt-closure]: Use any[] in DbHandle for better-sqlite3 compatibility; type assertion for html2canvas CJS default export
 - [Phase 16-tech-debt-closure]: ESM deep imports to CJS packages need .js extension (graphology-metrics/centrality/degree.js)
+- [Phase 16-tech-debt-closure]: macos-14 maps to darwin-arm64, macos-13 maps to darwin-x64 in GitHub Actions CI matrix
 
 ### Pending Todos
 
@@ -158,6 +160,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T21:42:58.006Z
-Stopped at: Completed 16-03-PLAN.md
+Last session: 2026-03-29T22:22:47.211Z
+Stopped at: Completed 16-05-PLAN.md
 Resume file: None
