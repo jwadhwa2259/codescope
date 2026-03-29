@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "type": "module",
   "main": "dist/server.js",
+  "bin": {
+    "codescope": "./dist/cli.mjs"
+  },
   "scripts": {
     "build": "tsdown",
     "dev": "tsx src/server.ts",
@@ -11,7 +14,8 @@
     "lint": "tsc --noEmit",
     "build:grammars": "npx tree-sitter build --wasm node_modules/tree-sitter-typescript/typescript && npx tree-sitter build --wasm node_modules/tree-sitter-typescript/tsx && npx tree-sitter build --wasm node_modules/tree-sitter-javascript && npx tree-sitter build --wasm node_modules/tree-sitter-python && mv *.wasm grammars/",
     "copy:grammars": "cp node_modules/tree-sitter-wasms/out/tree-sitter-typescript.wasm node_modules/tree-sitter-wasms/out/tree-sitter-tsx.wasm node_modules/tree-sitter-wasms/out/tree-sitter-javascript.wasm node_modules/tree-sitter-wasms/out/tree-sitter-python.wasm grammars/",
-    "dev:dashboard": "tsx src/dashboard/server.ts"
+    "dev:dashboard": "tsx src/dashboard/server.ts",
+    "build:cli": "tsdown"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.11",
@@ -19,6 +23,8 @@
     "@modelcontextprotocol/sdk": "^1.27.1",
     "@sigma/node-border": "^3.0.0",
     "better-sqlite3": "^12.8.0",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3",
     "enhanced-resolve": "^5.20.1",
     "graphology": "^0.26.0",
     "graphology-communities-louvain": "^2.0.2",
@@ -30,6 +36,7 @@
     "html2canvas": "^1.4.1",
     "js-yaml": "^4.1.1",
     "open": "^11.0.0",
+    "ora": "^9.3.0",
     "sigma": "^3.0.2",
     "tsconfig-paths": "^4.2.0",
     "web-tree-sitter": "0.25.10",

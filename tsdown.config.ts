@@ -26,4 +26,12 @@ export default defineConfig([
     noExternal: [/(.*)/],
     clean: false,
   },
+  {
+    entry: ["src/cli/cli.ts"],
+    format: "esm",
+    outDir: "dist",
+    external: ["better-sqlite3"],
+    clean: false,
+    banner: { js: "#!/usr/bin/env node" },
+  },
 ]);
