@@ -2,7 +2,7 @@
   "name": "codescope",
   "version": "0.1.0",
   "type": "module",
-  "main": "dist/server.js",
+  "main": "dist/server.mjs",
   "bin": {
     "codescope": "./dist/cli.mjs"
   },
