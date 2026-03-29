@@ -21,6 +21,7 @@
   "scripts": {
     "build": "tsdown",
     "prepack": "npm run build",
+    "postinstall": "npm run build --ignore-scripts",
     "pack:check": "npm pack --dry-run",
     "dev": "tsx src/server.ts",
     "test": "vitest run",
