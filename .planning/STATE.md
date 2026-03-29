@@ -146,9 +146,10 @@ None.
 |---|-------------|------|--------|-----------|
 | 260327-fvp | Fix all 6 audit findings: command injection, type safety, dependency vulnerabilities | 2026-03-27 | 443ddd5 | [260327-fvp-fix-all-6-audit-findings-command-injecti](./quick/260327-fvp-fix-all-6-audit-findings-command-injecti/) |
 | 260327-i7k | Create run-bootstrap.ts CLI entry point | 2026-03-27 | 336a354 | [260327-i7k-create-run-bootstrap-ts-cli-entry-point](./quick/260327-i7k-create-run-bootstrap-ts-cli-entry-point/) |
+| 260329-f32 | Fix audit findings: unbounded query LIMIT, eliminate any types in command/blast-radius panels | 2026-03-29 | 9917ba4 | [260329-f32-fix-audit-findings-unbounded-query-type-](./quick/260329-f32-fix-audit-findings-unbounded-query-type-/) |
 
 ## Session Continuity
 
-Last session: 2026-03-29T17:36:51.225Z
-Stopped at: Completed 15-02-PLAN.md
+Last session: 2026-03-29T17:58:07Z
+Stopped at: Completed quick task 260329-f32
 Resume file: None
