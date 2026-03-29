@@ -209,7 +209,8 @@ export function startDashboard(port?: number) {
 }
 
 // Auto-start when run directly
-if (process.argv[1]?.endsWith("server")) {
+const entryFile = process.argv[1] ?? "";
+if (entryFile.includes("dashboard/server") || entryFile.includes("dashboard\\server")) {
   startDashboard();
 }
 

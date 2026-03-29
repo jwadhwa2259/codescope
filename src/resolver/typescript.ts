@@ -1,4 +1,5 @@
-import { ResolverFactory, CachedInputFileSystem } from "enhanced-resolve";
+import enhancedResolve from "enhanced-resolve";
+const { ResolverFactory, CachedInputFileSystem } = enhancedResolve;
 import * as fs from "node:fs";
 import * as path from "node:path";
 
