@@ -38,41 +38,58 @@ describe("codescope_conventions", () => {
     );
   }
 
-  /** Sample conventions.md content with structured convention blocks. */
-  const SAMPLE_CONVENTIONS = `## Naming Conventions
+  /** Sample conventions.md content in detector's actual h3 + markdown table format. */
+  const SAMPLE_CONVENTIONS = `---
+generated: "2026-03-30T12:00:00.000Z"
+generator: "convention-detector"
+phase: 2
+total_rules_evaluated: 6
+total_conventions_detected: 3
+false_positive_target: "<5%"
+---
 
-**Convention:** camelCase for variables
-**Adoption:** 92%
-**Confidence:** HIGH-CONF
-**Category:** naming
-**Files:** src/utils/paths.ts, src/tools/helpers.ts, src/config/loader.ts
+# Conventions
+
+### camelCase for variables
+
+| Metric | Value |
+|--------|-------|
+| Adoption | 92% (23/25 files) |
+| Confidence | HIGH-CONF |
+| Trend | Stable |
+| Category | naming |
+
 **Evidence:**
-- src/utils/paths.ts:4 — const codescopePath = ...
-- src/tools/helpers.ts:10 — const startMs = ...
-- src/config/loader.ts:8 — const configData = ...
+- \`src/utils/paths.ts:4\` -- const codescopePath = ...
+- \`src/tools/helpers.ts:10\` -- const startMs = ...
+- \`src/config/loader.ts:8\` -- const configData = ...
 
-## Import Conventions
+### Named exports over default exports
 
-**Convention:** Named exports over default exports
-**Adoption:** 85%
-**Confidence:** HIGH-CONF
-**Category:** imports
-**Files:** src/tools/status.ts, src/tools/helpers.ts, src/server.ts
+| Metric | Value |
+|--------|-------|
+| Adoption | 85% (17/20 files) |
+| Confidence | HIGH-CONF |
+| Trend | Stable |
+| Category | imports |
+
 **Evidence:**
-- src/tools/status.ts:1 — export function registerStatusTool
-- src/tools/helpers.ts:1 — export function okResponse
-- src/server.ts:3 — export function createServer
+- \`src/tools/status.ts:1\` -- export function registerStatusTool
+- \`src/tools/helpers.ts:1\` -- export function okResponse
+- \`src/server.ts:3\` -- export function createServer
 
-## Error Handling
+### try-catch with typed errors
 
-**Convention:** try-catch with typed errors
-**Adoption:** 45%
-**Confidence:** LOW-CONF
-**Category:** error-handling
-**Files:** src/graph/builder.ts, src/agents/scout.ts
+| Metric | Value |
+|--------|-------|
+| Adoption | 45% (9/20 files) |
+| Confidence | LOW-CONF |
+| Trend | Stable |
+| Category | error-handling |
+
 **Evidence:**
-- src/graph/builder.ts:22 — try { ... } catch (e) { ... }
-- src/agents/scout.ts:15 — try { ... } catch (e) { ... }
+- \`src/graph/builder.ts:22\` -- try { ... } catch (e) { ... }
+- \`src/agents/scout.ts:15\` -- try { ... } catch (e) { ... }
 `;
 
   it("Test 7: Returns all conventions when no filter specified", async () => {

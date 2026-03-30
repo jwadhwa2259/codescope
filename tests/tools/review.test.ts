@@ -294,26 +294,43 @@ diff --git a/src/C.ts b/src/C.ts
   it("Test 3: matches changed files against conventions.md and reports violations", async () => {
     // Write a conventions.md file
     const csPath = path.join(projectRoot, ".claude", "codescope");
-    const conventionsContent = `## Naming Conventions
+    const conventionsContent = `---
+generated: "2026-03-30T12:00:00.000Z"
+generator: "convention-detector"
+phase: 2
+total_rules_evaluated: 4
+total_conventions_detected: 2
+false_positive_target: "<5%"
+---
 
-**Convention:** Use camelCase for functions
-**Adoption:** 85%
-**Confidence:** HIGH-CONF
-**Category:** naming
-**Files:** src/A.ts, src/B.ts, src/C.ts
+# Conventions
+
+### Use camelCase for functions
+
+| Metric | Value |
+|--------|-------|
+| Adoption | 85% (17/20 files) |
+| Confidence | HIGH-CONF |
+| Trend | Stable |
+| Category | naming |
+
 **Evidence:**
-- src/A.ts:10 -- function myFunc()
-- src/B.ts:5 -- function otherFunc()
+- \`src/A.ts:10\` -- function myFunc()
+- \`src/B.ts:5\` -- function otherFunc()
+- \`src/C.ts:3\` -- function anotherFunc()
 
-## Import Conventions
+### Use named imports
 
-**Convention:** Use named imports
-**Adoption:** 92%
-**Confidence:** MEDIUM-CONF
-**Category:** imports
-**Files:** src/D.ts, src/E.ts
+| Metric | Value |
+|--------|-------|
+| Adoption | 92% (23/25 files) |
+| Confidence | MEDIUM-CONF |
+| Trend | Stable |
+| Category | imports |
+
 **Evidence:**
-- src/D.ts:1 -- import { foo } from './foo'
+- \`src/D.ts:1\` -- import { foo } from './foo'
+- \`src/E.ts:2\` -- import { bar } from './bar'
 `;
     fs.writeFileSync(path.join(csPath, "conventions.md"), conventionsContent);
 

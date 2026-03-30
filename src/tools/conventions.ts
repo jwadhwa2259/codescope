@@ -9,6 +9,7 @@ import {
   okResponse,
   buildMetadata,
 } from "./helpers.js";
+import { parseDetectorConventions, type ParsedConvention } from "../conventions/parser.js";
 
 // ---- Types ----
 
@@ -17,102 +18,11 @@ interface ConventionsInput {
   module?: string;
 }
 
-interface ParsedConvention {
-  name: string;
-  adoption_pct: number;
-  confidence: string;
-  category: string;
-  files: string[];
-  evidence: string[];
-}
-
 interface ConventionsData {
   conventions: ParsedConvention[];
   total: number;
   filtered: number;
   message?: string;
-}
-
-// ---- Convention Parsing ----
-
-/**
- * Parses conventions.md into structured convention objects.
- *
- * Expected format per convention block:
- * ```
- * ## Section Heading
- *
- * **Convention:** convention name
- * **Adoption:** N%
- * **Confidence:** HIGH-CONF|MEDIUM-CONF|LOW-CONF
- * **Category:** category-name
- * **Files:** file1, file2, ...
- * **Evidence:**
- * - file:line -- description
- * ```
- */
-function parseConventions(content: string): ParsedConvention[] {
-  const conventions: ParsedConvention[] = [];
-  const sections = content.split(/^## /m).filter((s) => s.trim().length > 0);
-
-  for (const section of sections) {
-    const lines = section.split("\n");
-
-    let name = "";
-    let adoption = 0;
-    let confidence = "";
-    let category = "";
-    let files: string[] = [];
-    const evidence: string[] = [];
-    let inEvidence = false;
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-
-      if (trimmed.startsWith("**Convention:**")) {
-        name = trimmed.replace("**Convention:**", "").trim();
-        inEvidence = false;
-      } else if (trimmed.startsWith("**Adoption:**")) {
-        const pctStr = trimmed.replace("**Adoption:**", "").trim();
-        adoption = parseInt(pctStr.replace("%", ""), 10) || 0;
-        inEvidence = false;
-      } else if (trimmed.startsWith("**Confidence:**")) {
-        confidence = trimmed.replace("**Confidence:**", "").trim();
-        inEvidence = false;
-      } else if (trimmed.startsWith("**Category:**")) {
-        category = trimmed.replace("**Category:**", "").trim();
-        inEvidence = false;
-      } else if (trimmed.startsWith("**Files:**")) {
-        const fileStr = trimmed.replace("**Files:**", "").trim();
-        files = fileStr
-          .split(",")
-          .map((f) => f.trim())
-          .filter((f) => f.length > 0);
-        inEvidence = false;
-      } else if (trimmed.startsWith("**Evidence:**")) {
-        inEvidence = true;
-      } else if (inEvidence && trimmed.startsWith("-")) {
-        evidence.push(trimmed.replace(/^-\s*/, "").trim());
-      } else if (inEvidence && trimmed === "") {
-        // End of evidence block on blank line
-        inEvidence = false;
-      }
-    }
-
-    // Only add if we found a valid convention name
-    if (name) {
-      conventions.push({
-        name,
-        adoption_pct: adoption,
-        confidence,
-        category,
-        files,
-        evidence,
-      });
-    }
-  }
-
-  return conventions;
 }
 
 // ---- Handler ----
@@ -157,7 +67,7 @@ export async function handleConventions(
   }
 
   const content = fs.readFileSync(conventionsPath, "utf-8");
-  const allConventions = parseConventions(content);
+  const allConventions = parseDetectorConventions(content);
 
   // Empty conventions file
   if (allConventions.length === 0) {

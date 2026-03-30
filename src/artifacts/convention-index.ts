@@ -12,63 +12,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { ConventionIndex, ConventionFileEntry } from "./types.js";
-
-// ---- Convention Parsing ----
-
-interface ParsedConvention {
-  name: string;
-  adoption_pct: number;
-  confidence: string;
-  category: string;
-  files: string[];
-}
-
-/**
- * Parses conventions.md content into structured convention objects.
- *
- * Replicates the parsing logic from src/tools/conventions.ts parseConventions().
- */
-function parseConventions(content: string): ParsedConvention[] {
-  const conventions: ParsedConvention[] = [];
-  const sections = content.split(/^## /m).filter((s) => s.trim().length > 0);
-
-  for (const section of sections) {
-    const lines = section.split("\n");
-
-    let name = "";
-    let adoption = 0;
-    let confidence = "";
-    let category = "";
-    let files: string[] = [];
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-
-      if (trimmed.startsWith("**Convention:**")) {
-        name = trimmed.replace("**Convention:**", "").trim();
-      } else if (trimmed.startsWith("**Adoption:**")) {
-        const pctStr = trimmed.replace("**Adoption:**", "").trim();
-        adoption = parseInt(pctStr.replace("%", ""), 10) || 0;
-      } else if (trimmed.startsWith("**Confidence:**")) {
-        confidence = trimmed.replace("**Confidence:**", "").trim();
-      } else if (trimmed.startsWith("**Category:**")) {
-        category = trimmed.replace("**Category:**", "").trim();
-      } else if (trimmed.startsWith("**Files:**")) {
-        const fileStr = trimmed.replace("**Files:**", "").trim();
-        files = fileStr
-          .split(",")
-          .map((f) => f.trim())
-          .filter((f) => f.length > 0);
-      }
-    }
-
-    if (name) {
-      conventions.push({ name, adoption_pct: adoption, confidence, category, files });
-    }
-  }
-
-  return conventions;
-}
+import { parseDetectorConventions, type ParsedConvention } from "../conventions/parser.js";
 
 /**
  * Build convention index from conventions.md file(s) in the codescope directory.
@@ -84,7 +28,7 @@ export function buildConventionIndex(codescopeDir: string): ConventionIndex {
   const topLevelPath = path.join(codescopeDir, "conventions.md");
   if (fs.existsSync(topLevelPath)) {
     const content = fs.readFileSync(topLevelPath, "utf-8");
-    allConventions.push(...parseConventions(content));
+    allConventions.push(...parseDetectorConventions(content));
   }
 
   // Check service-specific conventions.md files
@@ -97,7 +41,7 @@ export function buildConventionIndex(codescopeDir: string): ConventionIndex {
           const serviceConvPath = path.join(servicesDir, entry.name, "conventions.md");
           if (fs.existsSync(serviceConvPath)) {
             const content = fs.readFileSync(serviceConvPath, "utf-8");
-            allConventions.push(...parseConventions(content));
+            allConventions.push(...parseDetectorConventions(content));
           }
         }
       }
