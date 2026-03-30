@@ -2,16 +2,13 @@
   "name": "codescope",
   "version": "0.1.0",
   "description": "Deep codebase analysis for AI-powered code changes that respect existing conventions and stay within safe blast radius",
-  "skills": [
-    { "name": "onboard", "path": "skills/onboard/SKILL.md" },
-    { "name": "bootstrap", "path": "skills/bootstrap/SKILL.md" },
-    { "name": "orient", "path": "skills/orient/SKILL.md" },
-    { "name": "settings", "path": "skills/settings/SKILL.md" },
-    { "name": "review-learnings", "path": "skills/review-learnings/SKILL.md" },
-    { "name": "review", "path": "skills/review/SKILL.md" },
-    { "name": "pause", "path": "skills/pause/SKILL.md" },
-    { "name": "resume", "path": "skills/resume/SKILL.md" },
-    { "name": "viz", "path": "skills/viz/SKILL.md" }
-  ],
-  "hooks": "./hooks/hooks.json"
+  "author": {
+    "name": "Jay Wadhwa",
+    "url": "https://github.com/jwadhwa2259/codescope"
+  },
+  "repository": "https://github.com/jwadhwa2259/codescope",
+  "license": "MIT",
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": "./.mcp.json"
 }
