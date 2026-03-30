@@ -9,6 +9,5 @@
   "repository": "https://github.com/jwadhwa2259/codescope",
   "license": "MIT",
   "skills": "./skills/",
-  "hooks": "./hooks/hooks.json",
   "mcpServers": "./.mcp.json"
 }
