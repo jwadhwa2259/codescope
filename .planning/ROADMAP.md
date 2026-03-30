@@ -44,7 +44,7 @@ CodeScope is built bottom-up: infrastructure first, then codebase intelligence, 
 
 **Milestone Goal:** Fix the gaps exposed by comparison testing against Fastify and h3 -- make CodeScope demonstrably better than vanilla Claude Code on real codebases.
 
-- [ ] **Phase 17: Foundation Fixes** - Fix import graph (ESM + CommonJS), convention index parsing, plugin distribution, readiness scoring, and bootstrap error surfacing
+- [x] **Phase 17: Foundation Fixes** - Fix import graph (ESM + CommonJS), convention index parsing, plugin distribution, readiness scoring, and bootstrap error surfacing (completed 2026-03-30)
 - [ ] **Phase 18: Semantic Conventions** - Framework-specific convention detection, file-role classification, and golden file quality filtering
 - [ ] **Phase 19: Intelligence Features** - Reference file injection, post-edit convention validation, and the `/codescope:eval` skill
 
@@ -66,7 +66,7 @@ Plans:
 - [x] 17-01-PLAN.md -- CJS require() and module.exports extraction in AST parser
 - [x] 17-02-PLAN.md -- Resolver null-check fix, shared graph builder, 0-edge warning
 - [x] 17-03-PLAN.md -- Canonical convention parser, readiness scoring with actual data
-- [ ] 17-04-PLAN.md -- Plugin distribution fix, GRAPH_INCOMPLETE downstream warnings
+- [x] 17-04-PLAN.md -- Plugin distribution fix, GRAPH_INCOMPLETE downstream warnings
 
 ### Phase 18: Semantic Conventions
 **Goal**: Convention detection identifies framework-specific patterns (not just generic syntax), golden files are filtered to exclude noise, and file roles are classified to prevent false-positive convention matching
@@ -122,6 +122,6 @@ Phases execute in numeric order: 17 -> 18 -> 19
 | 14. Visualization Dashboard | v2.0 | 5/5 | Complete | 2026-03-29 |
 | 15. Distribution | v2.0 | 2/2 | Complete | 2026-03-29 |
 | 16. Tech Debt Closure | v2.0 | 5/5 | Complete | 2026-03-29 |
-| 17. Foundation Fixes | v2.1 | 3/4 | In Progress|  |
+| 17. Foundation Fixes | v2.1 | 4/4 | Complete   | 2026-03-30 |
 | 18. Semantic Conventions | v2.1 | 0/0 | Not started | - |
 | 19. Intelligence Features | v2.1 | 0/0 | Not started | - |

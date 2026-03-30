@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Eval Fixes & Real-World Quality
-status: executing
-stopped_at: Completed 17-02-PLAN.md
-last_updated: "2026-03-30T21:24:34.013Z"
+status: verifying
+stopped_at: Completed 17-04-PLAN.md
+last_updated: "2026-03-30T21:32:42.194Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 Phase: 17 (foundation-fixes) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-30
 
 Progress: [░░░░░░░░░░] 0%
@@ -52,6 +52,8 @@ All decisions archived in PROJECT.md Key Decisions table and milestone archives.
 - [Phase 17]: Canonical parser pattern: all convention parsing through src/conventions/parser.ts
 - [Phase 17]: tsResolver typed as Resolver (not Resolver | null), enforcing non-null at the type level
 - [Phase 17]: Fallback resolver uses ResolverFactory.createResolver without path aliases when tsconfig missing
+- [Phase 17]: graph.size === 0 check placed after getGraph() and before main logic in all 4 downstream tools
+- [Phase 17]: detect-changes returns risk_level UNKNOWN (not LOW) when graph incomplete per D-02
 
 ### Pending Todos
 
@@ -65,6 +67,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-30T21:24:34.010Z
-Stopped at: Completed 17-02-PLAN.md
+Last session: 2026-03-30T21:32:42.192Z
+Stopped at: Completed 17-04-PLAN.md
 Resume file: None
