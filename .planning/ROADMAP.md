@@ -60,12 +60,13 @@ CodeScope is built bottom-up: infrastructure first, then codebase intelligence, 
   3. The `conventions.json` artifact contains parsed conventions matching what the convention detector wrote to `conventions.md` (not empty)
   4. Installing the plugin from marketplace on a clean machine succeeds without recursive cloning or manifest validation errors
   5. When import resolution produces 0 edges on a codebase with >5 files, bootstrap emits a visible warning explaining the failure
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 17-01: TBD
-- [ ] 17-02: TBD
-- [ ] 17-03: TBD
+- [ ] 17-01-PLAN.md -- CJS require() and module.exports extraction in AST parser
+- [ ] 17-02-PLAN.md -- Resolver null-check fix, shared graph builder, 0-edge warning
+- [ ] 17-03-PLAN.md -- Canonical convention parser, readiness scoring with actual data
+- [ ] 17-04-PLAN.md -- Plugin distribution fix, GRAPH_INCOMPLETE downstream warnings
 
 ### Phase 18: Semantic Conventions
 **Goal**: Convention detection identifies framework-specific patterns (not just generic syntax), golden files are filtered to exclude noise, and file roles are classified to prevent false-positive convention matching
@@ -121,6 +122,6 @@ Phases execute in numeric order: 17 -> 18 -> 19
 | 14. Visualization Dashboard | v2.0 | 5/5 | Complete | 2026-03-29 |
 | 15. Distribution | v2.0 | 2/2 | Complete | 2026-03-29 |
 | 16. Tech Debt Closure | v2.0 | 5/5 | Complete | 2026-03-29 |
-| 17. Foundation Fixes | v2.1 | 0/0 | Not started | - |
+| 17. Foundation Fixes | v2.1 | 0/4 | Planning complete | - |
 | 18. Semantic Conventions | v2.1 | 0/0 | Not started | - |
 | 19. Intelligence Features | v2.1 | 0/0 | Not started | - |
