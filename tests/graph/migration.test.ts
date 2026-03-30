@@ -76,7 +76,7 @@ describe("Schema migration system", () => {
       expect(pkCol?.pk).toBe(1);
     });
 
-    it("has readiness_history table with 8 columns", () => {
+    it("has readiness_history table with 9 columns (including scoring_version)", () => {
       dbPath = tmpDbPath();
       db = openDatabase(dbPath);
 
@@ -94,8 +94,9 @@ describe("Schema migration system", () => {
         "type_safety",
         "test_coverage_proxy",
         "import_graph_health",
+        "scoring_version",
       ]);
-      expect(columns).toHaveLength(8);
+      expect(columns).toHaveLength(9);
     });
 
     it("has idx_readiness_ts index on readiness_history", () => {
