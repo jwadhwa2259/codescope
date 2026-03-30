@@ -2,3 +2,9 @@ node_modules/
 dist/
 *.tsbuildinfo
 grammars/*.wasm
+
+# GSD planning artifacts (internal)
+.planning/
+
+# Claude Code local state
+.claude/
