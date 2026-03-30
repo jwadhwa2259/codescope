@@ -286,6 +286,69 @@ describe.skipIf(!grammarsExist)("buildGraph", () => {
     }
   });
 
+  it("produces IMPORTS edges for TypeScript project without tsconfig.json", async () => {
+    // Create a fresh fixture with no tsconfig.json
+    const noTsconfigRoot = tmpDir();
+    const noTsconfigSrc = path.join(noTsconfigRoot, "src");
+    fs.mkdirSync(noTsconfigSrc, { recursive: true });
+
+    // index.ts imports from ./utils via relative path
+    fs.writeFileSync(
+      path.join(noTsconfigSrc, "index.ts"),
+      `import { helper } from "./utils";\n\nexport function main(): string {\n  return helper("world");\n}\n`,
+      "utf-8",
+    );
+
+    // utils.ts exports helper, imports from ./config
+    fs.writeFileSync(
+      path.join(noTsconfigSrc, "utils.ts"),
+      `import { prefix } from "./config";\n\nexport function helper(name: string): string {\n  return prefix + name;\n}\n`,
+      "utf-8",
+    );
+
+    // config.ts exports prefix
+    fs.writeFileSync(
+      path.join(noTsconfigSrc, "config.ts"),
+      `export const prefix = "Hello, ";\n`,
+      "utf-8",
+    );
+
+    // No tsconfig.json exists in noTsconfigRoot
+
+    const noTsconfigDbPath = tmpDbPath();
+    const noTsconfigBatchDir = tmpDir();
+
+    try {
+      const result = await buildGraph({
+        projectRoot: noTsconfigRoot,
+        dbPath: noTsconfigDbPath,
+        batchDir: noTsconfigBatchDir,
+      });
+
+      // Must have processed all 3 files
+      expect(result.filesProcessed).toBe(3);
+
+      // Critical: IMPORTS edges must be > 0 even without tsconfig.json
+      // index.ts -> utils.ts and utils.ts -> config.ts = at least 2 IMPORTS edges
+      expect(result.edgesCreated).toBeGreaterThanOrEqual(2);
+
+      // Verify in DB
+      const db = openDatabase(noTsconfigDbPath);
+      try {
+        const importEdges = db
+          .prepare("SELECT COUNT(*) as count FROM edges e JOIN nodes sn ON e.source_id = sn.id JOIN nodes tn ON e.target_id = tn.id WHERE e.kind = 'IMPORTS'")
+          .get() as { count: number };
+        expect(importEdges.count).toBeGreaterThanOrEqual(2);
+      } finally {
+        closeDatabase(db);
+      }
+    } finally {
+      cleanupDb(noTsconfigDbPath);
+      try { fs.rmSync(noTsconfigRoot, { recursive: true, force: true }); } catch { /* cleanup */ }
+      try { fs.rmSync(noTsconfigBatchDir, { recursive: true, force: true }); } catch { /* cleanup */ }
+    }
+  });
+
   it("buildGraph result includes correct filesProcessed, nodesCreated, edgesCreated counts", async () => {
     const result = await buildGraph({
       projectRoot: fixtureDir,
