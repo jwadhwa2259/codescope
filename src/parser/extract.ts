@@ -481,6 +481,158 @@ function extractPythonClass(
   });
 }
 
+// ---- CommonJS extraction ----
+
+function extractCJSRequire(node: SyntaxNode): ImportInfo | null {
+  // Handles: const X = require('Y') or const { A, B } = require('Y')
+  // Node structure: variable_declarator > value: call_expression > function: identifier("require")
+  if (node.type !== "variable_declarator") return null;
+
+  const valueNode = node.childForFieldName("value");
+  if (!valueNode || valueNode.type !== "call_expression") return null;
+
+  const funcNode = valueNode.childForFieldName("function");
+  if (!funcNode || funcNode.type !== "identifier" || funcNode.text !== "require")
+    return null;
+
+  const argsNode = valueNode.childForFieldName("arguments");
+  if (!argsNode || argsNode.childCount < 2) return null; // ( and string at minimum
+
+  // Get the first string argument -- skip dynamic require(variable)
+  let source: string | null = null;
+  for (let i = 0; i < argsNode.childCount; i++) {
+    const arg = argsNode.child(i)!;
+    if (arg.type === "string" || arg.type === "string_fragment") {
+      source = arg.text.replace(/['"]/g, "");
+      break;
+    }
+  }
+  if (!source) return null;
+
+  // Extract specifiers from the name pattern
+  const nameNode = node.childForFieldName("name");
+  const specifiers: string[] = [];
+  let isDefault = false;
+
+  if (nameNode?.type === "identifier") {
+    specifiers.push(nameNode.text);
+    isDefault = true;
+  } else if (nameNode?.type === "object_pattern") {
+    for (let i = 0; i < nameNode.childCount; i++) {
+      const child = nameNode.child(i)!;
+      if (child.type === "shorthand_property_identifier_pattern") {
+        specifiers.push(child.text);
+      } else if (child.type === "pair_pattern") {
+        const value = child.childForFieldName("value");
+        if (value) specifiers.push(value.text);
+      }
+    }
+  }
+
+  return {
+    source,
+    specifiers,
+    line: node.startPosition.row + 1,
+    isDefault,
+    isNamespace: false,
+  };
+}
+
+function extractCJSExport(node: SyntaxNode, result: ParseResult): void {
+  // Handles: module.exports = X and exports.foo = X
+  // Node structure: expression_statement > assignment_expression > left: member_expression
+  if (node.type !== "expression_statement") return;
+
+  const expr = node.child(0);
+  if (!expr || expr.type !== "assignment_expression") return;
+
+  const left = expr.childForFieldName("left");
+  if (!left || left.type !== "member_expression") return;
+
+  const obj = left.childForFieldName("object");
+  const prop = left.childForFieldName("property");
+  if (!obj || !prop) return;
+
+  if (obj.text === "module" && prop.text === "exports") {
+    // module.exports = X
+    result.exports.push({
+      name: "default",
+      kind: "default",
+      line: node.startPosition.row + 1,
+    });
+
+    // Check for module.exports = require('other') re-export pattern
+    const right = expr.childForFieldName("right");
+    if (right?.type === "call_expression") {
+      const funcNode = right.childForFieldName("function");
+      if (
+        funcNode?.type === "identifier" &&
+        funcNode.text === "require"
+      ) {
+        const argsNode = right.childForFieldName("arguments");
+        if (argsNode) {
+          for (let i = 0; i < argsNode.childCount; i++) {
+            const arg = argsNode.child(i)!;
+            if (arg.type === "string" || arg.type === "string_fragment") {
+              const source = arg.text.replace(/['"]/g, "");
+              result.imports.push({
+                source,
+                specifiers: [],
+                line: node.startPosition.row + 1,
+                isDefault: false,
+                isNamespace: false,
+              });
+              break;
+            }
+          }
+        }
+      }
+    }
+  } else if (obj.text === "exports") {
+    // exports.foo = X
+    result.exports.push({
+      name: prop.text,
+      kind: "variable",
+      line: node.startPosition.row + 1,
+    });
+  }
+}
+
+function extractBareRequire(node: SyntaxNode): ImportInfo | null {
+  // Handles: require('side-effect') -- bare call without assignment
+  // Node structure: expression_statement > call_expression > function: identifier("require")
+  if (node.type !== "expression_statement") return null;
+
+  const callExpr = node.child(0);
+  if (!callExpr || callExpr.type !== "call_expression") return null;
+
+  const funcNode = callExpr.childForFieldName("function");
+  if (!funcNode || funcNode.type !== "identifier" || funcNode.text !== "require")
+    return null;
+
+  const argsNode = callExpr.childForFieldName("arguments");
+  if (!argsNode) return null;
+
+  // Get the first string argument
+  let source: string | null = null;
+  for (let i = 0; i < argsNode.childCount; i++) {
+    const arg = argsNode.child(i)!;
+    if (arg.type === "string" || arg.type === "string_fragment") {
+      source = arg.text.replace(/['"]/g, "");
+      break;
+    }
+  }
+  if (!source) return null;
+
+  return {
+    source,
+    specifiers: [],
+    line: node.startPosition.row + 1,
+    isDefault: false,
+    isNamespace: false,
+  };
+}
+
 // ---- Error collection ----
 
 function collectErrors(node: SyntaxNode, errors: string[]): void {
@@ -586,7 +738,23 @@ export async function extractFromSource(
           case "lexical_declaration":
           case "variable_declaration":
             extractTSVariableDeclaration(node, result, false);
+            // Also check for CJS require() calls within variable declarations
+            for (let j = 0; j < node.childCount; j++) {
+              const child = node.child(j)!;
+              if (child.type === "variable_declarator") {
+                const cjsImport = extractCJSRequire(child);
+                if (cjsImport) result.imports.push(cjsImport);
+              }
+            }
             break;
+          case "expression_statement": {
+            // CJS exports: module.exports = X, exports.foo = X
+            extractCJSExport(node, result);
+            // Bare require('side-effect') calls
+            const bareImport = extractBareRequire(node);
+            if (bareImport) result.imports.push(bareImport);
+            break;
+          }
           // Abstract class declarations (TypeScript-specific)
           case "abstract_class_declaration":
             extractTSClass(node, result, false, shallow);
