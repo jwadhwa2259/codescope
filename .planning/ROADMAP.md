@@ -64,7 +64,7 @@ CodeScope is built bottom-up: infrastructure first, then codebase intelligence, 
 
 Plans:
 - [x] 17-01-PLAN.md -- CJS require() and module.exports extraction in AST parser
-- [ ] 17-02-PLAN.md -- Resolver null-check fix, shared graph builder, 0-edge warning
+- [x] 17-02-PLAN.md -- Resolver null-check fix, shared graph builder, 0-edge warning
 - [x] 17-03-PLAN.md -- Canonical convention parser, readiness scoring with actual data
 - [ ] 17-04-PLAN.md -- Plugin distribution fix, GRAPH_INCOMPLETE downstream warnings
 
@@ -122,6 +122,6 @@ Phases execute in numeric order: 17 -> 18 -> 19
 | 14. Visualization Dashboard | v2.0 | 5/5 | Complete | 2026-03-29 |
 | 15. Distribution | v2.0 | 2/2 | Complete | 2026-03-29 |
 | 16. Tech Debt Closure | v2.0 | 5/5 | Complete | 2026-03-29 |
-| 17. Foundation Fixes | v2.1 | 2/4 | In Progress|  |
+| 17. Foundation Fixes | v2.1 | 3/4 | In Progress|  |
 | 18. Semantic Conventions | v2.1 | 0/0 | Not started | - |
 | 19. Intelligence Features | v2.1 | 0/0 | Not started | - |
