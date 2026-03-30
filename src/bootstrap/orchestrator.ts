@@ -417,6 +417,16 @@ export async function runBootstrap(
   );
   const resolvedImports = totalEdgesAll;
 
+  // CRITICAL warning when 0 edges produced from a non-trivial number of files
+  if (totalEdgesAll === 0 && totalSourceFiles > 5) {
+    warnings.push(
+      `CRITICAL: Import graph produced 0 edges from ${totalSourceFiles} files. ` +
+      `Blast radius, impact prediction, and review tools cannot assess risk accurately. ` +
+      `Likely causes: (1) no import/require statements found in source files, ` +
+      `(2) all imports resolve to external packages outside the project.`
+    );
+  }
+
   const previousMeta = readBootstrapMeta(projectRoot);
   const readinessScore = computeReadiness({
     totalSourceFiles: Math.max(totalSourceFiles, 1),
