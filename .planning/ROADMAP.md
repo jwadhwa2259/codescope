@@ -78,11 +78,13 @@ Plans:
   2. Golden file rankings exclude deprecated, test, generated, and config files -- only production source files appear as top exemplars
   3. Golden file rankings for a TypeScript project do not penalize files for missing Python-only conventions (and vice versa)
   4. Files are classified by role (utility, route handler, test, config, deprecated) and convention matching uses role to avoid false positives (e.g., utility files not flagged for missing route handler patterns)
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 18-01: TBD
-- [ ] 18-02: TBD
+- [ ] 18-01-PLAN.md -- Shared RULE_METADATA module, file-role classifier, framework detection
+- [ ] 18-02-PLAN.md -- Framework-specific ast-grep rules (Fastify, Express, h3) and runner integration
+- [ ] 18-03-PLAN.md -- Golden file noise filtering and per-language density fix
+- [ ] 18-04-PLAN.md -- Integration wiring: convention detector, readiness cap, pre-commit, rule validation
 
 ### Phase 19: Intelligence Features
 **Goal**: CodeScope actively helps Claude write code that fits the codebase by suggesting reference files before edits, validating conventions after edits, and exposing a skill for on-demand evaluation
@@ -123,6 +125,6 @@ Phases execute in numeric order: 17 -> 18 -> 19
 | 14. Visualization Dashboard | v2.0 | 5/5 | Complete | 2026-03-29 |
 | 15. Distribution | v2.0 | 2/2 | Complete | 2026-03-29 |
 | 16. Tech Debt Closure | v2.0 | 5/5 | Complete | 2026-03-29 |
-| 17. Foundation Fixes | v2.1 | 5/5 | Complete   | 2026-03-30 |
-| 18. Semantic Conventions | v2.1 | 0/0 | Not started | - |
+| 17. Foundation Fixes | v2.1 | 5/5 | Complete    | 2026-03-30 |
+| 18. Semantic Conventions | v2.1 | 0/4 | Planned | - |
 | 19. Intelligence Features | v2.1 | 0/0 | Not started | - |
