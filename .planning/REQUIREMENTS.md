@@ -3,8 +3,8 @@
 ## Import Graph
 
 - [ ] **GRAPH-01**: Parser extracts ESM `import` statements and creates edges in the knowledge graph (fix existing bug — 0 edges on TypeScript ESM repos like h3)
-- [ ] **GRAPH-02**: Parser extracts CommonJS `require()` calls from `call_expression` AST nodes and creates edges (supports `const x = require('y')`, `const { a } = require('y')`, `module.exports = require('y')`)
-- [ ] **GRAPH-03**: Parser extracts `module.exports` and `exports.*` assignments as export declarations
+- [x] **GRAPH-02**: Parser extracts CommonJS `require()` calls from `call_expression` AST nodes and creates edges (supports `const x = require('y')`, `const { a } = require('y')`, `module.exports = require('y')`)
+- [x] **GRAPH-03**: Parser extracts `module.exports` and `exports.*` assignments as export declarations
 - [ ] **GRAPH-04**: Resolver handles projects without tsconfig.json (currently silently returns null, producing 0 edges)
 - [ ] **GRAPH-05**: Shared graph-building function extracted from `builder.ts` and `incremental.ts` to eliminate ~150 lines of duplicated node/edge creation logic
 - [ ] **GRAPH-06**: Bootstrap surfaces errors when graph produces 0 edges (instead of completing silently with empty graph)
@@ -63,8 +63,8 @@
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
 | GRAPH-01 | Phase 17 | Pending |
-| GRAPH-02 | Phase 17 | Pending |
-| GRAPH-03 | Phase 17 | Pending |
+| GRAPH-02 | Phase 17 | Complete |
+| GRAPH-03 | Phase 17 | Complete |
 | GRAPH-04 | Phase 17 | Pending |
 | GRAPH-05 | Phase 17 | Pending |
 | GRAPH-06 | Phase 17 | Pending |

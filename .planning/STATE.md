@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Eval Fixes & Real-World Quality
-status: active
-stopped_at: Roadmap created, ready to plan Phase 17
-last_updated: "2026-03-30T18:30:00.000Z"
+status: executing
+stopped_at: Completed 17-01-PLAN.md
+last_updated: "2026-03-30T21:10:32.997Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 4
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** AI-generated code changes that respect existing conventions, stay within safe blast radius, and actually work in the codebase -- verified end-to-end before the user sees them.
-**Current focus:** v2.1 Phase 17 — Foundation Fixes (import graph, convention index, plugin distribution)
+**Current focus:** Phase 17 — foundation-fixes
 
 ## Current Position
 
-Phase: 17 of 19 (Foundation Fixes)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-30 — Roadmap created for v2.1
+Phase: 17 (foundation-fixes) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-03-30
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -47,6 +47,8 @@ Progress: [░░░░░░░░░░] 0%
 
 All decisions archived in PROJECT.md Key Decisions table and milestone archives.
 
+- [Phase 17]: Only extract static require() with string literals; dynamic require(variable) skipped per REQUIREMENTS.md
+
 ### Pending Todos
 
 None.
@@ -59,6 +61,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-30
-Stopped at: Roadmap created for v2.1 milestone (3 phases: 17-19)
+Last session: 2026-03-30T21:10:32.995Z
+Stopped at: Completed 17-01-PLAN.md
 Resume file: None
