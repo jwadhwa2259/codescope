@@ -25,9 +25,26 @@ npx codescope init
 
 <br>
 
-[The Problem](#the-problem) · [How It Works](#how-it-works) · [Getting Started](#getting-started) · [Commands](#commands) · [MCP Tools](#mcp-tools)
+[The Problem](#the-problem) · [How It Works](#how-it-works) · [Install](#install) · [Commands](#commands) · [MCP Tools](#mcp-tools)
 
 </div>
+
+---
+
+## Install
+
+### As a Claude Code Plugin
+
+```bash
+/plugin marketplace add jwadhwa2259/codescope
+/plugin install codescope@codescope
+```
+
+### As a CLI
+
+```bash
+npx codescope init
+```
 
 ---
 
