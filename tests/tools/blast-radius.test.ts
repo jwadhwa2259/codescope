@@ -231,6 +231,55 @@ describe("codescope_blast_radius (src/tools/blast-radius.ts)", () => {
     expect(parsed.data.total_affected).toBe(1);
   });
 
+  it("returns GRAPH_INCOMPLETE warning when graph has 0 edges", async () => {
+    // Build a graph with nodes but NO edges
+    const emptyEdgeGraph = new DirectedGraph();
+    emptyEdgeGraph.addNode("1", {
+      name: "A.ts",
+      kind: "file",
+      filePath: "src/A.ts",
+      loc: 100,
+    });
+    emptyEdgeGraph.addNode("2", {
+      name: "B.ts",
+      kind: "file",
+      filePath: "src/B.ts",
+      loc: 50,
+    });
+
+    getGraph.mockResolvedValue({
+      graph: emptyEdgeGraph,
+      centralities: new Map([
+        ["1", 0.0],
+        ["2", 0.0],
+      ]),
+      loadedAt: Date.now(),
+    });
+
+    const result = await handleBlastRadius(
+      { file_path: "src/A.ts" },
+      projectRoot,
+    );
+
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.status).toBe("partial");
+    expect(parsed.warnings).toBeDefined();
+    expect(parsed.warnings.length).toBeGreaterThan(0);
+    expect(parsed.warnings[0]).toContain("GRAPH_INCOMPLETE");
+    expect(parsed.data.graph_incomplete).toBe(true);
+  });
+
+  it("returns normal ok response when graph has edges (no GRAPH_INCOMPLETE regression)", async () => {
+    const result = await handleBlastRadius(
+      { file_path: "src/A.ts" },
+      projectRoot,
+    );
+
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.status).toBe("ok");
+    expect(parsed.warnings).toBeUndefined();
+  });
+
   it("Test 12: Response includes blast radius count and query_ms", async () => {
     const result = await handleBlastRadius(
       { file_path: "src/A.ts" },

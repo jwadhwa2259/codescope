@@ -291,6 +291,58 @@ diff --git a/src/C.ts b/src/C.ts
     expect(parsed.error.code).toBe("NOT_BOOTSTRAPPED");
   });
 
+  it("returns GRAPH_INCOMPLETE warning when graph has 0 edges", async () => {
+    // Build a graph with nodes but NO edges
+    const emptyEdgeGraph = new DirectedGraph();
+    emptyEdgeGraph.addNode("1", {
+      name: "A.ts",
+      kind: "file",
+      filePath: "src/A.ts",
+      loc: 100,
+    });
+
+    getGraph.mockResolvedValue({
+      graph: emptyEdgeGraph,
+      centralities: new Map([["1", 0.0]]),
+      loadedAt: Date.now(),
+    });
+
+    const diff = `diff --git a/src/A.ts b/src/A.ts
+--- a/src/A.ts
++++ b/src/A.ts
+@@ -1 +1 @@
+-old
++new`;
+
+    const result = await handleDetectChanges({ diff }, projectRoot);
+
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.status).toBe("partial");
+    expect(parsed.warnings).toBeDefined();
+    expect(parsed.warnings.length).toBeGreaterThan(0);
+    expect(parsed.warnings[0]).toContain("GRAPH_INCOMPLETE");
+    expect(parsed.data.graph_incomplete).toBe(true);
+    // Must NOT return risk_level "LOW" -- should be "UNKNOWN" per D-02
+    if (parsed.data.risk_level !== undefined) {
+      expect(parsed.data.risk_level).toBe("UNKNOWN");
+    }
+  });
+
+  it("returns normal ok response when graph has edges (no GRAPH_INCOMPLETE regression)", async () => {
+    const diff = `diff --git a/src/A.ts b/src/A.ts
+--- a/src/A.ts
++++ b/src/A.ts
+@@ -1 +1 @@
+-old
++new`;
+
+    const result = await handleDetectChanges({ diff }, projectRoot);
+
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.status).toBe("ok");
+    expect(parsed.warnings).toBeUndefined();
+  });
+
   it("Test 15: Files not in graph get LOW risk classification", async () => {
     const diff = `diff --git a/src/unknown.ts b/src/unknown.ts
 --- a/src/unknown.ts

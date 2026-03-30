@@ -222,6 +222,46 @@ describe("codescope_predict_impact (src/tools/impact-prediction.ts)", () => {
     expect(parsed.error.code).toBe("NOT_BOOTSTRAPPED");
   });
 
+  it("returns GRAPH_INCOMPLETE warning when graph has 0 edges", async () => {
+    // Build a graph with nodes but NO edges
+    const emptyEdgeGraph = new DirectedGraph();
+    emptyEdgeGraph.addNode("1", {
+      name: "A.ts",
+      kind: "file",
+      filePath: "src/A.ts",
+      loc: 100,
+    });
+
+    getGraph.mockResolvedValue({
+      graph: emptyEdgeGraph,
+      centralities: new Map([["1", 0.0]]),
+      loadedAt: Date.now(),
+    });
+
+    const result = await handlePredictImpact(
+      { file_paths: ["src/A.ts"] },
+      projectRoot,
+    );
+
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.status).toBe("partial");
+    expect(parsed.warnings).toBeDefined();
+    expect(parsed.warnings.length).toBeGreaterThan(0);
+    expect(parsed.warnings[0]).toContain("GRAPH_INCOMPLETE");
+    expect(parsed.data.graph_incomplete).toBe(true);
+  });
+
+  it("returns normal ok response when graph has edges (no GRAPH_INCOMPLETE regression)", async () => {
+    const result = await handlePredictImpact(
+      { file_paths: ["src/A.ts"] },
+      projectRoot,
+    );
+
+    const parsed = JSON.parse(result.content[0].text);
+    expect(parsed.status).toBe("ok");
+    expect(parsed.warnings).toBeUndefined();
+  });
+
   it("Test 7: multiple file_paths are each individually analyzed", async () => {
     const result = await handlePredictImpact(
       { file_paths: ["src/A.ts", "src/C.ts", "src/E.ts"] },

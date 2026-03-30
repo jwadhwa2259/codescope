@@ -667,6 +667,54 @@ diff --git a/src/B.ts b/src/B.ts
     expect(typeof parsed.metadata.query_ms).toBe("number");
   });
 
+  // ---- Test: GRAPH_INCOMPLETE warning when 0 edges ----
+  it("returns GRAPH_INCOMPLETE warning when graph has 0 edges", async () => {
+    // Build a graph with nodes but NO edges
+    const emptyEdgeGraph = new DirectedGraph();
+    emptyEdgeGraph.addNode("1", { name: "A.ts", kind: "file", filePath: "src/A.ts", loc: 100 });
+    emptyEdgeGraph.addNode("2", { name: "B.ts", kind: "file", filePath: "src/B.ts", loc: 50 });
+
+    getGraph.mockResolvedValue({
+      graph: emptyEdgeGraph,
+      centralities: new Map([
+        ["1", 0.0],
+        ["2", 0.0],
+      ]),
+      loadedAt: Date.now(),
+    });
+
+    const diff = `diff --git a/src/A.ts b/src/A.ts
+--- a/src/A.ts
++++ b/src/A.ts
+@@ -1 +1 @@
+-old
++new`;
+
+    const result = await handleReview({ diff }, projectRoot);
+    const parsed = JSON.parse(result.content[0].text);
+
+    expect(parsed.status).toBe("partial");
+    expect(parsed.warnings).toBeDefined();
+    expect(parsed.warnings.length).toBeGreaterThan(0);
+    expect(parsed.warnings[0]).toContain("GRAPH_INCOMPLETE");
+    expect(parsed.data.graph_incomplete).toBe(true);
+  });
+
+  it("returns normal ok response when graph has edges (no GRAPH_INCOMPLETE regression)", async () => {
+    const diff = `diff --git a/src/A.ts b/src/A.ts
+--- a/src/A.ts
++++ b/src/A.ts
+@@ -1 +1 @@
+-old
++new`;
+
+    const result = await handleReview({ diff }, projectRoot);
+    const parsed = JSON.parse(result.content[0].text);
+
+    expect(parsed.status).toBe("ok");
+    expect(parsed.warnings).toBeUndefined();
+  });
+
   // ---- Test: Cross-community NOT flagged when <3 communities ----
   it("Test 4b: not flagged when fewer than 3 communities are touched", async () => {
     // Only 1 community touched
