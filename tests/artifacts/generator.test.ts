@@ -95,27 +95,32 @@ function insertTestGraph(db: DatabaseType): void {
 function createMockConventions(csDir: string): void {
   const conventionsContent = `# Detected Conventions
 
-## Error Handling
+### Try-catch with typed errors
 
-**Convention:** Try-catch with typed errors
-**Adoption:** 85%
-**Confidence:** HIGH-CONF
-**Category:** error-handling
-**Files:** src/auth.ts, src/db.ts, src/routes.ts
+| Metric | Value |
+|--------|-------|
+| Adoption | 85% (17/20 files) |
+| Confidence | HIGH-CONF |
+| Trend | Stable |
+| Category | error-handling |
+
 **Evidence:**
-- src/auth.ts:10 -- Uses typed catch block
-- src/db.ts:15 -- Wraps query in try-catch
+- \`src/auth.ts:10\` -- Uses typed catch block
+- \`src/db.ts:15\` -- Wraps query in try-catch
 
-## Import Style
+### Named imports over default
 
-**Convention:** Named imports over default
-**Adoption:** 92%
-**Confidence:** HIGH-CONF
-**Category:** imports
-**Files:** src/index.ts, src/auth.ts, src/utils.ts
+| Metric | Value |
+|--------|-------|
+| Adoption | 92% (23/25 files) |
+| Confidence | HIGH-CONF |
+| Trend | Stable |
+| Category | imports |
+
 **Evidence:**
-- src/index.ts:1 -- Uses named import
-- src/auth.ts:1 -- Uses named import
+- \`src/index.ts:1\` -- Uses named import
+- \`src/auth.ts:1\` -- Uses named import
+- \`src/utils.ts:3\` -- Uses named import
 `;
   fs.writeFileSync(path.join(csDir, "conventions.md"), conventionsContent, "utf-8");
 }
