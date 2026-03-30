@@ -127,6 +127,127 @@ describe.skipIf(!grammarsExist)("extractFromSource", () => {
     });
   });
 
+  describe("CommonJS extraction", () => {
+    it("extracts const foo = require('bar') as default import", async () => {
+      const result = await extractFromSource(
+        "const foo = require('bar');",
+        "javascript",
+        pool
+      );
+      expect(result.imports).toHaveLength(1);
+      expect(result.imports[0].source).toBe("bar");
+      expect(result.imports[0].specifiers).toContain("foo");
+      expect(result.imports[0].isDefault).toBe(true);
+      expect(result.imports[0].isNamespace).toBe(false);
+    });
+
+    it("extracts const { a, b } = require('bar') as named imports", async () => {
+      const result = await extractFromSource(
+        "const { a, b } = require('bar');",
+        "javascript",
+        pool
+      );
+      expect(result.imports).toHaveLength(1);
+      expect(result.imports[0].source).toBe("bar");
+      expect(result.imports[0].specifiers).toContain("a");
+      expect(result.imports[0].specifiers).toContain("b");
+      expect(result.imports[0].isDefault).toBe(false);
+    });
+
+    it("extracts bare require('side-effect') as import with empty specifiers", async () => {
+      const result = await extractFromSource(
+        "require('side-effect');",
+        "javascript",
+        pool
+      );
+      expect(result.imports).toHaveLength(1);
+      expect(result.imports[0].source).toBe("side-effect");
+      expect(result.imports[0].specifiers).toHaveLength(0);
+      expect(result.imports[0].isDefault).toBe(false);
+    });
+
+    it("extracts module.exports = something as default export", async () => {
+      const result = await extractFromSource(
+        "module.exports = MyClass;",
+        "javascript",
+        pool
+      );
+      expect(result.exports).toHaveLength(1);
+      expect(result.exports[0].name).toBe("default");
+      expect(result.exports[0].kind).toBe("default");
+    });
+
+    it("extracts exports.foo = something as named export", async () => {
+      const result = await extractFromSource(
+        "exports.foo = myFunction;",
+        "javascript",
+        pool
+      );
+      expect(result.exports).toHaveLength(1);
+      expect(result.exports[0].name).toBe("foo");
+      expect(result.exports[0].kind).toBe("variable");
+    });
+
+    it("extracts module.exports = require('other') as both import and export", async () => {
+      const result = await extractFromSource(
+        "module.exports = require('other');",
+        "javascript",
+        pool
+      );
+      expect(result.imports).toHaveLength(1);
+      expect(result.imports[0].source).toBe("other");
+      expect(result.exports).toHaveLength(1);
+      expect(result.exports[0].name).toBe("default");
+      expect(result.exports[0].kind).toBe("default");
+    });
+
+    it("skips dynamic require(variable) - not statically analyzable", async () => {
+      const result = await extractFromSource(
+        "const x = require(variable);",
+        "javascript",
+        pool
+      );
+      expect(result.imports).toHaveLength(0);
+    });
+
+    it("extracts both ESM imports and CJS require in mixed file", async () => {
+      const source = [
+        'import { foo } from "esm-module";',
+        'const bar = require("cjs-module");',
+      ].join("\n");
+      const result = await extractFromSource(source, "typescript", pool);
+      expect(result.imports).toHaveLength(2);
+      const sources = result.imports.map((i) => i.source);
+      expect(sources).toContain("esm-module");
+      expect(sources).toContain("cjs-module");
+    });
+
+    it("extracts require with let and var declarations", async () => {
+      const source = [
+        "let a = require('mod-a');",
+        "var b = require('mod-b');",
+      ].join("\n");
+      const result = await extractFromSource(source, "javascript", pool);
+      expect(result.imports).toHaveLength(2);
+      expect(result.imports[0].source).toBe("mod-a");
+      expect(result.imports[1].source).toBe("mod-b");
+    });
+
+    it("extracts multiple exports.* assignments", async () => {
+      const source = [
+        "exports.create = createFn;",
+        "exports.destroy = destroyFn;",
+        "exports.update = updateFn;",
+      ].join("\n");
+      const result = await extractFromSource(source, "javascript", pool);
+      expect(result.exports).toHaveLength(3);
+      const names = result.exports.map((e) => e.name);
+      expect(names).toContain("create");
+      expect(names).toContain("destroy");
+      expect(names).toContain("update");
+    });
+  });
+
   describe("Edge cases", () => {
     it("returns empty arrays for file with only comments", async () => {
       const result = await extractFromSource(
