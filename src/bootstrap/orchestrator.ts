@@ -15,6 +15,7 @@ import { getCodescopePath, getGraphDbPath } from "../utils/paths.js";
 import { storeReadinessSnapshot } from "../graph/readiness-history.js";
 import { openDatabase, closeDatabase } from "../graph/database.js";
 import { generateInjectionArtifacts } from "../artifacts/generator.js";
+import { parseDetectorConventions } from "../conventions/parser.js";
 
 // ---------------------------------------------------------------------------
 // Event emission helper (inline for build isolation per D-33)
@@ -346,20 +347,75 @@ export async function runBootstrap(
   emitEvent(projectRoot, { type: "bootstrap:progress", stage: "Computing analytics", percentage: 75 });
   const readinessStartMs = Date.now();
 
-  // Gather readiness input from results
-  const totalSourceFiles = allServices.reduce((sum, s) => sum + s.loc, 0);
-  const typedFiles = totalSourceFiles; // Approximation; real count would need file walking
-  const testFiles = Math.round(totalSourceFiles * 0.2); // Approximation
+  // ---- Gather readiness input from ACTUAL bootstrap data (per D-13) ----
+  // Query graph DB for real file counts instead of hardcoded approximations
+  let totalSourceFiles = 0;
+  let typedFiles = 0;
+  let testFiles = 0;
+  const graphDbPath = getGraphDbPath(projectRoot);
+  if (fs.existsSync(graphDbPath)) {
+    const readinessDb = openDatabase(graphDbPath);
+    try {
+      const totalRow = readinessDb
+        .prepare("SELECT COUNT(*) as count FROM nodes WHERE kind = 'file'")
+        .get() as { count: number } | undefined;
+      totalSourceFiles = totalRow?.count ?? 0;
+
+      const typedRow = readinessDb
+        .prepare(
+          "SELECT COUNT(*) as count FROM nodes WHERE kind = 'file' AND (language = 'typescript' OR language = 'tsx')",
+        )
+        .get() as { count: number } | undefined;
+      typedFiles = typedRow?.count ?? 0;
+
+      const testRow = readinessDb
+        .prepare(
+          "SELECT COUNT(*) as count FROM nodes WHERE kind = 'file' AND is_test = 1",
+        )
+        .get() as { count: number } | undefined;
+      testFiles = testRow?.count ?? 0;
+    } finally {
+      closeDatabase(readinessDb);
+    }
+  }
+
+  // Count HIGH-CONF conventions from actual detector output
   const totalConventions = serviceResults.reduce(
     (sum, s) => sum + s.conventionsDetected,
     0,
   );
-  const highConfidenceConventions = Math.round(totalConventions * 0.6); // Approximation
+  let highConfidenceConventions = 0;
+  for (const service of servicesToAnalyze) {
+    const convPath = path.join(
+      codescopeDir,
+      "services",
+      service.name,
+      "conventions.md",
+    );
+    if (fs.existsSync(convPath)) {
+      const convContent = fs.readFileSync(convPath, "utf-8");
+      const parsed = parseDetectorConventions(convContent);
+      highConfidenceConventions += parsed.filter(
+        (c) => c.confidence === "HIGH-CONF",
+      ).length;
+    }
+  }
+  // Also check top-level conventions.md
+  const topConvPath = path.join(codescopeDir, "conventions.md");
+  if (fs.existsSync(topConvPath)) {
+    const topContent = fs.readFileSync(topConvPath, "utf-8");
+    const topParsed = parseDetectorConventions(topContent);
+    highConfidenceConventions += topParsed.filter(
+      (c) => c.confidence === "HIGH-CONF",
+    ).length;
+  }
+
+  // edgesCreated IS the resolved import count (edges only created when resolved)
   const totalEdgesAll = serviceResults.reduce(
     (sum, s) => sum + s.edgesCreated,
     0,
   );
-  const resolvedImports = Math.round(totalEdgesAll * 0.9); // Approximation
+  const resolvedImports = totalEdgesAll;
 
   const previousMeta = readBootstrapMeta(projectRoot);
   const readinessScore = computeReadiness({
@@ -371,6 +427,17 @@ export async function runBootstrap(
     resolvedImports,
     totalImports: totalEdgesAll,
   });
+
+  // D-03: Diagnostic steps when import_graph_health is 0%
+  if (readinessScore.dimensions.importGraphHealth.percent === 0) {
+    warnings.push(
+      "Import Graph Health: 0% -- No import relationships were resolved between source files. " +
+        "Diagnostic: (1) Check that source files contain import/require statements pointing to other project files (not just external packages). " +
+        "(2) For TypeScript projects, verify tsconfig.json exists with correct path aliases. " +
+        "(3) For CommonJS projects, ensure require() calls use string literals (dynamic require is not supported). " +
+        "Impact: blast_radius, predict_impact, and review tools cannot assess change risk without import edges.",
+    );
+  }
 
   const readinessPath = writeReadinessArtifact(codescopeDir, readinessScore);
   timingBreakdown["readiness"] = Date.now() - readinessStartMs;

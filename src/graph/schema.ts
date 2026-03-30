@@ -128,4 +128,14 @@ export const SCHEMA_V2_SQL = `
 export function createSchema(db: DatabaseType): void {
   db.exec(SCHEMA_V2_SQL);
   db.pragma("user_version = 2");
+
+  // Migration: add scoring_version column (per D-11)
+  // SQLite doesn't support ADD COLUMN IF NOT EXISTS, so use try/catch
+  try {
+    db.exec(
+      "ALTER TABLE readiness_history ADD COLUMN scoring_version INTEGER DEFAULT 1",
+    );
+  } catch {
+    // Column already exists -- expected on subsequent runs
+  }
 }

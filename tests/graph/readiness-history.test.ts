@@ -195,6 +195,45 @@ describe("readiness-history", () => {
     expect(result).toBeNull();
   });
 
+  it("storeReadinessSnapshot with default scoring_version stores version 2", () => {
+    dbPath = tmpDbPath();
+    db = openDatabase(dbPath);
+
+    storeReadinessSnapshot(db, mockScore());
+
+    const row = db.prepare("SELECT * FROM readiness_history").get() as ReadinessSnapshot;
+    expect(row).toBeDefined();
+    expect(row.scoring_version).toBe(2);
+  });
+
+  it("scoring_version column exists and old rows default to 1", () => {
+    dbPath = tmpDbPath();
+    db = openDatabase(dbPath);
+
+    // Insert a row without scoring_version (simulating old data)
+    db.prepare(
+      `INSERT INTO readiness_history
+        (timestamp, overall_grade, overall_percent, convention_coverage, type_safety, test_coverage_proxy, import_graph_health)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    ).run("2026-03-01T00:00:00.000Z", "C", 73, 70, 65, 80, 77);
+
+    const row = db
+      .prepare("SELECT * FROM readiness_history")
+      .get() as ReadinessSnapshot;
+    expect(row.scoring_version).toBe(1); // DEFAULT 1
+  });
+
+  it("getLatestSnapshot returns scoring_version field", () => {
+    dbPath = tmpDbPath();
+    db = openDatabase(dbPath);
+
+    storeReadinessSnapshot(db, mockScore({ percent: 87 }));
+
+    const latest = getLatestSnapshot(db);
+    expect(latest).not.toBeNull();
+    expect(latest!.scoring_version).toBe(2);
+  });
+
   it("getSnapshotNear with multiple snapshots returns the one closest to target time", () => {
     dbPath = tmpDbPath();
     db = openDatabase(dbPath);

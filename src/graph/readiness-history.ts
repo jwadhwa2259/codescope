@@ -18,6 +18,7 @@ export interface ReadinessSnapshot {
   type_safety: number;
   test_coverage_proxy: number;
   import_graph_health: number;
+  scoring_version: number; // 1 = v2.0 estimation, 2 = v2.1 actual data
 }
 
 // ---------------------------------------------------------------------------
@@ -33,11 +34,12 @@ export interface ReadinessSnapshot {
 export function storeReadinessSnapshot(
   db: DatabaseType,
   score: ReadinessScore,
+  scoringVersion: number = 2,
 ): void {
   const stmt = db.prepare(
     `INSERT INTO readiness_history
-      (timestamp, overall_grade, overall_percent, convention_coverage, type_safety, test_coverage_proxy, import_graph_health)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      (timestamp, overall_grade, overall_percent, convention_coverage, type_safety, test_coverage_proxy, import_graph_health, scoring_version)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   stmt.run(
@@ -48,6 +50,7 @@ export function storeReadinessSnapshot(
     score.dimensions.typeSafety.percent,
     score.dimensions.testCoverageProxy.percent,
     score.dimensions.importGraphHealth.percent,
+    scoringVersion,
   );
 }
 

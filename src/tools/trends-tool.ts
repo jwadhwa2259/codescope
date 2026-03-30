@@ -162,6 +162,23 @@ export async function handleTrends(
       .prepare("SELECT COUNT(*) as count FROM readiness_history")
       .get() as { count: number };
 
+    // D-12: Notice when comparing snapshots across scoring versions
+    const notices: string[] = [];
+    const comparisons = [previousComparison, weekComparison, monthComparison];
+    for (const comp of comparisons) {
+      if (
+        comp.snapshot !== null &&
+        (current.scoring_version ?? 1) !==
+          (comp.snapshot.scoring_version ?? 1)
+      ) {
+        notices.push(
+          "Scoring methodology updated -- pre-update snapshots used estimation-based formulas. " +
+            "Direct comparison may not be meaningful.",
+        );
+        break; // One notice is enough
+      }
+    }
+
     const data = {
       current: {
         timestamp: current.timestamp,
@@ -173,9 +190,11 @@ export async function handleTrends(
           test_coverage_proxy: current.test_coverage_proxy,
           import_graph_health: current.import_graph_health,
         },
+        scoring_version: current.scoring_version ?? 1,
       },
-      comparisons: [previousComparison, weekComparison, monthComparison],
+      comparisons,
       snapshot_count: countRow.count,
+      ...(notices.length > 0 ? { notices } : {}),
     };
 
     return okResponse(data, buildMetadata(projectRoot, startMs));
