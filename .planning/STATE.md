@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Eval Fixes & Real-World Quality
 status: executing
-stopped_at: Completed 17-01-PLAN.md
-last_updated: "2026-03-30T21:10:32.997Z"
+stopped_at: Completed 17-03-PLAN.md
+last_updated: "2026-03-30T21:17:11.190Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Phase: 17 (foundation-fixes) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-03-30
 
@@ -48,6 +48,8 @@ Progress: [░░░░░░░░░░] 0%
 All decisions archived in PROJECT.md Key Decisions table and milestone archives.
 
 - [Phase 17]: Only extract static require() with string literals; dynamic require(variable) skipped per REQUIREMENTS.md
+- [Phase 17]: Query graph DB for real file counts instead of modifying BuildGraphResult interface
+- [Phase 17]: Canonical parser pattern: all convention parsing through src/conventions/parser.ts
 
 ### Pending Todos
 
@@ -61,6 +63,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-30T21:10:32.995Z
-Stopped at: Completed 17-01-PLAN.md
+Last session: 2026-03-30T21:17:11.187Z
+Stopped at: Completed 17-03-PLAN.md
 Resume file: None

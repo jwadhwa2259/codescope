@@ -11,8 +11,8 @@
 
 ## Convention Pipeline
 
-- [ ] **CONV-01**: Convention index parser matches the format the convention detector actually writes (fix format mismatch — `conventions.json` is currently always empty)
-- [ ] **CONV-02**: Readiness scoring uses actual data from bootstrap (not hardcoded approximations like `Math.round(totalConventions * 0.6)`)
+- [x] **CONV-01**: Convention index parser matches the format the convention detector actually writes (fix format mismatch — `conventions.json` is currently always empty)
+- [x] **CONV-02**: Readiness scoring uses actual data from bootstrap (not hardcoded approximations like `Math.round(totalConventions * 0.6)`)
 - [ ] **CONV-03**: Golden file ranking excludes deprecated, test, generated, and config files from top exemplars
 - [ ] **CONV-04**: Golden file ranking filters convention applicability by language (TS files not penalized for missing Python conventions)
 - [ ] **CONV-05**: Framework detection from package.json dependencies determines which framework-specific convention rules to load
@@ -68,8 +68,8 @@
 | GRAPH-04 | Phase 17 | Pending |
 | GRAPH-05 | Phase 17 | Pending |
 | GRAPH-06 | Phase 17 | Pending |
-| CONV-01 | Phase 17 | Pending |
-| CONV-02 | Phase 17 | Pending |
+| CONV-01 | Phase 17 | Complete |
+| CONV-02 | Phase 17 | Complete |
 | CONV-03 | Phase 18 | Pending |
 | CONV-04 | Phase 18 | Pending |
 | CONV-05 | Phase 18 | Pending |
