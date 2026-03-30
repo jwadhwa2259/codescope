@@ -296,6 +296,7 @@ Built with TypeScript on the same tools Claude Code uses internally:
 | Bootstrap is slow | First bootstrap of a large codebase (100K+ LOC) can take up to 5 minutes. Subsequent runs are incremental. |
 | Convention detection seems wrong | Low-confidence detections (below 80%) are not enforced. Review with `/codescope:review-learnings`. |
 | Graph data seems stale | Run `/codescope:bootstrap --force` to rebuild from scratch. Config, conventions, and learnings are preserved. |
+| Plugin install fails with "SSH authentication failed" | Your Git is configured to use SSH but you don't have SSH keys set up. Run: `git config --global url."https://github.com/".insteadOf "git@github.com:"` to use HTTPS instead, then retry the install. |
 
 ---
 
