@@ -6,6 +6,7 @@ import { blastRadius } from "../graph/analytics.js";
 import {
   okResponse,
   errorResponse,
+  partialResponse,
   isBootstrapped,
   buildMetadata,
 } from "./helpers.js";
@@ -121,6 +122,24 @@ export async function handleDetectChanges(
     const cached = await getGraph(projectRoot);
     const graph = cached.graph;
     const centralities = cached.centralities;
+
+    // Check for incomplete graph (GRAPH-06 per D-02)
+    if (graph.size === 0) {
+      return partialResponse(
+        {
+          changed_files: changedFiles.map((p) => ({ path: p })),
+          summary: { total: changedFiles.length, high: 0, medium: 0, low: 0 },
+          risk_level: "UNKNOWN",
+          graph_incomplete: true,
+        },
+        [
+          "GRAPH_INCOMPLETE: Import graph has 0 edges. " +
+          "Risk assessment is unreliable because no import relationships were found. " +
+          "Run /codescope:bootstrap to rebuild the knowledge graph.",
+        ],
+        buildMetadata(projectRoot, startMs),
+      );
+    }
 
     const results: ChangedFile[] = [];
 

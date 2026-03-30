@@ -5,6 +5,7 @@ import { reverseBlastRadius, type BlastRadiusNode } from "../graph/analytics.js"
 import {
   okResponse,
   errorResponse,
+  partialResponse,
   isBootstrapped,
   buildMetadata,
 } from "./helpers.js";
@@ -71,6 +72,25 @@ export async function handlePredictImpact(
     const cached = await getGraph(projectRoot, filePaths);
     const graph = cached.graph;
     const centralities = cached.centralities;
+
+    // Check for incomplete graph (GRAPH-06 per D-02)
+    if (graph.size === 0) {
+      return partialResponse(
+        {
+          file_paths: filePaths,
+          max_hops: maxHops,
+          total_impacted: 0,
+          results: [],
+          graph_incomplete: true,
+        },
+        [
+          "GRAPH_INCOMPLETE: Import graph has 0 edges. " +
+          "Impact prediction is unreliable because no import relationships were found. " +
+          "Run /codescope:bootstrap to rebuild the knowledge graph.",
+        ],
+        buildMetadata(projectRoot, startMs),
+      );
+    }
 
     const results: ImpactResult[] = [];
 

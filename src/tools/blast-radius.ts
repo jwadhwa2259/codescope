@@ -5,6 +5,7 @@ import { blastRadius } from "../graph/analytics.js";
 import {
   okResponse,
   errorResponse,
+  partialResponse,
   isBootstrapped,
   buildMetadata,
 } from "./helpers.js";
@@ -35,6 +36,25 @@ export async function handleBlastRadius(
   try {
     const cached = await getGraph(projectRoot);
     const graph = cached.graph;
+
+    // Check for incomplete graph (GRAPH-06 per D-02)
+    if (graph.size === 0) {
+      return partialResponse(
+        {
+          file_path: filePath,
+          max_hops: maxHops,
+          total_affected: 0,
+          nodes: [],
+          graph_incomplete: true,
+        },
+        [
+          "GRAPH_INCOMPLETE: Import graph has 0 edges. " +
+          "Blast radius analysis is unreliable because no import relationships were found. " +
+          "Run /codescope:bootstrap to rebuild the knowledge graph.",
+        ],
+        buildMetadata(projectRoot, startMs),
+      );
+    }
 
     // Find the file node
     const matchingNodes = graph.filterNodes(

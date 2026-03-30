@@ -7,6 +7,7 @@ import { getGraphDbPath, getCodescopePath } from "../../utils/paths.js";
 import {
   okResponse,
   errorResponse,
+  partialResponse,
   isBootstrapped,
   buildMetadata,
 } from "../helpers.js";
@@ -83,6 +84,23 @@ export async function handleReview(
     const cached = await getGraph(projectRoot, changedFiles);
     const graph = cached.graph;
     const centralities = cached.centralities;
+
+    // Check for incomplete graph (GRAPH-06 per D-02)
+    if (graph.size === 0) {
+      return partialResponse(
+        {
+          summary: { total_files: changedFiles.length, high_risk: 0, medium_risk: 0, low_risk: 0 },
+          files: changedFiles.map((p) => ({ path: p, risk: "UNKNOWN", centrality: 0, blast_radius_count: 0 })),
+          graph_incomplete: true,
+        },
+        [
+          "GRAPH_INCOMPLETE: Import graph has 0 edges. " +
+          "Review risk assessment is unreliable because no import relationships were found. " +
+          "Run /codescope:bootstrap to rebuild the knowledge graph.",
+        ],
+        buildMetadata(projectRoot, startMs),
+      );
+    }
 
     // ---- Step 1: Per-file risk scoring (REVIEW-01) ----
     const fileResults: Array<{

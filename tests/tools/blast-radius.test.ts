@@ -203,19 +203,38 @@ describe("codescope_blast_radius (src/tools/blast-radius.ts)", () => {
     expect(parsed.error.code).toBe("NOT_BOOTSTRAPPED");
   });
 
-  it("Test 11: Isolated node returns only itself (hop 0, Red)", async () => {
-    // Build a graph with an isolated node
-    const isolatedGraph = new DirectedGraph();
-    isolatedGraph.addNode("1", {
+  it("Test 11: Isolated node in a graph with edges returns only itself (hop 0, Red)", async () => {
+    // Build a graph that has edges (so GRAPH_INCOMPLETE doesn't trigger)
+    // but the queried node is isolated (not connected to any edge)
+    const graphWithIsolated = new DirectedGraph();
+    graphWithIsolated.addNode("1", {
       name: "lonely.ts",
       kind: "file",
       filePath: "src/lonely.ts",
       loc: 10,
     });
+    graphWithIsolated.addNode("2", {
+      name: "other.ts",
+      kind: "file",
+      filePath: "src/other.ts",
+      loc: 20,
+    });
+    graphWithIsolated.addNode("3", {
+      name: "another.ts",
+      kind: "file",
+      filePath: "src/another.ts",
+      loc: 30,
+    });
+    // Add an edge between other nodes so graph.size > 0
+    graphWithIsolated.mergeEdge("2", "3", { kind: "IMPORTS", weight: 1 });
 
     getGraph.mockResolvedValue({
-      graph: isolatedGraph,
-      centralities: new Map([["1", 0.0]]),
+      graph: graphWithIsolated,
+      centralities: new Map([
+        ["1", 0.0],
+        ["2", 0.5],
+        ["3", 0.1],
+      ]),
       loadedAt: Date.now(),
     });
 
