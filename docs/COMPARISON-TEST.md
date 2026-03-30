@@ -1,235 +1,229 @@
-# CodeScope Comparison Test — Fastify
+# CodeScope Comparison Test — h3
 
-## Why Fastify
+## Why h3
 
-Fastify is the ideal test repo because it has **strong conventions that are invisible without codebase analysis**. Vanilla Claude will get these wrong:
+[h3](https://github.com/h3js/h3) is the HTTP framework that powers Nuxt and Nitro. Unlike Fastify or Express, Claude has far less training data on h3's **internal source conventions**. It has highly distinctive patterns that vanilla Claude will get wrong:
 
-| Convention | What Fastify does | What Claude will likely do |
-|------------|-------------------|---------------------------|
-| **Module system** | `require()` / `module.exports` (CommonJS) — zero ESM in core | Write `import`/`export` (ESM) |
-| **No JSDoc** | Zero JSDoc comments in the entire codebase | Add JSDoc to exported functions |
-| **Symbol-based privacy** | Internal state via `kRequest`, `kReply` from `./symbols.js` | Use `_private` prefix or `#private` |
-| **Error pattern** | Custom error classes from `./errors.js` with `FST_ERR_*` codes | `throw new Error('message')` |
-| **Export aliasing** | `module.exports = { add: decorateFastify, exist: checkExistence }` | Export functions by their original names |
-| **Test framework** | `node:test` with `t.plan(N)`, `t.assert.strictEqual()`, `t.after()` | Use Jest or Vitest patterns (`describe`, `it`, `expect`) |
-| **Test naming** | `feature-name.test.js` (flat in `test/` root) | Create `__tests__/` or `test/feature/` directories |
-| **HTTP testing** | `fastify.inject()` — no real sockets | Use `supertest` or start a real server |
-| **Plugin pattern** | `fastify-plugin` wrapper (`fp()`) with dependency metadata | Write plain middleware functions |
-| **Hook registration** | `instance.addHook('onRequest', fn)` with error-first callbacks | Use Express-style `app.use()` middleware |
-| **Promise detection** | `typeof result.then === 'function'` (duck-typing) | `result instanceof Promise` |
-| **Performance loops** | `for` loops, not `.forEach()` / `.map()` in hot paths | Use array methods |
+| Convention | What h3 does | What Claude will likely do |
+|------------|-------------|---------------------------|
+| **Event-based context** | `H3Event` object — not `req`/`res` | Use `Request`/`Response` or Express-style `req, res` |
+| **`defineHandler` wrapper** | All handlers wrapped in `defineHandler()` | Write plain `async function` handlers |
+| **`HTTPError` class** | Custom error via `new HTTPError({ status: 429, message: "..." })` | `throw new Error("Too many requests")` or `res.status(429)` |
+| **Utility function architecture** | Flat exported functions, no classes | Create a `RateLimiter` class |
+| **Internal `_` prefix** | Private helpers use `_` prefix (`_fetchHandler`, `_dynamicEventHandler`) | Use `#private` fields or no prefix |
+| **Section comments** | `// --- Rate Limiting ---` style dividers | Standard `/** JSDoc */` or no comments |
+| **`import type` separation** | Type imports always use `import type { ... }` | Mix type and value imports |
+| **Generic type params** | Single uppercase: `Req`, `Res`, `T`, `K` | Full words: `Request`, `Response`, `Data` |
+| **Function overloads** | Multiple `export function` signatures for polymorphic APIs | Single function with union types or optional params |
+| **Test setup** | `describeMatrix()` running tests across web + Node.js targets | Plain `describe/it` blocks |
+| **Test context** | Shared `TestContext` with `ctx.fetch()`, `ctx.app`, `ctx.errors[]` | Create new app instance per test |
+| **Test file naming** | `feature.test.ts` flat in `test/` | `__tests__/feature.spec.ts` or nested |
+| **File naming** | kebab-case in `src/utils/` | camelCase or PascalCase |
 
-These aren't documented anywhere obvious — you have to read the code to know them. That's exactly what CodeScope does.
+These patterns are **not documented** and **not common** across the JS/TS ecosystem. You have to read the source to know them.
 
 ---
 
 ## The Task
 
-> **"Add a request timeout plugin to Fastify that aborts requests exceeding a configurable time limit."**
+> **"Add a rate limiting utility to h3 that tracks requests per IP and returns 429 when limits are exceeded."**
 
-This task is designed to expose the most conventions at once:
+This task forces Claude to hit the most conventions at once:
 
-1. **New file creation** — where to put it, how to name it
-2. **Plugin pattern** — must use `fastify-plugin` (`fp()`) wrapper
-3. **Hook system** — must use `addHook('onRequest', ...)` not Express middleware
-4. **Error handling** — must use Fastify's error class pattern with `FST_ERR_*` code
-5. **Symbol usage** — should use symbols for internal state
-6. **Test file** — must use `node:test`, `t.plan()`, `fastify.inject()`, not Jest
-7. **CommonJS** — must use `require`/`module.exports`, not ESM
-8. **No JSDoc** — should match the zero-JSDoc convention
-9. **Performance** — should use `for` loops, not array methods in hot paths
+1. **New utility file** — must go in `src/utils/rate-limit.ts` (kebab-case)
+2. **Utility function pattern** — must export flat functions, not a class
+3. **H3Event context** — must accept `H3Event`, not `req`/`res`
+4. **HTTPError** — must use `new HTTPError({ status: 429 })`, not `throw new Error()`
+5. **Internal helpers** — should use `_` prefix for private state/functions
+6. **Section comments** — should use `// --- section ---` dividers
+7. **`import type`** — type imports must be separate
+8. **Test file** — must use `describeMatrix()` with shared `TestContext`
+9. **Test assertions** — must use Vitest `expect().toBe()` pattern
+10. **File placement** — utility in `src/utils/`, test in `test/`
 
 ### Exact Prompt (Use This Verbatim in Both Sessions)
 
 ```
-Add a request timeout plugin to Fastify's core library.
+Add a rate limiting utility to h3.
 
 Requirements:
-- New plugin in lib/ that aborts requests exceeding a configurable timeout (default 30s)
-- Use the onRequest hook to start a timer and the onResponse hook to clear it
-- When timeout fires, reply with 408 Request Timeout
-- Support per-route timeout override via route options
-- Add a test file covering: default timeout, custom timeout, per-route override, and timeout cancellation on normal response
+- New utility in src/utils/ that tracks requests per IP address
+- Configurable window (default 60s) and max requests (default 100)
+- When limit exceeded, respond with 429 Too Many Requests
+- Provide both a middleware function and a manual check function
+- Support custom key extraction (not just IP)
+- Add a test file covering: basic rate limiting, custom window/max, custom key function, limit reset after window, and 429 response format
 ```
 
 ---
 
 ## Step-by-Step Testing Guide
 
-### Setup (Do This Once)
+### Setup
 
 ```bash
-# Clone Fastify twice into separate directories
-git clone https://github.com/fastify/fastify.git ~/codescope-eval/fastify-with-codescope
-git clone https://github.com/fastify/fastify.git ~/codescope-eval/fastify-vanilla
-
-# Pin both to the same commit
-cd ~/codescope-eval/fastify-with-codescope && git checkout v5.3.2
-cd ~/codescope-eval/fastify-vanilla && git checkout v5.3.2
+# Clone h3 twice
+git clone https://github.com/h3js/h3.git ~/codescope-eval/h3-with-codescope
+git clone https://github.com/h3js/h3.git ~/codescope-eval/h3-vanilla
 
 # Install dependencies in both
-cd ~/codescope-eval/fastify-with-codescope && npm install
-cd ~/codescope-eval/fastify-vanilla && npm install
+cd ~/codescope-eval/h3-with-codescope && pnpm install
+cd ~/codescope-eval/h3-vanilla && pnpm install
 ```
 
-### Test A: With CodeScope (Your Plugin Active)
+### Test A: With CodeScope
 
 ```bash
-cd ~/codescope-eval/fastify-with-codescope
-claude
+cd ~/codescope-eval/h3-with-codescope
+claude --plugin-dir /Users/jaywadhwa/codescope
 ```
 
-In the Claude Code session:
-
-```
-# 1. Bootstrap CodeScope on this repo
-/codescope:bootstrap
-
-# 2. Wait for analysis to complete (1-3 min for Fastify)
-
-# 3. Run the task (paste the exact prompt above)
-Add a request timeout plugin to Fastify's core library...
-
-# 4. After Claude finishes, save the diff
-# In a separate terminal:
-cd ~/codescope-eval/fastify-with-codescope
-git diff > ../diff-with-codescope.patch
-git diff --stat > ../stats-with-codescope.txt
-```
-
-### Test B: Vanilla Claude Code (No Plugin)
+Or if plugin marketplace works:
 
 ```bash
-cd ~/codescope-eval/fastify-vanilla
+cd ~/codescope-eval/h3-with-codescope
 claude
+# Then: /bootstrap
+# Wait for analysis, then paste the task prompt
 ```
 
-In the Claude Code session:
+### Test B: Vanilla Claude Code
 
+```bash
+cd ~/codescope-eval/h3-vanilla
+claude
+# Just paste the exact same task prompt — no CodeScope
 ```
-# Just paste the exact same prompt — no CodeScope, no bootstrap
-Add a request timeout plugin to Fastify's core library...
 
-# After Claude finishes, save the diff
-cd ~/codescope-eval/fastify-vanilla
-git diff > ../diff-vanilla.patch
-git diff --stat > ../stats-vanilla.txt
+### Save Results
+
+```bash
+# After each session, save the new files
+cd ~/codescope-eval/h3-with-codescope
+git diff --no-index /dev/null src/utils/rate-limit.ts > ../h3-codescope-util.patch 2>/dev/null
+git diff --no-index /dev/null test/rate-limit.test.ts > ../h3-codescope-test.patch 2>/dev/null
+
+cd ~/codescope-eval/h3-vanilla
+# Find whatever files Claude created (might be different names/locations)
+find . -name "*rate*limit*" -not -path "./node_modules/*"
 ```
 
 ---
 
-## Evaluation Rubric
+## Evaluation Rubric (14 points)
 
-Score each output on these 12 criteria. Each is pass/fail.
+### Architecture (5 points)
 
-### Convention Adherence (8 points)
-
-| # | Criteria | With CodeScope | Vanilla |
+| # | Criteria | CodeScope | Vanilla |
 |---|----------|:-:|:-:|
-| 1 | **CommonJS** — uses `require()` / `module.exports`, not `import`/`export` | | |
-| 2 | **No JSDoc** — no JSDoc comments on functions | | |
-| 3 | **Error pattern** — uses custom error class from `errors.js` with `FST_ERR_*` code | | |
-| 4 | **Symbol usage** — uses symbols from `symbols.js` for internal state | | |
-| 5 | **Export aliasing** — exports use the `{ publicName: internalFn }` pattern | | |
-| 6 | **Plugin wrapper** — wraps in `fastify-plugin` (`fp()`) | | |
-| 7 | **Hook pattern** — uses `addHook('onRequest', ...)` not Express-style middleware | | |
-| 8 | **Performance** — uses `for` loops instead of `.forEach()` in hot path | | |
+| 1 | **Utility functions** — exports flat functions, not a class | | |
+| 2 | **H3Event context** — functions accept `H3Event`, not `req`/`res`/`Request` | | |
+| 3 | **HTTPError** — uses `new HTTPError({ status: 429 })` for limit exceeded | | |
+| 4 | **`_` prefix** — internal helpers/state use `_` prefix | | |
+| 5 | **`import type`** — type imports separated from value imports | | |
 
-### Test Quality (4 points)
+### File Conventions (4 points)
 
-| # | Criteria | With CodeScope | Vanilla |
+| # | Criteria | CodeScope | Vanilla |
 |---|----------|:-:|:-:|
-| 9 | **Test framework** — uses `node:test` with `t.plan()`, not Jest/Vitest | | |
-| 10 | **Test assertions** — uses `t.assert.strictEqual()` not `expect()` | | |
-| 11 | **HTTP testing** — uses `fastify.inject()` not `supertest` or real server | | |
-| 12 | **Test location** — file is `test/request-timeout.test.js` (flat, not nested) | | |
+| 6 | **Utility location** — file is `src/utils/rate-limit.ts` (kebab-case, in utils/) | | |
+| 7 | **Section comments** — uses `// --- section ---` dividers | | |
+| 8 | **Function overloads** — uses multiple signatures for flexible API | | |
+| 9 | **Export style** — uses `export function` declarations (not `export default` or `export const`) | | |
+
+### Test Conventions (5 points)
+
+| # | Criteria | CodeScope | Vanilla |
+|---|----------|:-:|:-:|
+| 10 | **`describeMatrix()`** — uses h3's matrix test pattern (web + Node.js) | | |
+| 11 | **Shared TestContext** — uses `ctx.fetch()`, `ctx.app` from `_setup.ts` | | |
+| 12 | **Vitest** — uses `describe/it/expect`, not `node:test` or Jest | | |
+| 13 | **Test location** — file is `test/rate-limit.test.ts` (flat in test/) | | |
+| 14 | **Error assertions** — tests 429 response via `expect(res.status).toBe(429)` | | |
 
 ### Scoring
 
 ```
-10-12: CodeScope clearly demonstrates value
-7-9:   Meaningful improvement
-4-6:   Moderate improvement
-0-3:   No significant difference
+12-14: CodeScope clearly demonstrates value
+9-11:  Strong improvement
+6-8:   Moderate improvement
+0-5:   Minimal difference
 ```
 
 ---
 
 ## What to Screenshot for GitHub
 
-### 1. Side-by-side diff comparison
+### 1. The utility file side-by-side
 
-Show the plugin file from both runs. Highlight:
-- ESM vs CommonJS
-- JSDoc presence vs absence
-- Error handling pattern differences
-- Plugin wrapping (fp() vs none)
+Highlight:
+- Class vs utility functions
+- `req/res` vs `H3Event`
+- `throw new Error()` vs `new HTTPError()`
+- `_` prefix usage
 
-### 2. Test file comparison
+### 2. The test file side-by-side
 
-Show the test file from both runs. Highlight:
-- Jest/Vitest vs node:test
-- supertest vs fastify.inject()
-- describe/it/expect vs test/t.plan/t.assert
+Highlight:
+- `describeMatrix()` vs plain `describe()`
+- `ctx.fetch()` vs standalone app creation
+- Import paths and setup
 
-### 3. Scorecard
+### 3. The filled-in scorecard
 
-Fill in the rubric table above with checkmarks. The visual is immediate.
-
-### 4. The "aha" moment
-
-Find the single most striking difference — usually the plugin pattern or test framework — and highlight it as a callout:
+### 4. The money quote
 
 ```
-Without CodeScope: Claude wrote Jest tests with describe/it/expect
-With CodeScope:    Claude matched Fastify's node:test convention perfectly
+Vanilla Claude wrote a RateLimiter class with req/res params.
+CodeScope Claude wrote utility functions accepting H3Event — matching
+h3's architecture exactly.
 
-Claude had no way to know Fastify uses node:test — unless something told it.
-That's CodeScope.
-```
-
----
-
-## README Section (Add After Testing)
-
-Once you have results, add this section to the README:
-
-```markdown
-## Does It Work?
-
-We ran the same task on [Fastify](https://github.com/fastify/fastify) — once with CodeScope, once without.
-
-**Task:** Add a request timeout plugin to Fastify's core library.
-
-| Criteria | Without CodeScope | With CodeScope |
-|----------|:-:|:-:|
-| CommonJS (not ESM) | X | Y |
-| No JSDoc (matches codebase) | X | Y |
-| Fastify error pattern (FST_ERR_*) | X | Y |
-| Symbol-based internal state | X | Y |
-| fastify-plugin wrapper | X | Y |
-| node:test (not Jest) | X | Y |
-| fastify.inject() (not supertest) | X | Y |
-| **Score** | **X/12** | **Y/12** |
-
-> Claude had no way to know Fastify uses node:test instead of Jest —
-> unless something analyzed the codebase first. That's CodeScope.
+Claude had no way to know h3 uses H3Event and utility functions
+instead of classes — unless something analyzed the codebase first.
 ```
 
 ---
 
 ## Expected Results
 
-Based on Fastify's conventions, vanilla Claude will almost certainly:
+Vanilla Claude will almost certainly:
+- **Create a class** (`class RateLimiter`) — Claude defaults to OOP for stateful utilities
+- **Use `Request`/`Response`** — standard web API or Express-style `req, res`
+- **Use `throw new Error()`** — not h3's `HTTPError`
+- **Write plain `describe/it`** — not `describeMatrix()`
+- **Skip `import type`** — mix type and value imports
+- **Use camelCase filename** — `rateLimit.ts` or `rateLimiter.ts`
+- **Put tests in wrong structure** — nested or wrong naming
 
-- **Write ESM** (`import`/`export`) — Claude defaults to modern JS
-- **Add JSDoc** — Claude's training strongly favors documentation
-- **Use Jest or Vitest** — these are the dominant test frameworks
-- **Use supertest** — the standard HTTP testing library
-- **Skip fastify-plugin wrapper** — this is Fastify-specific knowledge
-- **Use `throw new Error()`** — not the custom `FST_ERR_*` pattern
-- **Skip symbols** — this is an uncommon pattern
+CodeScope should detect h3's patterns from the codebase analysis and guide Claude to match them.
 
-CodeScope should catch most of these because it analyzes the actual codebase patterns before Claude writes anything.
+**Prediction: Vanilla scores 3-5/14, CodeScope scores 10-14/14.**
 
-**Prediction: Vanilla scores 2-4/12, CodeScope scores 9-12/12.**
+---
+
+## README Section (After Testing)
+
+```markdown
+## Does It Work?
+
+We ran the same task on [h3](https://github.com/h3js/h3) (the HTTP framework behind Nuxt) — once with CodeScope, once without.
+
+**Task:** Add a rate limiting utility to h3.
+
+| Criteria | Without CodeScope | With CodeScope |
+|----------|:-:|:-:|
+| Utility functions (not class) | X | Y |
+| H3Event context (not req/res) | X | Y |
+| HTTPError (not throw Error) | X | Y |
+| Internal `_` prefix | X | Y |
+| `import type` separation | X | Y |
+| kebab-case file in src/utils/ | X | Y |
+| Section comment dividers | X | Y |
+| `describeMatrix()` test pattern | X | Y |
+| Shared TestContext | X | Y |
+| **Score** | **X/14** | **Y/14** |
+
+> Claude had no way to know h3 uses `H3Event` and utility functions
+> instead of classes — unless something analyzed the codebase first.
+> That's CodeScope.
+```
