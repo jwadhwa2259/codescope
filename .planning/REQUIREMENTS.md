@@ -60,7 +60,32 @@
 
 ## Traceability
 
-(Filled by roadmapper)
-
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
+| GRAPH-01 | Phase 17 | Pending |
+| GRAPH-02 | Phase 17 | Pending |
+| GRAPH-03 | Phase 17 | Pending |
+| GRAPH-04 | Phase 17 | Pending |
+| GRAPH-05 | Phase 17 | Pending |
+| GRAPH-06 | Phase 17 | Pending |
+| CONV-01 | Phase 17 | Pending |
+| CONV-02 | Phase 17 | Pending |
+| CONV-03 | Phase 18 | Pending |
+| CONV-04 | Phase 18 | Pending |
+| CONV-05 | Phase 18 | Pending |
+| CONV-06 | Phase 18 | Pending |
+| CONV-07 | Phase 18 | Pending |
+| PLUG-01 | Phase 17 | Pending |
+| PLUG-02 | Phase 17 | Pending |
+| PLUG-03 | Phase 17 | Pending |
+| REF-01 | Phase 19 | Pending |
+| REF-02 | Phase 19 | Pending |
+| REF-03 | Phase 19 | Pending |
+| VALID-01 | Phase 19 | Pending |
+| VALID-02 | Phase 19 | Pending |
+| VALID-03 | Phase 19 | Pending |
+| VALID-04 | Phase 19 | Pending |
+| EVAL-01 | Phase 19 | Pending |
+| EVAL-02 | Phase 19 | Pending |
+| EVAL-03 | Phase 19 | Pending |
+| EVAL-04 | Phase 19 | Pending |

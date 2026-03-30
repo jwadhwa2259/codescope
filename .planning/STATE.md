@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Eval Fixes & Real-World Quality
 status: active
-stopped_at: Defining requirements
-last_updated: "2026-03-30T18:00:00.000Z"
+stopped_at: Roadmap created, ready to plan Phase 17
+last_updated: "2026-03-30T18:30:00.000Z"
 last_activity: 2026-03-30
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** AI-generated code changes that respect existing conventions, stay within safe blast radius, and actually work in the codebase -- verified end-to-end before the user sees them.
-**Current focus:** v2.1 — Fix eval gaps and plugin distribution
+**Current focus:** v2.1 Phase 17 — Foundation Fixes (import graph, convention index, plugin distribution)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-30 — Milestone v2.1 started
+Phase: 17 of 19 (Foundation Fixes)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-03-30 — Roadmap created for v2.1
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -53,14 +53,12 @@ None.
 
 ### Blockers/Concerns
 
-None.
-
-### Quick Tasks Completed
-
-(Carried from v2.0 — see MILESTONES.md for full history)
+- v2.0 eval exposed 0 import edges on both Fastify (CJS) and h3 (ESM) -- root cause confirmed in parser and resolver
+- Convention index is silently empty due to format mismatch between detector output and index parser
+- Plugin marketplace install has recursive cloning loop
 
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Defining requirements for v2.1
+Stopped at: Roadmap created for v2.1 milestone (3 phases: 17-19)
 Resume file: None
