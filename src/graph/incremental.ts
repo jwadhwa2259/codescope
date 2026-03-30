@@ -16,15 +16,18 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
+import enhancedResolve from "enhanced-resolve";
 import type { Database as DatabaseType } from "better-sqlite3";
 import { ParserPool, parseFile } from "../parser/index.js";
 import { detectLanguage } from "../parser/languages.js";
 import { computeFileHash, updateFileHash, removeFileHash } from "./file-hash.js";
 import { invalidateCache } from "./cache.js";
 import { BatchWriter, processBatchFiles } from "./batch-writer.js";
-import { createTypeScriptResolver, resolveTypeScriptImport } from "../resolver/typescript.js";
-import { resolvePythonImport } from "../resolver/python.js";
+import { createTypeScriptResolver } from "../resolver/typescript.js";
 import { generateInjectionArtifacts } from "../artifacts/generator.js";
+import { processFileForGraph } from "./shared-builder.js";
+
+const { ResolverFactory, CachedInputFileSystem } = enhancedResolve;
 
 export interface RebuildResult {
   rebuilt: number;
@@ -62,12 +65,21 @@ export async function rebuildStaleFiles(
     realProjectRoot = projectRoot;
   }
 
-  // Create TypeScript resolver once for reuse (may fail if no tsconfig)
-  let tsResolver: ReturnType<typeof createTypeScriptResolver> | null = null;
+  // Create TypeScript resolver once for reuse
+  // Always assigned -- fallback resolver created when tsconfig is missing
+  let tsResolver: ReturnType<typeof createTypeScriptResolver>;
   try {
     tsResolver = createTypeScriptResolver({ projectRoot });
   } catch {
-    // No tsconfig, skip TS import resolution
+    tsResolver = ResolverFactory.createResolver({
+      fileSystem: new CachedInputFileSystem(fs, 4000),
+      extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json'],
+      mainFields: ['types', 'typings', 'main', 'module'],
+      mainFiles: ['index'],
+      conditionNames: ['import', 'require', 'node', 'default'],
+      modules: ['node_modules'],
+      useSyncFileSystemCalls: true,
+    });
   }
 
   // Create parser pool
@@ -117,10 +129,9 @@ export async function rebuildStaleFiles(
         continue;
       }
 
-      // Create BatchWriter and replicate the per-file node/edge creation from builder.ts
+      // Create BatchWriter and delegate node/edge creation to shared function
       const writer = new BatchWriter(batchDir, `incremental-${Date.now()}`);
 
-      const basename = path.basename(absolutePath);
       const lang = detectLanguage(absolutePath);
       const isTest =
         absolutePath.includes(".test.") ||
@@ -136,138 +147,19 @@ export async function rebuildStaleFiles(
         lineCount = 0;
       }
 
-      // Add file node
-      writer.addNode({
-        name: basename,
-        kind: "file",
-        file_path: relPath,
-        language: lang ?? undefined,
-        loc: lineCount,
-        start_line: 1,
-        end_line: lineCount,
-        is_exported: false,
-        is_test: isTest,
-      });
-
-      // Add function nodes + CONTAINS edges
-      for (const func of parseResult.functions) {
-        writer.addNode({
-          name: func.name,
-          kind: "function",
-          file_path: relPath,
-          start_line: func.startLine,
-          end_line: func.endLine,
-          is_exported: func.isExported,
-          signature: `${func.name}(${func.params.join(", ")})`,
-          language: lang ?? undefined,
-        });
-
-        writer.addEdge({
-          source_name: basename,
-          source_file_path: relPath,
-          target_name: func.name,
-          target_file_path: relPath,
-          kind: "CONTAINS",
-        });
-      }
-
-      // Add class nodes + CONTAINS edges
-      for (const cls of parseResult.classes) {
-        writer.addNode({
-          name: cls.name,
-          kind: "class",
-          file_path: relPath,
-          start_line: cls.startLine,
-          end_line: cls.endLine,
-          is_exported: cls.isExported,
-          language: lang ?? undefined,
-        });
-
-        writer.addEdge({
-          source_name: basename,
-          source_file_path: relPath,
-          target_name: cls.name,
-          target_file_path: relPath,
-          kind: "CONTAINS",
-        });
-      }
-
-      // Add exported variable nodes + CONTAINS edges
-      for (const variable of parseResult.variables) {
-        if (variable.isExported) {
-          writer.addNode({
-            name: variable.name,
-            kind: "variable",
-            file_path: relPath,
-            start_line: variable.line,
-            end_line: variable.line,
-            is_exported: true,
-            language: lang ?? undefined,
-          });
-
-          writer.addEdge({
-            source_name: basename,
-            source_file_path: relPath,
-            target_name: variable.name,
-            target_file_path: relPath,
-            kind: "CONTAINS",
-          });
-        }
-      }
-
-      // Resolve imports and add IMPORTS edges
-      for (const imp of parseResult.imports) {
-        try {
-          let resolvedPath: string | null = null;
-
-          if (lang === "python") {
-            const result = resolvePythonImport(
-              imp.source,
-              absolutePath,
-              projectRoot,
-              imp.source.startsWith(".")
-            );
-            if (result.modulePath && !result.isExternal) {
-              resolvedPath = result.modulePath;
-            }
-          } else if (tsResolver) {
-            resolvedPath = resolveTypeScriptImport(
-              imp.source,
-              absolutePath,
-              tsResolver
-            );
-          }
-
-          if (resolvedPath) {
-            let normalizedResolved: string;
-            try {
-              normalizedResolved = fs.realpathSync(resolvedPath);
-            } catch {
-              normalizedResolved = resolvedPath;
-            }
-
-            const resolvedRelative = path.relative(
-              realProjectRoot,
-              normalizedResolved
-            );
-            if (
-              !resolvedRelative.startsWith("..") &&
-              !path.isAbsolute(resolvedRelative)
-            ) {
-              const resolvedBasename = path.basename(resolvedPath);
-              writer.addEdge({
-                source_name: basename,
-                source_file_path: relPath,
-                target_name: resolvedBasename,
-                target_file_path: resolvedRelative,
-                kind: "IMPORTS",
-              });
-            }
-          }
-        } catch {
-          // Import resolution failed -- skip this import edge
-        }
-      }
+      // Delegate node/edge creation to shared function
+      processFileForGraph(
+        writer,
+        parseResult,
+        relPath,
+        absolutePath,
+        tsResolver,
+        realProjectRoot,
+        projectRoot,
+        lang,
+        lineCount,
+        isTest,
+      );
 
       // Flush and process into SQLite
       writer.flush();
