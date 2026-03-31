@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "codescope",
-      "source": ".",
+      "source": "./",
       "description": "Deep codebase understanding for Claude Code — analyzes conventions, dependencies, and risk zones so every AI-generated change fits naturally"
     }
   ]
