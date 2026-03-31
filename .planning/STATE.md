@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Eval Fixes & Real-World Quality
 status: executing
-stopped_at: Completed 18-01-PLAN.md
-last_updated: "2026-03-31T00:12:44.629Z"
+stopped_at: Completed 18-03-PLAN.md
+last_updated: "2026-03-31T00:19:27.290Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 9
-  completed_plans: 6
+  completed_plans: 7
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Phase: 18 (semantic-conventions) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-03-31
 
@@ -57,6 +57,8 @@ All decisions archived in PROJECT.md Key Decisions table and milestone archives.
 - [Phase 18]: Pure data module pattern: rule-metadata.ts has zero imports for build isolation
 - [Phase 18]: 3-tier signal chain: filename (0.95) > path (0.80-0.85) > fallback (0.50) for file classification
 - [Phase 18]: Permissive default: rules not in RULE_ROLE_APPLICABILITY apply to all file roles (D-23)
+- [Phase 18]: isNoiseFile exported for testability and potential reuse in other modules
+- [Phase 18]: Language detection: file extension for files (.py=Python), ruleId prefix for conventions (python-*=Python)
 
 ### Pending Todos
 
@@ -70,6 +72,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-31T00:12:44.626Z
-Stopped at: Completed 18-01-PLAN.md
+Last session: 2026-03-31T00:19:27.288Z
+Stopped at: Completed 18-03-PLAN.md
 Resume file: None

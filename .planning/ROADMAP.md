@@ -83,7 +83,7 @@ Plans:
 Plans:
 - [x] 18-01-PLAN.md -- Shared RULE_METADATA module, file-role classifier, framework detection
 - [ ] 18-02-PLAN.md -- Framework-specific ast-grep rules (Fastify, Express, h3) and runner integration
-- [ ] 18-03-PLAN.md -- Golden file noise filtering and per-language density fix
+- [x] 18-03-PLAN.md -- Golden file noise filtering and per-language density fix
 - [ ] 18-04-PLAN.md -- Integration wiring: convention detector, readiness cap, pre-commit, rule validation
 
 ### Phase 19: Intelligence Features
@@ -126,5 +126,5 @@ Phases execute in numeric order: 17 -> 18 -> 19
 | 15. Distribution | v2.0 | 2/2 | Complete | 2026-03-29 |
 | 16. Tech Debt Closure | v2.0 | 5/5 | Complete | 2026-03-29 |
 | 17. Foundation Fixes | v2.1 | 5/5 | Complete    | 2026-03-30 |
-| 18. Semantic Conventions | v2.1 | 1/4 | In Progress|  |
+| 18. Semantic Conventions | v2.1 | 2/4 | In Progress|  |
 | 19. Intelligence Features | v2.1 | 0/0 | Not started | - |
