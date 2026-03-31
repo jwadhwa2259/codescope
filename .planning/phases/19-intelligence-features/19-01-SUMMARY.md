@@ -43,7 +43,7 @@ patterns-established:
   - "Sparse violation index: only files with violations appear in the map"
   - "Build isolation duplicate types: new artifact types duplicated in hooks/lib/types.ts"
 
-requirements-completed: [REF-01, REF-03, VALID-01, VALID-02, VALID-03, VALID-04]
+requirements-completed: [REF-01, REF-03, VALID-01, VALID-04]
 
 # Metrics
 duration: 7min
