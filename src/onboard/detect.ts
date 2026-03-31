@@ -184,3 +184,36 @@ export async function detectProject(rootDir: string): Promise<ProjectInfo> {
 
   return info;
 }
+
+// ---------------------------------------------------------------------------
+// Framework Detection
+// ---------------------------------------------------------------------------
+
+/**
+ * Known framework packages to detect from package.json.
+ */
+const KNOWN_FRAMEWORKS: Record<string, string> = {
+  fastify: "fastify",
+  express: "express",
+  h3: "h3",
+};
+
+/**
+ * Detect known frameworks from package.json dependencies and devDependencies.
+ *
+ * @param projectRoot - Absolute path to project root
+ * @returns Array of detected framework names (e.g., ["fastify", "express"])
+ */
+export function detectFrameworks(projectRoot: string): string[] {
+  const pkgPath = path.join(projectRoot, "package.json");
+  if (!fs.existsSync(pkgPath)) return [];
+  try {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+    const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+    return Object.keys(KNOWN_FRAMEWORKS)
+      .filter((dep) => dep in allDeps)
+      .map((dep) => KNOWN_FRAMEWORKS[dep]);
+  } catch {
+    return [];
+  }
+}
