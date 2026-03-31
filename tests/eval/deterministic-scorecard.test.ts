@@ -1,4 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 import {
   computeCompositeScore,
   computeConventionAdherence,
@@ -10,6 +13,7 @@ import {
   computeScorecard,
 } from "../../src/eval/deterministic-scorecard.js";
 import type { DeterministicScorecard, ScorecardInput } from "../../src/eval/types.js";
+import type { ViolationIndex } from "../../src/artifacts/types.js";
 
 // ---------------------------------------------------------------------------
 // computeCompositeScore
@@ -145,6 +149,107 @@ describe("computeViolationImpact", () => {
     });
     expect(result).toEqual({ total: 0, byRule: {}, normalized: 100 });
   });
+
+  it("parses ViolationIndex-shaped JSON (object with files map) and counts violations for changed files", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "scorecard-vi-test-"));
+    const violationsPath = path.join(tmpDir, "convention-violations.json");
+    const violationIndex: ViolationIndex = {
+      generated: new Date().toISOString(),
+      files: {
+        "src/utils/helpers.ts": [
+          { ruleId: "Typed catch blocks", detected: "Convention not followed", expected: "Typed catch blocks", line: 0 },
+          { ruleId: "Named exports", detected: "Convention not followed", expected: "Named exports", line: 0 },
+        ],
+        "src/routes/users.ts": [
+          { ruleId: "Named exports", detected: "Convention not followed", expected: "Named exports", line: 0 },
+        ],
+        "src/unrelated/other.ts": [
+          { ruleId: "Named exports", detected: "Convention not followed", expected: "Named exports", line: 0 },
+        ],
+      },
+    };
+    fs.writeFileSync(violationsPath, JSON.stringify(violationIndex), "utf-8");
+
+    const result = computeViolationImpact({
+      changedFiles: ["src/utils/helpers.ts", "src/routes/users.ts"],
+      violationsPath,
+    });
+
+    expect(result.total).toBe(3); // 2 for helpers + 1 for users
+    expect(result.byRule["Typed catch blocks"]).toBe(1);
+    expect(result.byRule["Named exports"]).toBe(2);
+
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("returns normalized 85 for 1-2 violations matching changed files (ViolationIndex shape)", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "scorecard-vi-test-"));
+    const violationsPath = path.join(tmpDir, "convention-violations.json");
+    const violationIndex: ViolationIndex = {
+      generated: new Date().toISOString(),
+      files: {
+        "src/foo.ts": [
+          { ruleId: "rule-a", detected: "x", expected: "y", line: 0 },
+        ],
+      },
+    };
+    fs.writeFileSync(violationsPath, JSON.stringify(violationIndex), "utf-8");
+
+    const result = computeViolationImpact({
+      changedFiles: ["src/foo.ts"],
+      violationsPath,
+    });
+
+    expect(result.total).toBe(1);
+    expect(result.normalized).toBe(85);
+
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("returns normalized 100 when changed files have no violations in the ViolationIndex", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "scorecard-vi-test-"));
+    const violationsPath = path.join(tmpDir, "convention-violations.json");
+    const violationIndex: ViolationIndex = {
+      generated: new Date().toISOString(),
+      files: {
+        "src/other.ts": [
+          { ruleId: "rule-a", detected: "x", expected: "y", line: 0 },
+        ],
+      },
+    };
+    fs.writeFileSync(violationsPath, JSON.stringify(violationIndex), "utf-8");
+
+    const result = computeViolationImpact({
+      changedFiles: ["src/foo.ts"],
+      violationsPath,
+    });
+
+    expect(result.total).toBe(0);
+    expect(result.normalized).toBe(100);
+
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("still handles legacy flat array format (backward compat)", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "scorecard-vi-test-"));
+    const violationsPath = path.join(tmpDir, "convention-violations.json");
+    const flatArray = [
+      { file: "src/foo.ts", rule: "no-any", ruleId: "no-any" },
+      { file: "src/bar.ts", rule: "no-any", ruleId: "no-any" },
+    ];
+    fs.writeFileSync(violationsPath, JSON.stringify(flatArray), "utf-8");
+
+    const result = computeViolationImpact({
+      changedFiles: ["src/foo.ts"],
+      violationsPath,
+    });
+
+    expect(result.total).toBe(1);
+    expect(result.byRule["no-any"]).toBe(1);
+    expect(result.normalized).toBe(85);
+
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -266,5 +371,44 @@ describe("computeScorecard", () => {
     expect(result.riskFilesModified.count).toBe(0);
     expect(result.composite.percent).toBe(100);
     expect(result.composite.grade).toBe("A");
+  });
+
+  it("resolves violationsPath to injection/convention-violations.json", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "scorecard-path-test-"));
+    const codescopeDir = tmpDir;
+    const injectionDir = path.join(codescopeDir, "injection");
+    fs.mkdirSync(injectionDir, { recursive: true });
+
+    // Write violations in the injection/ subpath
+    const violationIndex: ViolationIndex = {
+      generated: new Date().toISOString(),
+      files: {
+        "src/foo.ts": [
+          { ruleId: "test-rule", detected: "x", expected: "y", line: 0 },
+          { ruleId: "test-rule", detected: "x", expected: "y", line: 10 },
+          { ruleId: "test-rule", detected: "x", expected: "y", line: 20 },
+        ],
+      },
+    };
+    fs.writeFileSync(
+      path.join(injectionDir, "convention-violations.json"),
+      JSON.stringify(violationIndex),
+      "utf-8",
+    );
+
+    const input: ScorecardInput = {
+      changedFiles: ["src/foo.ts"],
+      projectRoot: "/tmp/fake-project",
+      codescopeDir,
+      db: null,
+    };
+
+    const result = computeScorecard(input);
+
+    // 3 violations = 70% normalized
+    expect(result.violationImpact.total).toBe(3);
+    expect(result.violationImpact.normalized).toBe(70);
+
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 });
