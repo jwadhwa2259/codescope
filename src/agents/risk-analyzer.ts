@@ -31,6 +31,7 @@ export interface RiskAnalyzerResult {
   dangerZonesPath: string;
   nodesCreated: number;
   edgesCreated: number;
+  totalImports: number;
   communitiesDetected: number;
   dangerZoneCount: number;
   durationMs: number;
@@ -135,6 +136,7 @@ export async function runRiskAnalyzer(
     dangerZonesPath,
     nodesCreated: buildResult.nodesCreated,
     edgesCreated: buildResult.edgesCreated,
+    totalImports: buildResult.totalImports,
     communitiesDetected: communityResult?.communityCount ?? 0,
     dangerZoneCount: dangerZones.length,
     durationMs,

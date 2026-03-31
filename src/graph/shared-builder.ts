@@ -25,6 +25,7 @@ type Resolver = ReturnType<typeof enhancedResolve.ResolverFactory.createResolver
 
 export interface ProcessFileResult {
   errors: string[];
+  totalImports: number;
 }
 
 /**
@@ -201,5 +202,5 @@ export function processFileForGraph(
     }
   }
 
-  return { errors };
+  return { errors, totalImports: parseResult.imports.length };
 }

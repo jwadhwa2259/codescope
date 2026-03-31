@@ -46,6 +46,7 @@ export interface BuildGraphResult {
   edgesCreated: number;
   errors: string[];
   durationMs: number;
+  totalImports: number;
 }
 
 /**
@@ -160,6 +161,7 @@ export async function buildGraph(
     // Track processed files to avoid duplicates (per Pitfall 4)
     const processedFiles = new Set<string>();
     let filesProcessed = 0;
+    let totalImportsCount = 0;
 
     // Step 5: Process each file
     for (const filePath of filePaths) {
@@ -207,6 +209,7 @@ export async function buildGraph(
 
         // Collect errors from per-file processing
         errors.push(...fileResult.errors);
+        totalImportsCount += fileResult.totalImports;
       } catch (err) {
         errors.push(`Failed to process ${relativePath}: ${String(err)}`);
       }
@@ -230,6 +233,7 @@ export async function buildGraph(
         edgesCreated: batchResult.edgesInserted,
         errors: [...errors, ...batchResult.errors],
         durationMs,
+        totalImports: totalImportsCount,
       };
     } finally {
       closeDatabase(db);
