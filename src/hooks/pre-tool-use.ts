@@ -71,8 +71,10 @@ export function processPreToolUse(
   const convEntries = artifacts.conventions?.files[relPath];
   const centrality = dzEntry?.centrality ?? 0;
   const hasConventions = convEntries != null && convEntries.length > 0;
+  const refEntry = artifacts.references?.files[relPath];
+  const hasReference = refEntry != null;
 
-  if (centrality <= 0.3 && !hasConventions) {
+  if (centrality <= 0.3 && !hasConventions && !hasReference) {
     return bareOutput;
   }
 
@@ -105,6 +107,14 @@ export function processPreToolUse(
       );
     }
     items.push({ priority: 2, content: lines.join("\n") });
+  }
+
+  // Priority 2.5: Reference suggestion (per D-07, D-23, D-25)
+  if (refEntry) {
+    items.push({
+      priority: 2.5,
+      content: `Reference: see \`${refEntry.referencePath}\` for this codebase's ${refEntry.roleLabel} pattern`,
+    });
   }
 
   // Priority 3: Blast radius summary
