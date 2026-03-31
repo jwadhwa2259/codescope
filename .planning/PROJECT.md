@@ -3,14 +3,15 @@
 ## Current State
 
 **Version:** v2.1 shipped 2026-03-31
-**Codebase:** ~35K LOC TypeScript (source + tests, 1,357 passing)
+**Codebase:** ~35K LOC TypeScript (source + tests)
 **Stack:** TypeScript, web-tree-sitter WASM, ast-grep CLI, better-sqlite3, graphology, enhanced-resolve, @modelcontextprotocol/sdk, Hono, sigma.js, vitest
+**Total shipped:** 20 phases, 75 plans, 144 tasks across 3 milestones (10 days, 2026-03-22 to 2026-03-31)
 
 ## What This Is
 
 CodeScope is a Claude Code plugin that deeply analyzes brownfield codebases once, then autonomously researches, plans, executes, verifies, evaluates, and self-corrects code changes using coordinated sub-agents. The user only steps in twice: to describe what they want, and to approve what gets shipped.
 
-v2.0 transforms CodeScope from a one-time analysis tool into an always-on intelligence layer with auto-injection, graph-aware PR review, interactive visualization, convention enforcement, and self-improving pipeline -- ready for `npx codescope` distribution.
+v2.1 makes CodeScope demonstrably better than vanilla Claude Code on real codebases: accurate import graphs (ESM + CommonJS), framework-specific convention detection (Fastify, Express, h3), reference file injection before edits, post-edit convention validation, and a 3-mode eval skill for measuring code quality.
 
 ## Core Value
 
@@ -53,23 +54,19 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - CLI entry point (`npx codescope`): init, bootstrap, viz, review, install-hooks, status -- v2.0
 - Plugin auto-wiring for Claude Code integration -- v2.0
 - Cross-platform npm distribution with better-sqlite3 prebuilds -- v2.0
-
-## Current Milestone: v2.1 Eval Fixes & Real-World Quality
-
-**Goal:** Fix the gaps exposed by comparison testing against Fastify and h3 — make CodeScope demonstrably better than vanilla Claude Code on real codebases.
-
-**Target features:**
-- Fix import graph (ESM edge creation + CommonJS require() support)
-- Semantic convention detection (framework-specific patterns, not just generic syntax)
-- Fix plugin distribution (marketplace, manifest, hooks, CLAUDE_PLUGIN_ROOT)
-- Fix readiness scoring, golden file ranking, bootstrap error surfacing
-- Build `/codescope:eval` skill (score changes against conventions, 3 modes)
-- Reference file injection ("write this like X" exemplar suggestion)
-- Post-edit convention validation (catch deviations before task completion)
+- Accurate ESM import edges and CommonJS require() extraction in knowledge graph -- v2.1
+- Canonical convention parser with readiness scoring from actual data -- v2.1
+- Framework-specific ast-grep rules (Fastify, Express, h3) with file-role classification -- v2.1
+- Golden file noise filtering and per-language convention density -- v2.1
+- Reference file injection (PreToolUse hook suggests structurally similar exemplar) -- v2.1
+- Post-edit convention validation (PostToolUse hook checks HIGH-CONF conventions) -- v2.1
+- `/codescope:eval` skill with 3 modes: deterministic scorecard, task+score, benchmark -- v2.1
+- Plugin distribution fix (marketplace, manifest validation) -- v2.1
+- Bootstrap 0-edge warning and GRAPH_INCOMPLETE downstream guards -- v2.1
 
 ### Active
 
-(Requirements defined in REQUIREMENTS.md)
+(No active requirements -- planning next milestone)
 
 ### Out of Scope
 
@@ -85,6 +82,8 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - Usage/cost monitoring -- Commodity; 6 tools already exist
 - Own orchestrator/workflow engine -- 11+ exist; would compete with potential consumers of the intelligence layer
 - AI-powered auto-fix for convention violations -- Convention auto-fix requires understanding intent; let pipeline handle fixes
+- Type name validation (VALID-02) -- Type references not stored in graph schema; requires parser-level changes
+- Import path validation against graph (VALID-03) -- Graph builder drops unresolved imports silently; requires tracking failed resolutions at parser level
 
 ## Context
 
@@ -95,7 +94,7 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 - **v1.0 shipped:** 2026-03-27. 8 phases, 34 plans, 65 tasks. 103/103 requirements. Full pipeline: onboard > bootstrap > orient > execute > verify > eval > gate > debug > learn.
 - **v2.0 shipped:** 2026-03-29. 8 phases, 27 plans, 53 tasks. 42/42 requirements. Always-fresh graph, auto-injection, PR review, convention enforcement, session continuity, pipeline evolution, interactive dashboard, npx distribution.
 - **Total shipped:** 16 phases, 61 plans, 118 tasks over 7 days (2026-03-22 to 2026-03-29).
-- **v2.1 eval findings (2026-03-30):** Comparison testing on Fastify (CommonJS) and h3 (TypeScript ESM) showed import graph producing 0 edges on both. Convention detection found generic patterns but missed framework-specific conventions. Vanilla Claude scored equal or better by simply reading source files. Root causes: parser only extracts `import_statement` AST nodes (not `require()` or graph edge creation bugs), convention rules too generic, no reference file injection, readiness scoring disconnected from convention detection output.
+- **v2.1 shipped (2026-03-31):** Fixed all issues exposed by comparison testing against Fastify (CJS) and h3 (ESM). Import graph now produces accurate edges on both. Framework-specific convention detection covers 3 frameworks (9 ast-grep rules). Intelligence hooks provide reference suggestions and post-edit validation. Eval skill enables measuring code quality with 6-metric scorecards. 89 commits, 363 files changed. Milestone audit passed with 27/27 requirements, Nyquist compliant.
 
 ## Constraints
 
@@ -127,6 +126,13 @@ AI-generated code changes that respect existing conventions, stay within safe bl
 | Hono for dashboard server | Lightweight, fast, TypeScript-native HTTP framework with built-in WebSocket support | Good |
 | sigma.js for graph visualization | Interactive graph rendering with FA2 layout, community coloring, and hover highlighting | Good |
 | Dynamic imports for heavy CLI deps | Keeps CLI bundle clean and avoids graphology ESM subpath resolution issues | Good |
+| Shared graph builder (shared-builder.ts) | Deduplicated ~200 lines of node/edge creation between builder.ts and incremental.ts | Good |
+| Pure data RULE_METADATA module | Zero imports for build isolation -- hook scripts can import without transitively pulling heavy deps | Good |
+| 3-tier file-role signal chain | filename (0.95) > path (0.85) > fallback (0.50) provides robust classification without AST parsing | Good |
+| Permissive convention default | Rules not in RULE_ROLE_APPLICABILITY apply to all file roles -- avoids silent gaps | Good |
+| Pre-computed reference/violation indexes | JSON artifacts built at bootstrap for sub-50ms hook consumption -- no DB queries in hooks | Good |
+| Scorecard computed server-side in MCP | Skill agent gets a complete scorecard, doesn't assemble metrics inline -- cleaner separation | Good |
+| VALID-02/VALID-03 deferred to Out of Scope | Type references and failed import resolutions not stored in graph schema -- parser-level changes needed | Good |
 
 ## Evolution
 
@@ -146,4 +152,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-31 after Phase 20 complete — eval DB fix, ViolationEntry.ruleId fix, VALID-02/VALID-03 moved to Out of Scope*
+*Last updated: 2026-03-31 after v2.1 milestone complete — 20 phases, 75 plans shipped across 3 milestones*
