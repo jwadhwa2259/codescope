@@ -375,6 +375,67 @@ function detectCiCd(rootDir: string): CiCdInfo[] {
 }
 
 /**
+ * Expand glob patterns in config service paths into per-subdirectory services.
+ * E.g., `path: "packages/*"` becomes one service per subdirectory in `packages/`.
+ * Non-glob paths pass through unchanged.
+ */
+function expandGlobServices(
+  projectRoot: string,
+  services: Array<{ name: string; path: string; build?: string; test?: string }>,
+): Array<{ name: string; path: string; build?: string; test?: string }> {
+  const expanded: Array<{ name: string; path: string; build?: string; test?: string }> = [];
+
+  for (const svc of services) {
+    if (!svc.path.includes("*")) {
+      // No glob — pass through unchanged
+      expanded.push(svc);
+      continue;
+    }
+
+    // Strip trailing /* or /** to get the base directory
+    const baseDir = svc.path.replace(/\/?\*+$/, "");
+    const fullBase = path.join(projectRoot, baseDir);
+
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(fullBase, { withFileTypes: true });
+    } catch {
+      // Base directory doesn't exist — skip this glob service
+      continue;
+    }
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+
+      const subDirPath = baseDir ? `${baseDir}/${entry.name}` : entry.name;
+      const pkgJsonPath = path.join(fullBase, entry.name, "package.json");
+
+      // Determine service name: prefer package.json name field, fall back to directory name
+      let serviceName = entry.name;
+      if (fs.existsSync(pkgJsonPath)) {
+        try {
+          const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, "utf-8"));
+          if (typeof pkg.name === "string" && pkg.name) {
+            serviceName = pkg.name;
+          }
+        } catch {
+          // Malformed package.json — use directory name
+        }
+      }
+
+      expanded.push({
+        name: serviceName,
+        path: subDirPath,
+        build: svc.build,
+        test: svc.test,
+      });
+    }
+  }
+
+  return expanded;
+}
+
+/**
  * Build a ServiceEntry for a given service directory.
  */
 function buildServiceEntry(
@@ -508,7 +569,12 @@ export async function runScout(options: ScoutOptions): Promise<ScoutResult> {
     projectInfo = await detectProject(projectRoot);
   }
 
-  // 2. Build service entries with enrichment
+  // 2. Expand glob patterns in config service paths (e.g., "packages/*" -> per-subdirectory)
+  if (projectInfo.services.length > 0) {
+    projectInfo.services = expandGlobServices(projectRoot, projectInfo.services);
+  }
+
+  // 3. Build service entries with enrichment
   const services: ServiceEntry[] = [];
 
   if (projectInfo.services.length > 0) {
