@@ -168,7 +168,7 @@ export function runAstGrepScan(
 
 /**
  * Count files applicable for a given language in a directory.
- * Skips test files (*.test.ts, *.spec.ts, __tests__/).
+ * Skips test, config, generated, and deprecated files (per CONV-03).
  */
 export function countApplicableFiles(
   targetDir: string,
@@ -179,12 +179,28 @@ export function countApplicableFiles(
       ? [".ts", ".tsx", ".js", ".jsx"]
       : [".py"];
 
-  const testPatterns = [
+  const excludePatterns = [
+    // Test files
     ".test.",
     ".spec.",
     "__tests__",
     "__test__",
+    // Config files
+    ".config.",
+    ".eslintrc",
+    ".prettierrc",
+    // Generated files
+    ".generated.",
+    ".gen.",
+    ".pb.",
+    // Deprecated files
+    "deprecated",
+    "legacy",
+    "obsolete",
   ];
+
+  /** Config files matched by exact name prefix */
+  const configNamePrefixes = /^(tsconfig|jest\.config|vitest\.config|\.eslintrc|\.prettierrc)/;
 
   let count = 0;
 
@@ -200,11 +216,17 @@ export function countApplicableFiles(
       const fullPath = path.join(dir, entry.name);
 
       if (entry.isDirectory()) {
-        // Skip node_modules, dist, build, vendor, __tests__
+        // Skip node_modules, dist, build, vendor, __tests__, test, tests
         if (
-          ["node_modules", "dist", "build", "vendor", "__tests__"].includes(
-            entry.name,
-          )
+          [
+            "node_modules",
+            "dist",
+            "build",
+            "vendor",
+            "__tests__",
+            "test",
+            "tests",
+          ].includes(entry.name)
         ) {
           continue;
         }
@@ -215,11 +237,16 @@ export function countApplicableFiles(
           continue;
         }
 
-        // Skip test files
-        const isTest = testPatterns.some((pattern) =>
+        // Skip config files by exact name prefix
+        if (configNamePrefixes.test(entry.name)) {
+          continue;
+        }
+
+        // Skip test, config, generated, and deprecated files
+        const isExcluded = excludePatterns.some((pattern) =>
           entry.name.includes(pattern),
         );
-        if (isTest) {
+        if (isExcluded) {
           continue;
         }
 
