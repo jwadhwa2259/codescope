@@ -98,6 +98,82 @@ const TEST_CONFIG_FILES = [
 ];
 
 // ---------------------------------------------------------------------------
+// Wrapper framework detection (e.g. @effect/vitest wrapping vitest)
+// ---------------------------------------------------------------------------
+
+const WRAPPER_FRAMEWORKS: Record<string, string> = {
+  "@effect/vitest": "@effect/vitest",
+  "@testing-library/react": "react-testing-library",
+  "@playwright/test": "playwright",
+  "@testing-library/vue": "vue-testing-library",
+  "@testing-library/svelte": "svelte-testing-library",
+};
+
+/**
+ * Scan up to 5 test files for wrapper framework imports.
+ * Returns the wrapper name if found, null otherwise.
+ */
+function detectTestWrapperFramework(
+  rootDir: string,
+  testDir: string | null,
+): string | null {
+  const searchDir = testDir ? path.join(rootDir, testDir) : rootDir;
+  if (!fs.existsSync(searchDir)) return null;
+
+  const testFiles: string[] = [];
+  function findTests(dir: string, depth: number): void {
+    if (depth > 3 || testFiles.length >= 5) return;
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (testFiles.length >= 5) break;
+        const fullPath = path.join(dir, entry.name);
+        if (
+          entry.isDirectory() &&
+          !entry.name.startsWith(".") &&
+          entry.name !== "node_modules"
+        ) {
+          findTests(fullPath, depth + 1);
+        } else if (
+          entry.isFile() &&
+          /\.(test|spec)\.(ts|tsx|js|jsx|mjs)$/.test(entry.name)
+        ) {
+          testFiles.push(fullPath);
+        }
+      }
+    } catch {
+      /* skip unreadable dirs */
+    }
+  }
+  findTests(searchDir, 0);
+
+  const importCounts = new Map<string, number>();
+  for (const testFile of testFiles) {
+    try {
+      const content = fs.readFileSync(testFile, "utf-8");
+      const importMatches = content.matchAll(
+        /(?:import\s+.*?from\s+|import\s+)['"]([^'"]+)['"]/g,
+      );
+      for (const match of importMatches) {
+        const pkg = match[1];
+        if (pkg.startsWith(".") || pkg.startsWith("/")) continue;
+        importCounts.set(pkg, (importCounts.get(pkg) ?? 0) + 1);
+      }
+    } catch {
+      /* skip unreadable files */
+    }
+  }
+
+  for (const [wrapper, name] of Object.entries(WRAPPER_FRAMEWORKS)) {
+    if (importCounts.has(wrapper)) {
+      return name;
+    }
+  }
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Directories to skip when listing
 // ---------------------------------------------------------------------------
 
@@ -332,8 +408,9 @@ function listKeyDirectories(
 
 /**
  * Detect test framework and setup.
+ * Exported for testing; also used internally by generateTestSetupSection.
  */
-function detectTestSetup(
+export function detectTestSetup(
   rootDir: string,
   pkgJsonPath: string,
 ): {
@@ -390,6 +467,12 @@ function detectTestSetup(
     } catch {
       // Skip
     }
+  }
+
+  // Check for wrapper frameworks in actual test file imports
+  const wrapperFramework = detectTestWrapperFramework(rootDir, testDir);
+  if (wrapperFramework) {
+    framework = wrapperFramework;
   }
 
   return { framework, configFile, testDir, testCommand };
