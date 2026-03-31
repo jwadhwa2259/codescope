@@ -1,0 +1,16 @@
+{
+  "name": "codescope",
+  "owner": {
+    "name": "Jay Wadhwa"
+  },
+  "plugins": [
+    {
+      "name": "codescope",
+      "source": {
+        "source": "github",
+        "repo": "jwadhwa2259/codescope"
+      },
+      "description": "Deep codebase understanding for Claude Code — analyzes conventions, dependencies, and risk zones so every AI-generated change fits naturally"
+    }
+  ]
+}
