@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Eval Fixes & Real-World Quality
-status: executing
-stopped_at: Completed 18-02-PLAN.md
-last_updated: "2026-03-31T00:21:26.797Z"
+status: verifying
+stopped_at: Completed 18-04-PLAN.md
+last_updated: "2026-03-31T00:31:53.729Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 3
-  completed_phases: 1
-  total_plans: 9
-  completed_plans: 8
+  completed_phases: 2
+  total_plans: 5
+  completed_plans: 9
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 Phase: 18 (semantic-conventions) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-31
 
 Progress: [░░░░░░░░░░] 0%
@@ -61,6 +61,8 @@ All decisions archived in PROJECT.md Key Decisions table and milestone archives.
 - [Phase 18]: Language detection: file extension for files (.py=Python), ruleId prefix for conventions (python-*=Python)
 - [Phase 18]: Framework rules use same YAML format and severity:info as base rules for consistent scanning
 - [Phase 18]: detectedFrameworks defaults to empty array for backward compatibility
+- [Phase 18]: Use relative path from targetDir for file-role classification to avoid test fixture path contamination
+- [Phase 18]: Readiness cap placed after all convention accumulation and before computeReadiness call
 
 ### Pending Todos
 
@@ -74,6 +76,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-31T00:21:26.795Z
-Stopped at: Completed 18-02-PLAN.md
+Last session: 2026-03-31T00:31:53.726Z
+Stopped at: Completed 18-04-PLAN.md
 Resume file: None

@@ -45,7 +45,7 @@ CodeScope is built bottom-up: infrastructure first, then codebase intelligence, 
 **Milestone Goal:** Fix the gaps exposed by comparison testing against Fastify and h3 -- make CodeScope demonstrably better than vanilla Claude Code on real codebases.
 
 - [x] **Phase 17: Foundation Fixes** - Fix import graph (ESM + CommonJS), convention index parsing, plugin distribution, readiness scoring, and bootstrap error surfacing (gap closure in progress) (completed 2026-03-30)
-- [ ] **Phase 18: Semantic Conventions** - Framework-specific convention detection, file-role classification, and golden file quality filtering
+- [x] **Phase 18: Semantic Conventions** - Framework-specific convention detection, file-role classification, and golden file quality filtering (completed 2026-03-31)
 - [ ] **Phase 19: Intelligence Features** - Reference file injection, post-edit convention validation, and the `/codescope:eval` skill
 
 ## Phase Details
@@ -84,7 +84,7 @@ Plans:
 - [x] 18-01-PLAN.md -- Shared RULE_METADATA module, file-role classifier, framework detection
 - [x] 18-02-PLAN.md -- Framework-specific ast-grep rules (Fastify, Express, h3) and runner integration
 - [x] 18-03-PLAN.md -- Golden file noise filtering and per-language density fix
-- [ ] 18-04-PLAN.md -- Integration wiring: convention detector, readiness cap, pre-commit, rule validation
+- [x] 18-04-PLAN.md -- Integration wiring: convention detector, readiness cap, pre-commit, rule validation
 
 ### Phase 19: Intelligence Features
 **Goal**: CodeScope actively helps Claude write code that fits the codebase by suggesting reference files before edits, validating conventions after edits, and exposing a skill for on-demand evaluation
@@ -126,5 +126,5 @@ Phases execute in numeric order: 17 -> 18 -> 19
 | 15. Distribution | v2.0 | 2/2 | Complete | 2026-03-29 |
 | 16. Tech Debt Closure | v2.0 | 5/5 | Complete | 2026-03-29 |
 | 17. Foundation Fixes | v2.1 | 5/5 | Complete    | 2026-03-30 |
-| 18. Semantic Conventions | v2.1 | 3/4 | In Progress|  |
+| 18. Semantic Conventions | v2.1 | 4/1 | Complete   | 2026-03-31 |
 | 19. Intelligence Features | v2.1 | 0/0 | Not started | - |
