@@ -396,4 +396,174 @@ describe("PreToolUse hook", () => {
     );
     // Should NOT crash despite missing conventions.json and blast-radius.json
   });
+
+  // ---- Reference suggestion tests (Plan 19-03) ----
+
+  it("injects reference suggestion at P2.5 when reference entry exists", () => {
+    fs.writeFileSync(path.join(codescopeDir, "graph.db"), "");
+    // Need centrality > 0.3 to trigger (or reference entry)
+    fs.writeFileSync(
+      path.join(injectionDir, "references-index.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/foo.ts": {
+            referencePath: "src/utils/session.ts",
+            roleLabel: "utility",
+            score: 0.85,
+          },
+        },
+      })
+    );
+
+    const input = makeInput({ cwd: projectDir });
+    const result = processPreToolUse(input, projectDir);
+    expect(result.hookSpecificOutput.additionalContext).toContain(
+      "Reference: see `src/utils/session.ts` for this codebase's utility pattern"
+    );
+  });
+
+  it("reference suggestion appears after conventions and before blast radius", () => {
+    fs.writeFileSync(path.join(codescopeDir, "graph.db"), "");
+    fs.writeFileSync(
+      path.join(injectionDir, "danger-zones.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/foo.ts": {
+            centrality: 0.6,
+            riskScore: 0.8,
+            communitiesTouched: 3,
+            reasons: ["High centrality"],
+          },
+        },
+      })
+    );
+    fs.writeFileSync(
+      path.join(injectionDir, "conventions.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/foo.ts": [
+            {
+              name: "Use async/await",
+              adoption_pct: 95,
+              confidence: "HIGH-CONF",
+              category: "async",
+            },
+          ],
+        },
+      })
+    );
+    fs.writeFileSync(
+      path.join(injectionDir, "references-index.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/foo.ts": {
+            referencePath: "src/utils/session.ts",
+            roleLabel: "utility",
+            score: 0.85,
+          },
+        },
+      })
+    );
+    fs.writeFileSync(
+      path.join(injectionDir, "blast-radius.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/foo.ts": {
+            totalAffected: 10,
+            byRisk: { red: 1, orange: 2, yellow: 3, green: 4 },
+            topAffected: ["src/bar.ts", "src/baz.ts"],
+          },
+        },
+      })
+    );
+
+    const input = makeInput({ cwd: projectDir });
+    const result = processPreToolUse(input, projectDir);
+    const ctx = result.hookSpecificOutput.additionalContext!;
+    const dzIdx = ctx.indexOf("[DANGER ZONE]");
+    const convIdx = ctx.indexOf("[CONVENTIONS]");
+    const refIdx = ctx.indexOf("Reference:");
+    const brIdx = ctx.indexOf("[BLAST RADIUS]");
+    expect(dzIdx).toBeGreaterThanOrEqual(0);
+    expect(convIdx).toBeGreaterThan(dzIdx);
+    expect(refIdx).toBeGreaterThan(convIdx);
+    expect(brIdx).toBeGreaterThan(refIdx);
+  });
+
+  it("triggers on reference entry even without conventions or high centrality", () => {
+    fs.writeFileSync(path.join(codescopeDir, "graph.db"), "");
+    // No danger zones, no conventions -- only reference entry
+    fs.writeFileSync(
+      path.join(injectionDir, "references-index.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/foo.ts": {
+            referencePath: "src/models/base.ts",
+            roleLabel: "model",
+            score: 0.72,
+          },
+        },
+      })
+    );
+
+    const input = makeInput({ cwd: projectDir });
+    const result = processPreToolUse(input, projectDir);
+    expect(result.hookSpecificOutput.additionalContext).toBeDefined();
+    expect(result.hookSpecificOutput.additionalContext).toContain(
+      "Reference: see `src/models/base.ts` for this codebase's model pattern"
+    );
+  });
+
+  it("no reference injection when reference entry is missing for the target file", () => {
+    fs.writeFileSync(path.join(codescopeDir, "graph.db"), "");
+    // Reference exists but for a DIFFERENT file
+    fs.writeFileSync(
+      path.join(injectionDir, "references-index.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/other.ts": {
+            referencePath: "src/utils/session.ts",
+            roleLabel: "utility",
+            score: 0.85,
+          },
+        },
+      })
+    );
+    // Need centrality > 0.3 to trigger to check output
+    fs.writeFileSync(
+      path.join(injectionDir, "danger-zones.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/foo.ts": {
+            centrality: 0.5,
+            riskScore: 0.3,
+            communitiesTouched: 2,
+            reasons: ["High centrality"],
+          },
+        },
+      })
+    );
+
+    const input = makeInput({ cwd: projectDir });
+    const result = processPreToolUse(input, projectDir);
+    const ctx = result.hookSpecificOutput.additionalContext ?? "";
+    expect(ctx).not.toContain("Reference:");
+  });
+
+  it("no reference injection when references artifact is null", () => {
+    fs.writeFileSync(path.join(codescopeDir, "graph.db"), "");
+    // No references-index.json at all
+    // Low centrality, no conventions -> bare output
+    const input = makeInput({ cwd: projectDir });
+    const result = processPreToolUse(input, projectDir);
+    expect(result.hookSpecificOutput.additionalContext).toBeUndefined();
+  });
 });
