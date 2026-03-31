@@ -8,9 +8,107 @@ export interface WorkspacePackage {
 }
 
 /**
+ * Extract the "." entry point path from a package.json exports field.
+ * Handles string exports, condition maps, and Tiptap-style nested structures
+ * like { ".": { types: { import: ... }, import: "./dist/index.js" } }.
+ *
+ * Prefers: import > default > require > module > types (source over declarations).
+ * For nested objects (e.g. types: { import: ... }), only recurses one level.
+ */
+function extractDotExport(exports: unknown): string | null {
+  if (typeof exports === "string") return exports;
+  if (!exports || typeof exports !== "object") return null;
+
+  const exportsObj = exports as Record<string, unknown>;
+  const dotEntry = exportsObj["."];
+  if (dotEntry === undefined) return null;
+  if (typeof dotEntry === "string") return dotEntry;
+  if (!dotEntry || typeof dotEntry !== "object") return null;
+
+  const dot = dotEntry as Record<string, unknown>;
+
+  // Prefer import > default > require — skip nested objects on first pass
+  for (const key of ["import", "default", "require", "module"]) {
+    if (typeof dot[key] === "string") return dot[key] as string;
+  }
+
+  // Handle nested condition objects like { types: { import: "..." } }
+  for (const key of ["import", "default", "require", "module", "types"]) {
+    const nested = dot[key];
+    if (nested && typeof nested === "object") {
+      const nestedObj = nested as Record<string, unknown>;
+      for (const subKey of ["import", "default", "require"]) {
+        if (typeof nestedObj[subKey] === "string") return nestedObj[subKey] as string;
+      }
+    }
+  }
+
+  // types at top level as last resort (declaration files are better than nothing)
+  if (typeof dot["types"] === "string") return dot["types"] as string;
+
+  return null;
+}
+
+/**
+ * Resolve the entry point for a workspace package with file-existence checks.
+ * Tries exports > main > module fields, but only accepts paths that exist on disk.
+ * Falls back to src/index.ts, src/index.tsx, or index.ts.
+ */
+export function resolveEntryPoint(
+  pkgDir: string,
+  pkg: Record<string, unknown>,
+  relativeBase: string,
+): string | null {
+  // Candidate paths from package.json fields (in priority order)
+  const candidates: string[] = [];
+
+  // 1. exports["."] field
+  const dotExport = extractDotExport(pkg.exports);
+  if (typeof dotExport === "string") {
+    candidates.push(dotExport);
+  }
+
+  // 2. main field
+  if (typeof pkg.main === "string") {
+    candidates.push(pkg.main);
+  }
+
+  // 3. module field
+  if (typeof pkg.module === "string") {
+    candidates.push(pkg.module);
+  }
+
+  // Check each candidate — only accept if the file exists on disk
+  for (const candidate of candidates) {
+    const absPath = path.join(pkgDir, candidate);
+    if (fs.existsSync(absPath)) {
+      return path.join(relativeBase, candidate);
+    }
+  }
+
+  // 4. Fallback: src/index.ts
+  if (fs.existsSync(path.join(pkgDir, "src", "index.ts"))) {
+    return path.join(relativeBase, "src", "index.ts");
+  }
+
+  // 5. Fallback: src/index.tsx
+  if (fs.existsSync(path.join(pkgDir, "src", "index.tsx"))) {
+    return path.join(relativeBase, "src", "index.tsx");
+  }
+
+  // 6. Last resort: index.ts in package root
+  if (fs.existsSync(path.join(pkgDir, "index.ts"))) {
+    return path.join(relativeBase, "index.ts");
+  }
+
+  return null;
+}
+
+/**
  * Discover workspace packages from workspace directory patterns.
  * Reads package.json in each matching subdirectory to get the package name.
  * Resolves entry point via exports, main, or src/index.ts fallback.
+ * Entry points from exports/main are verified to exist on disk before use.
  */
 export function discoverWorkspacePackages(
   projectRoot: string,
@@ -38,46 +136,11 @@ export function discoverWorkspacePackages(
         if (!name || seen.has(name)) continue;
         seen.add(name);
 
-        // Resolve entry point: exports > main > src/index.ts fallback
-        let entryPoint: string | null = null;
-
-        // Check exports field (simplified: look for "." entry)
-        if (pkg.exports) {
-          const dotExport = typeof pkg.exports === "string"
-            ? pkg.exports
-            : pkg.exports["."]
-              ? (typeof pkg.exports["."] === "string"
-                ? pkg.exports["."]
-                : pkg.exports["."].import || pkg.exports["."].default || pkg.exports["."].types)
-              : null;
-          if (typeof dotExport === "string") {
-            entryPoint = path.join(baseDir, entry.name, dotExport);
-          }
-        }
-
-        // Fallback to main
-        if (!entryPoint && pkg.main) {
-          entryPoint = path.join(baseDir, entry.name, pkg.main);
-        }
-
-        // Fallback to src/index.ts
-        if (!entryPoint) {
-          const srcIndex = path.join(pkgDir, "src", "index.ts");
-          if (fs.existsSync(srcIndex)) {
-            entryPoint = path.join(baseDir, entry.name, "src", "index.ts");
-          }
-        }
-
-        // Last resort: index.ts in package root
-        if (!entryPoint) {
-          const rootIndex = path.join(pkgDir, "index.ts");
-          if (fs.existsSync(rootIndex)) {
-            entryPoint = path.join(baseDir, entry.name, "index.ts");
-          }
-        }
+        const relativeBase = path.join(baseDir, entry.name);
+        const entryPoint = resolveEntryPoint(pkgDir, pkg, relativeBase);
 
         if (entryPoint) {
-          packages.push({ name, path: path.join(baseDir, entry.name), entryPoint });
+          packages.push({ name, path: relativeBase, entryPoint });
         }
       } catch { /* skip malformed package.json */ }
     }
