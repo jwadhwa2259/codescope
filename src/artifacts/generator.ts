@@ -2,9 +2,9 @@
  * Main entry point for injection artifact generation.
  *
  * Generates pre-computed JSON index files for hook scripts to read.
- * Three index files (danger-zones.json, conventions.json, blast-radius.json)
- * are written to .claude/codescope/injection/ after every bootstrap and
- * every incremental rebuild.
+ * Five index files (danger-zones.json, conventions.json, blast-radius.json,
+ * references-index.json, convention-violations.json) are written to
+ * .claude/codescope/injection/ after every bootstrap and every incremental rebuild.
  *
  * Per D-11, D-12: All heavy computation (graph traversal, centrality,
  * community detection) happens here in the MCP server process. Hook scripts
@@ -21,6 +21,8 @@ import { getCodescopePath } from "../utils/paths.js";
 import { buildDangerZoneIndex } from "./danger-zone-index.js";
 import { buildConventionIndex } from "./convention-index.js";
 import { buildBlastRadiusIndex } from "./blast-radius-index.js";
+import { buildReferenceIndex } from "./reference-index.js";
+import { buildViolationIndex } from "./violation-index.js";
 
 /** Subdirectory name under codescope dir for injection artifacts. */
 export const INJECTION_DIR = "injection";
@@ -44,10 +46,12 @@ export function writeArtifactAtomic(filePath: string, data: unknown): void {
 /**
  * Generate all injection artifacts and write them to disk.
  *
- * Produces three JSON index files:
+ * Produces five JSON index files:
  * - danger-zones.json: Per-file danger zone data with centrality and risk scores
  * - conventions.json: Per-file convention lists parsed from conventions.md
  * - blast-radius.json: Per-file blast radius with risk breakdown
+ * - references-index.json: Per-file reference suggestions with similarity scores
+ * - convention-violations.json: Per-file HIGH-CONF convention deviations
  *
  * Each builder runs independently in try/catch so one failure does not
  * prevent the others from completing.
@@ -99,5 +103,27 @@ export async function generateInjectionArtifacts(
     );
   } catch {
     // Blast radius builder failure is non-fatal
+  }
+
+  // Build and write reference index
+  try {
+    const referenceIndex = buildReferenceIndex(db, codescopeDir);
+    writeArtifactAtomic(
+      path.join(injectionDir, "references-index.json"),
+      referenceIndex,
+    );
+  } catch {
+    // Reference index builder failure is non-fatal
+  }
+
+  // Build and write violation index
+  try {
+    const violationIndex = buildViolationIndex(db, codescopeDir);
+    writeArtifactAtomic(
+      path.join(injectionDir, "convention-violations.json"),
+      violationIndex,
+    );
+  } catch {
+    // Violation index builder failure is non-fatal
   }
 }

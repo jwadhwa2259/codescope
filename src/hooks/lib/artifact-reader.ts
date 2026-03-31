@@ -13,6 +13,8 @@ import type {
   DangerZoneIndex,
   ConventionIndex,
   BlastRadiusIndex,
+  ReferenceIndex,
+  ViolationIndex,
 } from "./types.js";
 
 /** All artifact data that hooks may consume. */
@@ -20,6 +22,8 @@ export interface ArtifactData {
   dangerZones: DangerZoneIndex | null;
   conventions: ConventionIndex | null;
   blastRadius: BlastRadiusIndex | null;
+  references: ReferenceIndex | null;
+  violations: ViolationIndex | null;
 }
 
 /**
@@ -38,7 +42,7 @@ export function readJsonSafe<T>(filePath: string): T | null {
 }
 
 /**
- * Read all three artifact index files from the injection directory.
+ * Read all five artifact index files from the injection directory.
  *
  * Any or all may be null if the corresponding file is missing or invalid.
  * This supports partial bootstrap scenarios (D-15).
@@ -54,5 +58,12 @@ export function readAllArtifacts(injectionDir: string): ArtifactData {
     join(injectionDir, "blast-radius.json"),
   );
 
-  return { dangerZones, conventions, blastRadius };
+  const references = readJsonSafe<ReferenceIndex>(
+    join(injectionDir, "references-index.json"),
+  );
+  const violations = readJsonSafe<ViolationIndex>(
+    join(injectionDir, "convention-violations.json"),
+  );
+
+  return { dangerZones, conventions, blastRadius, references, violations };
 }

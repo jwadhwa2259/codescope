@@ -9,6 +9,8 @@ import type { Database as DatabaseType } from "better-sqlite3";
 import { buildDangerZoneIndex } from "../../src/artifacts/danger-zone-index.js";
 import { buildConventionIndex } from "../../src/artifacts/convention-index.js";
 import { buildBlastRadiusIndex } from "../../src/artifacts/blast-radius-index.js";
+import { buildReferenceIndex } from "../../src/artifacts/reference-index.js";
+import { buildViolationIndex } from "../../src/artifacts/violation-index.js";
 import {
   generateInjectionArtifacts,
   writeArtifactAtomic,
@@ -318,7 +320,7 @@ describe("Artifact generation pipeline (src/artifacts/)", () => {
   });
 
   describe("generateInjectionArtifacts", () => {
-    it("creates injection/ directory and writes all 3 JSON files", async () => {
+    it("creates injection/ directory and writes all 5 JSON files", async () => {
       const { db: testDb } = setupTestDb(projectDir);
       db = testDb;
       insertTestGraph(db);
@@ -332,14 +334,18 @@ describe("Artifact generation pipeline (src/artifacts/)", () => {
       const injectionDir = path.join(csDir, INJECTION_DIR);
       expect(fs.existsSync(injectionDir)).toBe(true);
 
-      // All 3 files should exist
+      // All 5 files should exist
       const dangerZonesPath = path.join(injectionDir, "danger-zones.json");
       const conventionsPath = path.join(injectionDir, "conventions.json");
       const blastRadiusPath = path.join(injectionDir, "blast-radius.json");
+      const referencesPath = path.join(injectionDir, "references-index.json");
+      const violationsPath = path.join(injectionDir, "convention-violations.json");
 
       expect(fs.existsSync(dangerZonesPath)).toBe(true);
       expect(fs.existsSync(conventionsPath)).toBe(true);
       expect(fs.existsSync(blastRadiusPath)).toBe(true);
+      expect(fs.existsSync(referencesPath)).toBe(true);
+      expect(fs.existsSync(violationsPath)).toBe(true);
 
       // Verify JSON structure
       const dz = JSON.parse(fs.readFileSync(dangerZonesPath, "utf-8"));
@@ -353,6 +359,14 @@ describe("Artifact generation pipeline (src/artifacts/)", () => {
       const br = JSON.parse(fs.readFileSync(blastRadiusPath, "utf-8"));
       expect(br).toHaveProperty("generated");
       expect(br).toHaveProperty("files");
+
+      const refs = JSON.parse(fs.readFileSync(referencesPath, "utf-8"));
+      expect(refs).toHaveProperty("generated");
+      expect(refs).toHaveProperty("files");
+
+      const viols = JSON.parse(fs.readFileSync(violationsPath, "utf-8"));
+      expect(viols).toHaveProperty("generated");
+      expect(viols).toHaveProperty("files");
     });
 
     it("skips gracefully when graph.db has zero nodes (no files written)", async () => {
@@ -370,6 +384,54 @@ describe("Artifact generation pipeline (src/artifacts/)", () => {
         const files = fs.readdirSync(injectionDir);
         expect(files).toHaveLength(0);
       }
+    });
+
+    it("writes references-index.json and convention-violations.json", async () => {
+      const { db: testDb } = setupTestDb(projectDir);
+      db = testDb;
+      insertTestGraph(db);
+
+      const csDir = path.join(projectDir, ".claude", "codescope");
+      createMockConventions(csDir);
+
+      await generateInjectionArtifacts(projectDir, db);
+
+      const injectionDir = path.join(csDir, INJECTION_DIR);
+      const refsPath = path.join(injectionDir, "references-index.json");
+      const violsPath = path.join(injectionDir, "convention-violations.json");
+
+      expect(fs.existsSync(refsPath)).toBe(true);
+      expect(fs.existsSync(violsPath)).toBe(true);
+
+      // Verify references-index shape
+      const refs = JSON.parse(fs.readFileSync(refsPath, "utf-8"));
+      expect(refs).toHaveProperty("generated");
+      expect(refs).toHaveProperty("files");
+      expect(typeof refs.files).toBe("object");
+
+      // Verify convention-violations shape
+      const viols = JSON.parse(fs.readFileSync(violsPath, "utf-8"));
+      expect(viols).toHaveProperty("generated");
+      expect(viols).toHaveProperty("files");
+      expect(typeof viols.files).toBe("object");
+    });
+
+    it("isolates builder failures: reference failure does not prevent violation index", async () => {
+      const { db: testDb } = setupTestDb(projectDir);
+      db = testDb;
+      insertTestGraph(db);
+
+      const csDir = path.join(projectDir, ".claude", "codescope");
+      createMockConventions(csDir);
+
+      // Run artifacts -- even if one builder fails internally, others should succeed
+      await generateInjectionArtifacts(projectDir, db);
+
+      const injectionDir = path.join(csDir, INJECTION_DIR);
+      // Both original artifacts should exist regardless
+      expect(fs.existsSync(path.join(injectionDir, "danger-zones.json"))).toBe(true);
+      expect(fs.existsSync(path.join(injectionDir, "conventions.json"))).toBe(true);
+      expect(fs.existsSync(path.join(injectionDir, "blast-radius.json"))).toBe(true);
     });
   });
 
