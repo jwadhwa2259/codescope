@@ -108,3 +108,23 @@ export interface DebugCycleResult {
     newFromFix: number;
   };
 }
+
+// ---- Deterministic Scorecard Types (D-17, D-20) ----
+
+/** Input for computing a deterministic scorecard. */
+export interface ScorecardInput {
+  changedFiles: string[];
+  projectRoot: string;
+  codescopeDir: string;
+  db: import("better-sqlite3").Database | null;
+}
+
+/** Full deterministic scorecard result. */
+export interface DeterministicScorecard {
+  conventionAdherence: { percent: number; violatingFiles: number; totalFiles: number };
+  blastRadius: { totalAffected: number; normalized: number; riskBreakdown: Record<string, number> };
+  violationImpact: { total: number; byRule: Record<string, number>; normalized: number };
+  importCorrectness: { percent: number; broken: number; total: number };
+  riskFilesModified: { count: number; files: string[] };
+  composite: { percent: number; grade: string };
+}

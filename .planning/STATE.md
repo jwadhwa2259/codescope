@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Eval Fixes & Real-World Quality
-status: completed
-stopped_at: Completed 19-01-PLAN.md
-last_updated: "2026-03-31T02:35:44.003Z"
-last_activity: 2026-03-31 -- Completed 19-02 deterministic scorecard
+status: executing
+stopped_at: Completed Wave 1 (19-01, 19-02)
+last_updated: "2026-03-31T02:36:22.785Z"
+last_activity: 2026-03-31 -- Completed Wave 1 (19-01, 19-02)
 progress:
   total_phases: 3
   completed_phases: 2
@@ -83,6 +83,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-31T02:35:44.001Z
-Stopped at: Completed 19-01-PLAN.md
+Last session: 2026-03-31T02:36:22.783Z
+Stopped at: Completed Wave 1 (19-01, 19-02)
 Resume file: None
