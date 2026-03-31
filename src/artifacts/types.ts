@@ -72,3 +72,45 @@ export interface BlastRadiusIndex {
   /** Per-file blast radius data, keyed by relative file path. */
   files: Record<string, BlastRadiusFileEntry>;
 }
+
+// ---- Reference Index ----
+
+/** Per-file entry in the reference index. */
+export interface ReferenceFileEntry {
+  /** Path to the most similar same-role file. */
+  referencePath: string;
+  /** Human-readable role label (e.g., "utility", "route-handler"). */
+  roleLabel: string;
+  /** Similarity score (0-1). */
+  score: number;
+}
+
+/** Top-level reference index structure. */
+export interface ReferenceIndex {
+  /** ISO 8601 timestamp of when this index was generated. */
+  generated: string;
+  /** Per-file reference data, keyed by relative file path. */
+  files: Record<string, ReferenceFileEntry>;
+}
+
+// ---- Violation Index ----
+
+/** Single violation entry for a file. */
+export interface ViolationEntry {
+  /** Rule or check that detected the deviation. */
+  ruleId: string;
+  /** What was actually found in the file. */
+  detected: string;
+  /** What was expected based on conventions. */
+  expected: string;
+  /** Line number where the deviation was found (0 if file-level). */
+  line: number;
+}
+
+/** Top-level violation index structure. */
+export interface ViolationIndex {
+  /** ISO 8601 timestamp of when this index was generated. */
+  generated: string;
+  /** Per-file violation lists, keyed by relative file path. Sparse: files with no violations are omitted. */
+  files: Record<string, ViolationEntry[]>;
+}

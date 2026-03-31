@@ -89,6 +89,37 @@ export interface BlastRadiusIndex {
   files: Record<string, BlastRadiusFileEntry>;
 }
 
+// ---- Reference Index (build isolation duplicate) ----
+
+/** Per-file entry in the reference index. */
+export interface ReferenceFileEntry {
+  referencePath: string;
+  roleLabel: string;
+  score: number;
+}
+
+/** Top-level reference index structure. */
+export interface ReferenceIndex {
+  generated: string;
+  files: Record<string, ReferenceFileEntry>;
+}
+
+// ---- Violation Index (build isolation duplicate) ----
+
+/** Single violation entry for a file. */
+export interface ViolationEntry {
+  ruleId: string;
+  detected: string;
+  expected: string;
+  line: number;
+}
+
+/** Top-level violation index structure. */
+export interface ViolationIndex {
+  generated: string;
+  files: Record<string, ViolationEntry[]>;
+}
+
 // ---- PreCompact / SessionStart Hook Types ----
 
 /** PreCompact hook input (received on stdin as JSON). */
