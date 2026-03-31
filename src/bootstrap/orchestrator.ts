@@ -16,6 +16,124 @@ import { storeReadinessSnapshot } from "../graph/readiness-history.js";
 import { openDatabase, closeDatabase } from "../graph/database.js";
 import { generateInjectionArtifacts } from "../artifacts/generator.js";
 import { parseDetectorConventions } from "../conventions/parser.js";
+import { createSchema } from "../graph/schema.js";
+import type { Database as DatabaseType } from "better-sqlite3";
+
+// ---------------------------------------------------------------------------
+// Graph merge utility (R1)
+// ---------------------------------------------------------------------------
+
+/**
+ * Merge a per-service graph DB into the root graph DB.
+ * Remaps node IDs and prepends service path to file_path for namespace isolation.
+ *
+ * Skips if:
+ * - serviceDbPath === rootDb path (self-merge)
+ * - serviceDbPath does not exist
+ */
+export function mergeServiceGraph(
+  rootDb: DatabaseType,
+  serviceDbPath: string,
+  servicePath: string,
+): void {
+  // Skip if service DB doesn't exist
+  if (!fs.existsSync(serviceDbPath)) return;
+
+  // Skip self-merge: compare resolved paths
+  const rootDbPath = (rootDb as any).name as string | undefined;
+  if (rootDbPath && path.resolve(rootDbPath) === path.resolve(serviceDbPath)) {
+    return;
+  }
+
+  const serviceDb = openDatabase(serviceDbPath);
+  try {
+    // Read all nodes from service DB
+    const serviceNodes = serviceDb
+      .prepare(
+        "SELECT id, name, kind, file_path, language, loc, is_exported, is_test FROM nodes",
+      )
+      .all() as Array<{
+      id: number;
+      name: string;
+      kind: string;
+      file_path: string | null;
+      language: string | null;
+      loc: number;
+      is_exported: number;
+      is_test: number;
+    }>;
+
+    // Build old->new ID map
+    const idMap = new Map<number, number>();
+    const insertNode = rootDb.prepare(
+      "INSERT INTO nodes (name, kind, file_path, language, loc, is_exported, is_test) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    );
+
+    for (const node of serviceNodes) {
+      // Prepend service path to file_path for namespace isolation
+      const filePath = node.file_path
+        ? path.join(servicePath, node.file_path)
+        : node.file_path;
+      const result = insertNode.run(
+        node.name,
+        node.kind,
+        filePath,
+        node.language,
+        node.loc,
+        node.is_exported,
+        node.is_test,
+      );
+      idMap.set(node.id, Number(result.lastInsertRowid));
+    }
+
+    // Read and remap edges
+    const serviceEdges = serviceDb
+      .prepare("SELECT source_id, target_id, kind, weight FROM edges")
+      .all() as Array<{
+      source_id: number;
+      target_id: number;
+      kind: string;
+      weight: number;
+    }>;
+
+    const insertEdge = rootDb.prepare(
+      "INSERT INTO edges (source_id, target_id, kind, weight) VALUES (?, ?, ?, ?)",
+    );
+
+    for (const edge of serviceEdges) {
+      const newSourceId = idMap.get(edge.source_id);
+      const newTargetId = idMap.get(edge.target_id);
+      if (newSourceId !== undefined && newTargetId !== undefined) {
+        insertEdge.run(newSourceId, newTargetId, edge.kind, edge.weight);
+      }
+    }
+
+    // Read and remap communities
+    const serviceCommunities = serviceDb
+      .prepare(
+        "SELECT node_id, community_id, modularity_class FROM communities",
+      )
+      .all() as Array<{
+      node_id: number;
+      community_id: number;
+      modularity_class: string | null;
+    }>;
+
+    if (serviceCommunities.length > 0) {
+      const insertComm = rootDb.prepare(
+        "INSERT INTO communities (node_id, community_id, modularity_class) VALUES (?, ?, ?)",
+      );
+      for (const comm of serviceCommunities) {
+        const newNodeId = idMap.get(comm.node_id);
+        if (newNodeId !== undefined) {
+          insertComm.run(newNodeId, comm.community_id, comm.modularity_class);
+        }
+      }
+    }
+  } finally {
+    closeDatabase(serviceDb);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Event emission helper (inline for build isolation per D-33)
@@ -218,6 +336,40 @@ export async function runBootstrap(
       ? fullServices.filter((s) => affectedServiceNames.includes(s.name))
       : fullServices;
 
+  // ---- Step 5a: Discover workspace aliases for import resolution ----
+  let workspaceAliases: Record<string, string> = {};
+  if (scoutResult.projectType === "monorepo" || allServices.length > 1) {
+    try {
+      const { discoverWorkspacePackages, buildWorkspaceAliases } = await import(
+        "../resolver/workspace.js"
+      );
+      const pnpmPath = path.join(projectRoot, "pnpm-workspace.yaml");
+      let patterns: string[] = [];
+      if (fs.existsSync(pnpmPath)) {
+        const yaml = await import("js-yaml");
+        const content = fs.readFileSync(pnpmPath, "utf-8");
+        const ws = yaml.load(content) as { packages?: string[] } | null;
+        patterns =
+          ws?.packages?.filter((p: string) => !p.startsWith("!")) ?? [];
+      }
+      if (patterns.length === 0) {
+        const pkgPath = path.join(projectRoot, "package.json");
+        if (fs.existsSync(pkgPath)) {
+          const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+          patterns = Array.isArray(pkg.workspaces)
+            ? pkg.workspaces
+            : (pkg.workspaces?.packages ?? []);
+        }
+      }
+      if (patterns.length > 0) {
+        const packages = discoverWorkspacePackages(projectRoot, patterns);
+        workspaceAliases = buildWorkspaceAliases(projectRoot, packages);
+      }
+    } catch {
+      // Workspace discovery is optional -- ignore errors (module may not exist yet)
+    }
+  }
+
   // ---- Step 5: Per-service analysis squads ----
   const serviceResults: Array<{
     name: string;
@@ -275,6 +427,7 @@ export async function runBootstrap(
     const riskResult = await runRiskAnalyzer({
       projectRoot: servicePath,
       outputDir: serviceOutputDir,
+      workspaceAliases,
     });
     timingBreakdown[`risk-analyzer:${service.name}`] =
       Date.now() - riskStartMs;
@@ -303,6 +456,34 @@ export async function runBootstrap(
       communitiesDetected: riskResult.communitiesDetected,
       conventionsDetected: convResult.conventionsDetected,
     });
+  }
+
+  // ---- Step 5b: Merge per-service graphs into root DB (R1) ----
+  if (servicesToAnalyze.length > 1) {
+    progress("## Merging per-service graphs into root...");
+    const rootDbPath = getGraphDbPath(projectRoot);
+    const rootDb = openDatabase(rootDbPath);
+    try {
+      createSchema(rootDb);
+      for (const service of servicesToAnalyze) {
+        const rawServicePath = path.resolve(projectRoot, service.path);
+        let servicePath: string;
+        try {
+          servicePath = fs.realpathSync(rawServicePath);
+        } catch {
+          servicePath = rawServicePath;
+        }
+        const serviceDbPath = getGraphDbPath(servicePath);
+        // Skip if service DB IS the root DB (path "." resolves to root)
+        if (path.resolve(serviceDbPath) === path.resolve(rootDbPath)) continue;
+        // Skip if service DB doesn't exist
+        if (!fs.existsSync(serviceDbPath)) continue;
+        mergeServiceGraph(rootDb, serviceDbPath, service.path);
+        progress(`- [x] Merged graph: ${service.name}`);
+      }
+    } finally {
+      closeDatabase(rootDb);
+    }
   }
 
   // Add lightweight services to results
