@@ -189,8 +189,8 @@ describe("rule-filter", () => {
   });
 
   describe("RULE_NAME_TO_ID", () => {
-    it("contains 18 entries (one per ast-grep rule)", () => {
-      expect(RULE_NAME_TO_ID.size).toBe(18);
+    it("contains 27 entries (18 base + 9 framework rules)", () => {
+      expect(RULE_NAME_TO_ID.size).toBe(27);
     });
 
     it("maps all expected convention names", () => {
@@ -216,8 +216,8 @@ describe("rule-filter", () => {
   });
 
   describe("RULE_ID_TO_NAME", () => {
-    it("contains 18 entries (one per ast-grep rule)", () => {
-      expect(RULE_ID_TO_NAME.size).toBe(18);
+    it("contains 27 entries (18 base + 9 framework rules)", () => {
+      expect(RULE_ID_TO_NAME.size).toBe(27);
     });
 
     it("is the inverse of RULE_NAME_TO_ID", () => {

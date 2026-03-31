@@ -350,7 +350,9 @@ export function detectConflicts(
 }
 
 /**
- * Determine the language of a rule by checking its directory path.
+ * Determine the language of a rule by checking its ruleId prefix.
+ * Framework rules (fastify-*, express-*, h3-*) are all TypeScript.
+ * Only rules with python- prefix are Python.
  */
 function getRuleLanguage(ruleId: string): "TypeScript" | "Python" {
   if (ruleId.startsWith("python-")) {
@@ -361,11 +363,13 @@ function getRuleLanguage(ruleId: string): "TypeScript" | "Python" {
 
 /**
  * Run a complete convention scan on a target directory.
- * Scans TypeScript and Python rules, calculates adoption, detects conflicts.
+ * Scans TypeScript, Python, and framework-specific rules.
+ * Framework rules only run when the corresponding framework is detected in package.json.
  */
 export function runConventionScan(
   targetDir: string,
   rulesDir: string,
+  detectedFrameworks: string[] = [],
 ): ConventionScanResult {
   const tsRulesDir = path.join(rulesDir, "typescript");
   const pyRulesDir = path.join(rulesDir, "python");
@@ -383,6 +387,14 @@ export function runConventionScan(
   // Scan Python rules (only if Python files exist)
   if (pyFileCount > 0 && fs.existsSync(pyRulesDir)) {
     allMatches = allMatches.concat(runAstGrepScan(pyRulesDir, targetDir));
+  }
+
+  // Scan framework-specific rules (only for detected frameworks per D-06)
+  for (const framework of detectedFrameworks) {
+    const frameworkRulesDir = path.join(rulesDir, "frameworks", framework);
+    if (fs.existsSync(frameworkRulesDir)) {
+      allMatches = allMatches.concat(runAstGrepScan(frameworkRulesDir, targetDir));
+    }
   }
 
   // Group matches by ruleId
@@ -410,6 +422,18 @@ export function runConventionScan(
     }
   } catch {
     // Directory may not exist
+  }
+
+  // Count framework rules
+  for (const framework of detectedFrameworks) {
+    const frameworkRulesDir = path.join(rulesDir, "frameworks", framework);
+    try {
+      totalRulesEvaluated += fs
+        .readdirSync(frameworkRulesDir)
+        .filter((f) => f.endsWith(".yml")).length;
+    } catch {
+      // Framework directory may not exist
+    }
   }
 
   // Build convention results
