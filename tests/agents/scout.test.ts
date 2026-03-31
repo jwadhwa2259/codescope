@@ -304,4 +304,233 @@ describe("Scout Agent", () => {
 
     expect(content).toContain("No CI/CD configuration detected.");
   });
+
+  it("Test 11: config.yml with glob pattern in service path expands to per-package services", async () => {
+    // Create a config.yml with a glob pattern
+    const configDir = path.join(tmpDir, ".claude", "codescope");
+    fs.mkdirSync(configDir, { recursive: true });
+
+    const configYml = `schema_version: 1
+
+project:
+  name: mono-test
+  type: monorepo
+  languages: [TypeScript]
+  services:
+    - name: packages
+      path: "packages/*"
+
+agents:
+  researcher: { model: inherited }
+  convention_detector: { model: inherited }
+  risk_analyzer: { model: inherited }
+  learning_synthesizer: { model: inherited }
+  eval_judge: { model: inherited }
+  debug: { model: inherited }
+
+orient:
+  verbosity: brief
+  clarification: auto
+  research_sources: [codebase]
+  max_research_time: 60
+
+execute:
+  max_agents_concurrent: 3
+
+verify:
+  timeout_seconds: 120
+  tests: {}
+  auto_smoke: false
+  static_check: false
+  blast_radius_diff: false
+
+eval:
+  mode: auto-debug
+  auto_debug_max_cycles: 3
+  criteria:
+    scope_compliance: true
+    convention_adherence: true
+    completeness: true
+    correctness: true
+
+conventions:
+  detection_threshold: 70
+  min_files: 3
+  strictness: suggest-only
+  auto_confirm_high_confidence: false
+
+learning:
+  project_memory: true
+  global_memory: false
+  global_memory_path: "~/.codescope/global-memory.md"
+  max_active_learnings: 50
+  confidence_decay:
+    gotchas: 90
+    decisions: 180
+  auto_capture: true
+  capture_ignores: false
+
+bootstrap:
+  scaling: auto
+  squad_threshold_loc: 5000
+  max_squads: 10
+
+display:
+  progress_reports: true
+  agent_activity: minimal
+  eval_detail: summary
+`;
+    fs.writeFileSync(path.join(configDir, "config.yml"), configYml);
+
+    // Create workspace packages
+    // packages/core with package.json
+    const coreDir = path.join(tmpDir, "packages", "core");
+    fs.mkdirSync(path.join(coreDir, "src"), { recursive: true });
+    fs.writeFileSync(
+      path.join(coreDir, "package.json"),
+      JSON.stringify({ name: "@tiptap/core", version: "1.0.0" }),
+    );
+    fs.writeFileSync(
+      path.join(coreDir, "src", "index.ts"),
+      Array(40).fill("// line\n").join(""),
+    );
+
+    // packages/react with package.json
+    const reactDir = path.join(tmpDir, "packages", "react");
+    fs.mkdirSync(path.join(reactDir, "src"), { recursive: true });
+    fs.writeFileSync(
+      path.join(reactDir, "package.json"),
+      JSON.stringify({ name: "@tiptap/react", version: "1.0.0" }),
+    );
+    fs.writeFileSync(
+      path.join(reactDir, "src", "index.ts"),
+      Array(30).fill("// line\n").join(""),
+    );
+
+    // Root package.json
+    fs.writeFileSync(
+      path.join(tmpDir, "package.json"),
+      JSON.stringify({ name: "mono-test", version: "1.0.0", private: true }),
+    );
+
+    const result = await runScout({ projectRoot: tmpDir, outputDir });
+
+    // Should have expanded to 2 services, NOT 1 "packages" service
+    expect(result.services.length).toBe(2);
+
+    const serviceNames = result.services.map((s) => s.name);
+    expect(serviceNames).toContain("@tiptap/core");
+    expect(serviceNames).toContain("@tiptap/react");
+
+    // Verify paths are concrete, not glob
+    const servicePaths = result.services.map((s) => s.path);
+    expect(servicePaths).toContain("packages/core");
+    expect(servicePaths).toContain("packages/react");
+
+    // Verify LOC is counted correctly
+    const coreSvc = result.services.find((s) => s.name === "@tiptap/core")!;
+    expect(coreSvc.loc).toBeGreaterThan(0);
+    const reactSvc = result.services.find((s) => s.name === "@tiptap/react")!;
+    expect(reactSvc.loc).toBeGreaterThan(0);
+  });
+
+  it("Test 12: config.yml with non-glob service path passes through unchanged", async () => {
+    // Create a config.yml with a non-glob path
+    const configDir = path.join(tmpDir, ".claude", "codescope");
+    fs.mkdirSync(configDir, { recursive: true });
+
+    const configYml = `schema_version: 1
+
+project:
+  name: simple-mono
+  type: monorepo
+  languages: [TypeScript]
+  services:
+    - name: demos
+      path: demos
+
+agents:
+  researcher: { model: inherited }
+  convention_detector: { model: inherited }
+  risk_analyzer: { model: inherited }
+  learning_synthesizer: { model: inherited }
+  eval_judge: { model: inherited }
+  debug: { model: inherited }
+
+orient:
+  verbosity: brief
+  clarification: auto
+  research_sources: [codebase]
+  max_research_time: 60
+
+execute:
+  max_agents_concurrent: 3
+
+verify:
+  timeout_seconds: 120
+  tests: {}
+  auto_smoke: false
+  static_check: false
+  blast_radius_diff: false
+
+eval:
+  mode: auto-debug
+  auto_debug_max_cycles: 3
+  criteria:
+    scope_compliance: true
+    convention_adherence: true
+    completeness: true
+    correctness: true
+
+conventions:
+  detection_threshold: 70
+  min_files: 3
+  strictness: suggest-only
+  auto_confirm_high_confidence: false
+
+learning:
+  project_memory: true
+  global_memory: false
+  global_memory_path: "~/.codescope/global-memory.md"
+  max_active_learnings: 50
+  confidence_decay:
+    gotchas: 90
+    decisions: 180
+  auto_capture: true
+  capture_ignores: false
+
+bootstrap:
+  scaling: auto
+  squad_threshold_loc: 5000
+  max_squads: 10
+
+display:
+  progress_reports: true
+  agent_activity: minimal
+  eval_detail: summary
+`;
+    fs.writeFileSync(path.join(configDir, "config.yml"), configYml);
+
+    // Create the demos directory with source
+    const demosDir = path.join(tmpDir, "demos");
+    fs.mkdirSync(path.join(demosDir, "src"), { recursive: true });
+    fs.writeFileSync(
+      path.join(demosDir, "src", "index.ts"),
+      Array(20).fill("// line\n").join(""),
+    );
+
+    // Root package.json
+    fs.writeFileSync(
+      path.join(tmpDir, "package.json"),
+      JSON.stringify({ name: "simple-mono", version: "1.0.0" }),
+    );
+
+    const result = await runScout({ projectRoot: tmpDir, outputDir });
+
+    // Should have exactly 1 service, unchanged
+    expect(result.services.length).toBe(1);
+    expect(result.services[0].name).toBe("demos");
+    expect(result.services[0].path).toBe("demos");
+    expect(result.services[0].loc).toBeGreaterThan(0);
+  });
 });
