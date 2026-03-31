@@ -90,11 +90,12 @@ None.
 |---|-------------|------|--------|-----------|
 | 260331-8m5 | Fix audit findings: patch path-to-regexp ReDoS, refactor 5 dashboard panel god files | 2026-03-31 | a786ef2 | [260331-8m5-fix-audit-findings-patch-path-to-regexp-](./quick/260331-8m5-fix-audit-findings-patch-path-to-regexp-/) |
 | 260331-939 | Fix adversarial review findings: scorecard violation path, ViolationIndex parsing, false positive filtering, VALID-02/03 removal | 2026-03-31 | dc2c717 | [260331-939-fix-adversarial-review-findings-scorecar](./quick/260331-939-fix-adversarial-review-findings-scorecar/) |
+| 260331-auc | Fix v2.1 audit tech debt: replace local isNoiseFile with canonical import, fix 20-02-SUMMARY requirements-deferred | 2026-03-31 | b0eedcb | [260331-auc-fix-v2-1-milestone-audit-tech-debt-isnoi](./quick/260331-auc-fix-v2-1-milestone-audit-tech-debt-isnoi/) |
 | Phase 20 P02 | 139s | 2 tasks | 2 files |
 | Phase 20 P01 | 3min | 2 tasks | 4 files |
 
 ## Session Continuity
 
-Last session: 2026-03-31T14:26:47.059Z
-Stopped at: Completed 20-01-PLAN.md
+Last session: 2026-03-31T07:52:00Z
+Stopped at: Completed quick task 260331-auc
 Resume file: None
