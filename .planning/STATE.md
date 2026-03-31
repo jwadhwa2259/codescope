@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Eval Fixes & Real-World Quality
 status: executing
-stopped_at: Completed 19-03-PLAN.md (phase 19 complete)
-last_updated: "2026-03-31T02:51:31.355Z"
+stopped_at: Completed 20-02-PLAN.md
+last_updated: "2026-03-31T14:25:26.674Z"
 last_activity: 2026-03-31
 progress:
-  total_phases: 3
+  total_phases: 4
   completed_phases: 3
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 14
+  completed_plans: 13
   percent: 67
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** AI-generated code changes that respect existing conventions, stay within safe blast radius, and actually work in the codebase -- verified end-to-end before the user sees them.
-**Current focus:** Phase 19 — intelligence-features
+**Current focus:** Phase 20 — eval-db-fix-audit-cleanup
 
 ## Current Position
 
-Phase: 19
-Plan: Not started
+Phase: 20 (eval-db-fix-audit-cleanup) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-03-31 - Completed quick task 260331-8m5: Fix audit findings
+Last activity: 2026-03-31
 
 Progress: [██████░░░░] 67%
 
@@ -70,6 +70,8 @@ All decisions archived in PROJECT.md Key Decisions table and milestone archives.
 - [Phase 19]: Scorecard computed server-side in MCP tool, not assembled inline by skill agent
 - [Phase 19]: Mode 1 revert uses git stash --include-untracked per D-18 (not git checkout)
 - [Phase 19]: Files not in graph scored as 100% for import correctness
+- [Phase 20]: VALID-02 deferred: type references not stored in graph schema, requires parser-level changes
+- [Phase 20]: VALID-03 deferred: graph builder drops unresolved imports silently, no failed-resolution data in DB
 
 ### Pending Todos
 
@@ -86,9 +88,11 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260331-8m5 | Fix audit findings: patch path-to-regexp ReDoS, refactor 5 dashboard panel god files | 2026-03-31 | a786ef2 | [260331-8m5-fix-audit-findings-patch-path-to-regexp-](./quick/260331-8m5-fix-audit-findings-patch-path-to-regexp-/) |
+| 260331-939 | Fix adversarial review findings: scorecard violation path, ViolationIndex parsing, false positive filtering, VALID-02/03 removal | 2026-03-31 | dc2c717 | [260331-939-fix-adversarial-review-findings-scorecar](./quick/260331-939-fix-adversarial-review-findings-scorecar/) |
+| Phase 20 P02 | 139s | 2 tasks | 2 files |
 
 ## Session Continuity
 
-Last session: 2026-03-31T02:45:51.497Z
-Stopped at: Completed 19-03-PLAN.md (phase 19 complete)
+Last session: 2026-03-31T14:25:26.672Z
+Stopped at: Completed 20-02-PLAN.md
 Resume file: None

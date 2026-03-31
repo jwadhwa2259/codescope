@@ -118,7 +118,7 @@ Plans:
 
 Plans:
 - [ ] 20-01-PLAN.md -- Fix eval.ts DB path bug and ViolationEntry.ruleId field
-- [ ] 20-02-PLAN.md -- Move VALID-02/VALID-03 to Out of Scope, fix SUMMARY frontmatter
+- [x] 20-02-PLAN.md -- Move VALID-02/VALID-03 to Out of Scope, fix SUMMARY frontmatter
 
 ## Progress
 
@@ -146,4 +146,4 @@ Phases execute in numeric order: 17 -> 18 -> 19 -> 20
 | 17. Foundation Fixes | v2.1 | 5/5 | Complete    | 2026-03-30 |
 | 18. Semantic Conventions | v2.1 | 4/1 | Complete    | 2026-03-31 |
 | 19. Intelligence Features | v2.1 | 3/3 | Complete    | 2026-03-31 |
-| 20. Eval DB Fix + Audit Cleanup | v2.1 | 0/2 | Planned | -- |
+| 20. Eval DB Fix + Audit Cleanup | v2.1 | 1/2 | In Progress|  |
