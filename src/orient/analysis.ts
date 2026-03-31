@@ -3,6 +3,7 @@ import * as path from "node:path";
 import { getGraph } from "../graph/cache.js";
 import { blastRadius } from "../graph/analytics.js";
 import { getCodescopePath } from "../utils/paths.js";
+import { parseDetectorConventions } from "../conventions/parser.js";
 import type { AffectedFile, AnalysisResult } from "./types.js";
 
 // ---------------------------------------------------------------------------
@@ -45,7 +46,8 @@ function classifyRisk(centrality: number): "HIGH" | "MEDIUM" | "LOW" {
 
 /**
  * Read conventions from conventions.md and filter to those relevant
- * to the given file paths.
+ * to the given file paths. Uses the canonical parseDetectorConventions
+ * parser to handle h3+table format written by the convention detector.
  */
 function readRelevantConventions(
   codescopePath: string,
@@ -55,39 +57,17 @@ function readRelevantConventions(
   if (!fs.existsSync(conventionsPath)) return [];
 
   const content = fs.readFileSync(conventionsPath, "utf-8");
+  const parsed = parseDetectorConventions(content);
   const conventions: string[] = [];
 
-  // Parse convention blocks (same format as conventions.ts)
-  const sections = content.split(/^## /m).filter((s) => s.trim().length > 0);
-
-  for (const section of sections) {
-    const lines = section.split("\n");
-    let name = "";
-    let files: string[] = [];
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (trimmed.startsWith("**Convention:**")) {
-        name = trimmed.replace("**Convention:**", "").trim();
-      } else if (trimmed.startsWith("**Files:**")) {
-        const fileStr = trimmed.replace("**Files:**", "").trim();
-        files = fileStr
-          .split(",")
-          .map((f) => f.trim())
-          .filter((f) => f.length > 0);
-      }
-    }
-
-    if (name) {
-      // Check if any convention files overlap with the relevant file paths
-      const isRelevant = files.some((convFile) =>
-        filePaths.some(
-          (fp) => fp.includes(convFile) || convFile.includes(fp),
-        ),
-      );
-      if (isRelevant || filePaths.length === 0) {
-        conventions.push(name);
-      }
+  for (const conv of parsed) {
+    const isRelevant = conv.files.some((convFile) =>
+      filePaths.some(
+        (fp) => fp.includes(convFile) || convFile.includes(fp),
+      ),
+    );
+    if (isRelevant || filePaths.length === 0) {
+      conventions.push(conv.name);
     }
   }
 
