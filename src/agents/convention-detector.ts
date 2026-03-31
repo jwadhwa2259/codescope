@@ -2,8 +2,10 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { runConventionScan } from "../conventions/runner.js";
+import { inferConventions, formatInferredConventions } from "../conventions/inference.js";
 import { rankGoldenFiles } from "../conventions/golden-files.js";
 import { detectFrameworks } from "../onboard/detect.js";
+import { walkSourceFiles } from "../graph/builder.js";
 import type {
   ConventionScanResult,
   ConventionResult,
@@ -73,10 +75,29 @@ export async function runConventionDetector(
   }
 
   // Generate conventions.md
-  const conventionsMd = generateConventionsMarkdown(
+  let conventionsMd = generateConventionsMarkdown(
     scanResult,
     scanError,
   );
+
+  // R8: Infer project-specific conventions beyond hardcoded rules
+  let inferredCount = 0;
+  let inferredHighConf = 0;
+  try {
+    const sourceFiles = walkSourceFiles(options.projectRoot);
+    const relativeFiles = sourceFiles.map(f => path.relative(options.projectRoot, f));
+    const inferred = inferConventions(options.projectRoot, relativeFiles);
+
+    if (inferred.length > 0) {
+      const inferredMd = formatInferredConventions(inferred);
+      conventionsMd += inferredMd;
+      inferredCount = inferred.length;
+      inferredHighConf = inferred.filter(c => c.confidence === "HIGH-CONF").length;
+    }
+  } catch {
+    // Inference is best-effort; don't fail the detector
+  }
+
   const conventionsPath = path.join(options.outputDir, "conventions.md");
   fs.writeFileSync(conventionsPath, conventionsMd, "utf-8");
 
@@ -91,7 +112,7 @@ export async function runConventionDetector(
   return {
     conventionsPath,
     goldenFilesPath,
-    conventionsDetected: scanResult?.totalConventionsDetected ?? 0,
+    conventionsDetected: (scanResult?.totalConventionsDetected ?? 0) + inferredCount,
     conflictsDetected: scanResult?.conflicts.length ?? 0,
     goldenFileCount: goldenFiles.length,
     durationMs,
