@@ -255,7 +255,7 @@ export function computeImportCorrectness(options: {
       `SELECT e.source_id, e.target_id, e.kind, n.file_path
        FROM edges e
        JOIN nodes n ON n.id = e.source_id
-       WHERE e.kind = 'imports' AND n.file_path IN (${changedFiles.map(() => "?").join(",")})`,
+       WHERE e.kind = 'IMPORTS' AND n.file_path IN (${changedFiles.map(() => "?").join(",")})`,
     );
 
     const edges = stmt.all(...changedFiles) as Array<{
