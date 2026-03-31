@@ -178,11 +178,24 @@ export function computeViolationImpact(options: {
     return { total: 0, byRule: {}, normalized: 100 };
   }
 
-  let violations: Array<{ file?: string; rule?: string; ruleId?: string }>;
+  let entries: Array<{ file: string; ruleId?: string; rule?: string }>;
   try {
     const raw = readFileSync(violationsPath, "utf-8");
-    violations = JSON.parse(raw);
-    if (!Array.isArray(violations)) {
+    const parsed = JSON.parse(raw);
+    entries = [];
+    if (parsed && typeof parsed === "object" && parsed.files && !Array.isArray(parsed)) {
+      // ViolationIndex shape: { generated, files: Record<string, ViolationEntry[]> }
+      for (const [filePath, fileViolations] of Object.entries(parsed.files)) {
+        if (Array.isArray(fileViolations)) {
+          for (const v of fileViolations as Array<{ ruleId?: string }>) {
+            entries.push({ file: filePath, ruleId: v.ruleId, rule: v.ruleId });
+          }
+        }
+      }
+    } else if (Array.isArray(parsed)) {
+      // Legacy flat array format (backward compat)
+      entries = parsed;
+    } else {
       return { total: 0, byRule: {}, normalized: 100 };
     }
   } catch {
@@ -190,7 +203,7 @@ export function computeViolationImpact(options: {
   }
 
   // Filter violations to changed files
-  const relevant = violations.filter((v) =>
+  const relevant = entries.filter((v) =>
     changedFiles.some(
       (f) => v.file === f || (v.file && (f.endsWith(v.file) || v.file.endsWith(f))),
     ),
@@ -415,7 +428,7 @@ export function computeScorecard(input: ScorecardInput): DeterministicScorecard 
   const { changedFiles, codescopeDir, db } = input;
 
   const conventionsPath = join(codescopeDir, "conventions.md");
-  const violationsPath = join(codescopeDir, "convention-violations.json");
+  const violationsPath = join(codescopeDir, "injection", "convention-violations.json");
   const dangerZonesPath = join(codescopeDir, "injection", "danger-zones.json");
 
   const conventionAdherence = computeConventionAdherence({
