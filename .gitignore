@@ -8,3 +8,14 @@ grammars/*.wasm
 
 # Claude Code local state
 .claude/
+CLAUDE.md
+
+# Internal docs / audit / spec artifacts
+AUDIT_CUSTOM_REPORT.md
+CODESCOPE-BUILD-INSTRUCTIONS.md
+CODESCOPE-SPEC-V6.md
+docs/COMPARISON-*.md
+docs/EVAL-PLAN.md
+
+# Orphan markers
+.orphaned_at
