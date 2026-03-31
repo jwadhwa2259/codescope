@@ -4,7 +4,7 @@ milestone: v2.1
 milestone_name: Eval Fixes & Real-World Quality
 status: verifying
 stopped_at: Completed 20-01-PLAN.md
-last_updated: "2026-03-31T14:26:47.061Z"
+last_updated: "2026-03-31T14:31:04.335Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 4
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 ## Current Position
 
-Phase: 20 (eval-db-fix-audit-cleanup) — EXECUTING
-Plan: 2 of 2
+Phase: 20
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-03-31
 

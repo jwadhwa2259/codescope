@@ -22,6 +22,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import type { Database as DatabaseType } from "better-sqlite3";
 import { parseDetectorConventions } from "../conventions/parser.js";
+import { isNoiseFile } from "../conventions/golden-files.js";
 import { classifyFileRole } from "../classifier/file-role.js";
 import { RULE_NAME_TO_ID } from "../conventions/rule-metadata.js";
 import type { ViolationIndex, ViolationEntry } from "./types.js";
@@ -48,14 +49,6 @@ function isFileLanguageMatch(filePath: string, convLang: "typescript" | "python"
   if (convLang === "unknown") return true;
   if (convLang === "python") return filePath.endsWith(".py");
   return /\.(ts|tsx|js|jsx)$/.test(filePath);
-}
-
-/**
- * Check if a file is a noise file that should never be flagged for conventions.
- * Declaration files, JSON, YAML, etc. are not applicable.
- */
-function isNoiseFile(filePath: string): boolean {
-  return /\.(d\.ts|json|yml|yaml|md|txt|css|scss|html|svg|png|jpg|lock)$/.test(filePath);
 }
 
 // ---------------------------------------------------------------------------

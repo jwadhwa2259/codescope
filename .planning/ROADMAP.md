@@ -146,4 +146,4 @@ Phases execute in numeric order: 17 -> 18 -> 19 -> 20
 | 17. Foundation Fixes | v2.1 | 5/5 | Complete    | 2026-03-30 |
 | 18. Semantic Conventions | v2.1 | 4/1 | Complete    | 2026-03-31 |
 | 19. Intelligence Features | v2.1 | 3/3 | Complete    | 2026-03-31 |
-| 20. Eval DB Fix + Audit Cleanup | v2.1 | 2/2 | Complete   | 2026-03-31 |
+| 20. Eval DB Fix + Audit Cleanup | v2.1 | 2/2 | Complete    | 2026-03-31 |
