@@ -1,10 +1,11 @@
 # CodeScope Codebase Audit Report
 
-**Date:** 2026-03-29 (updated post-remediation)
+**Date:** 2026-03-31 (updated post-remediation)
+**Previous Audit:** 2026-03-29 (all findings remediated)
 **Project:** CodeScope v0.1.0
-**Tech Stack:** TypeScript, Node.js 22+, MCP SDK, better-sqlite3, graphology, web-tree-sitter, Hono
-**Total Source Files:** 163 (src/) + 114 test files
-**Lines of Code:** ~483K (including tests and config)
+**Tech Stack:** TypeScript 5.9, Node.js >=22, MCP SDK 1.27.1, better-sqlite3, web-tree-sitter 0.25.10, graphology, Hono
+**Source Files:** 178 (`src/`) + 129 test files
+**Lines of Code:** ~800K total
 
 ---
 
@@ -14,22 +15,23 @@
 |----------|-------|--------|
 | CRITICAL | 0 | - |
 | HIGH | ~~1~~ 0 | Fixed |
-| MEDIUM | ~~1~~ 0 | Fixed |
-| LOW | ~~2~~ 0 | Fixed |
+| MEDIUM | ~~5~~ 0 | Fixed |
+| LOW | 0 | - |
+| **Total** | **0** | **All remediated** |
 
-**Health Score: 100/100 (A)** _(was 85/B before remediation)_
+**Health Score: 100 / 100 (Grade A)** _(was 75/C before remediation)_
 
 **All findings remediated.**
 
-**Remediated (quick task 260329-fkb):**
-- ~~`src/tools/review.ts` god file (736 lines, 8 responsibilities)~~ -- split into 8 focused modules under `src/tools/review/` (`bb315a5`)
+**Remediated (quick task 260331-8m5):**
+- ~~`path-to-regexp` ReDoS vulnerability~~ -- patched via `npm audit fix` (`de71760`)
+- ~~`src/dashboard/client/panels/graph.ts` god file (542-line function)~~ -- decomposed into 5 helpers (`d26ca90`)
+- ~~`src/dashboard/client/panels/heatmap.ts` god file (481-line function)~~ -- decomposed into 4 helpers (`d26ca90`)
+- ~~`src/dashboard/client/panels/blast-radius.ts` god file (480-line function)~~ -- decomposed into 3 helpers (`c4def75`)
+- ~~`src/dashboard/client/panels/trends.ts` god file (461-line function)~~ -- decomposed into 4 helpers (`c4def75`)
+- ~~`src/dashboard/client/panels/command.ts` god file (452-line function)~~ -- decomposed into 4 helpers (`c4def75`)
 
-**Remediated (quick task 260329-f32):**
-- ~~Unbounded `SELECT *` query in dashboard readiness API~~ -- LIMIT 100 added (`911f5e7`)
-- ~~Excessive `any` type usage in command.ts~~ -- typed interfaces + `catch (err: unknown)` (`9917ba4`)
-- ~~Excessive `any`/`as any` in blast-radius.ts~~ -- WeakMap SVG cleanup + `catch (err: unknown)` (`9917ba4`)
-
-**Overall Assessment:** The codebase is well-structured with strong fundamentals. All audit findings have been remediated. No security vulnerabilities. Parameterized queries used consistently, no hardcoded secrets, no injection vectors. Test coverage ratio is excellent (114 test files for 163 source files). No TS suppressions (@ts-ignore etc.) anywhere.
+**Overall Assessment:** The codebase is well-structured with strong fundamentals. All audit findings from both 2026-03-29 and 2026-03-31 scans have been remediated. Zero security vulnerabilities. Parameterized queries used consistently, no hardcoded secrets, no injection vectors. Test coverage ratio is excellent (129 test files for 178 source files). No TS suppressions (@ts-ignore etc.) anywhere. `npm audit` reports 0 vulnerabilities.
 
 ---
 
@@ -39,124 +41,161 @@
 - **Language:** TypeScript 5.9, ESM modules
 - **Database:** better-sqlite3 (synchronous, local)
 - **Build:** tsdown (Rolldown-powered)
-- **Test:** vitest 4.1
-- **Key modules:** bootstrap, orient, execution, verify, eval, tools (11 MCP tools), dashboard (sigma.js visualization), CLI
-- **Directory count:** 50+ well-organized directories under src/
-- **Dependencies:** 191 prod, 331 dev, 521 total
+- **Test:** vitest 4.1.0
+- **Key modules:** bootstrap, orient, execution, verify, eval, tools (11 MCP tools), dashboard (sigma.js visualization), CLI, agents, parser, learning, enforcement, conventions
+- **25 well-organized modules** under `src/`
+- **No `.env` files** committed to git
 
 ---
 
 ## Phase 2: Security Scan
 
 ### 2.1 Hardcoded Secrets
-**Result: CLEAN** - No hardcoded API keys, passwords, or tokens found.
+**CLEAN** -- No hardcoded API keys, passwords, or tokens found.
 
 ### 2.2 Injection Vulnerabilities
-**Result: CLEAN**
-
-- **SQL:** All database access uses better-sqlite3's parameterized API (`db.prepare().get/all/run()` with `?` placeholders). Static DDL in migration.ts uses `db.exec()` with hardcoded SQL strings only.
-- **Command Injection:** `spawn("sh", ["-c", command])` in `src/verify/server-lifecycle.ts:80` uses a command from `config.start_command` (user's own codescope config file), not untrusted input. `execFileSync` calls in `src/tools/review.ts` use array-form arguments with input validation (branch name regex at line 191).
-- **XSS:** No `dangerouslySetInnerHTML` or `v-html`. The `innerHTML` assignments in dashboard panels use internal graph data (from SQLite), not untrusted user input.
-- **Prompt Injection:** No LLM prompt construction with unsanitized user input.
+**CLEAN**
+- All database access uses parameterized queries (`db.prepare().get/all/run()` with `?` placeholders)
+- Static DDL in `migration.ts` uses `db.exec()` with hardcoded SQL strings only
+- `spawn("sh", ["-c", command])` in `src/verify/server-lifecycle.ts:80` receives command from internal project config, not untrusted input
+- No XSS vectors (`dangerouslySetInnerHTML`, `.innerHTML = userInput`)
+- No `eval()` with dynamic input
 
 ### 2.3 Authentication & Authorization
-N/A - Local CLI tool with stdio MCP transport. No HTTP auth surface.
+N/A -- Local CLI tool with stdio MCP transport. No HTTP auth surface.
 
-### 2.4 Dependency Vulnerabilities
-- `path-to-regexp@8.3.0` (HIGH severity, ReDoS via sequential optional groups) - transitive dependency of `@modelcontextprotocol/sdk` -> `express` -> `router`. CodeScope uses `StdioServerTransport` (not HTTP/SSE), so this vulnerability is **not exploitable** in production. Fix available via `npm audit fix`.
+### 2.4 ~~Dependency Vulnerabilities~~ FIXED (`de71760`)
+
+| # | Severity | Package | Issue | Status |
+|---|----------|---------|-------|--------|
+| 1 | ~~**HIGH**~~ | `path-to-regexp` (transitive via Hono) | Two ReDoS vulnerabilities: [GHSA-j3q9-mxjg-w52f](https://github.com/advisories/GHSA-j3q9-mxjg-w52f), [GHSA-27v5-c462-wpq7](https://github.com/advisories/GHSA-27v5-c462-wpq7) | **FIXED** -- `npm audit fix` applied, 0 vulnerabilities remaining |
 
 ### 2.5 Sensitive Data Handling
-**Result: CLEAN** - No passwords, tokens, or PII found in console.log/logger output.
+**CLEAN** -- No passwords, tokens, or PII in log output.
 
 ---
 
 ## Phase 3: Code Structure Analysis
 
-### ~~Finding 1: God File~~ FIXED (`bb315a5`)
+### ~~God Files~~ FIXED (`d26ca90`, `c4def75`)
 
-| | |
-|---|---|
-| **Severity** | ~~HIGH~~ FIXED |
-| **Category** | God File |
-| **File** | ~~`src/tools/review.ts:1-736`~~ → `src/tools/review/` (8 modules) |
+All five dashboard panel god files have been decomposed into focused helper functions. Each file retains exactly 1 export (`render*Panel`), with all helpers as module-private functions.
 
-**Resolution:** 736-line monolith split into 8 focused modules:
-```
-src/tools/review/
-  types.ts             # Shared types (DbHandle, ParsedConvention, DiffResolution, DiffError)
-  diff-resolver.ts     # resolveDiff, parseFilesFromDiff, getWorkingDirChanges, detectDefaultBranch
-  convention-parser.ts # parseConventions
-  graph-queries.ts     # getFileCommunities, getEdgesForFiles, getNodeIdsForFiles
-  cycle-detector.ts    # detectCycles
-  handler.ts           # handleReview (262 lines — largest module)
-  register.ts          # registerReviewTool
-  index.ts             # Barrel re-exports
-```
-All 14 review tests pass. All 1179 tests in full suite pass. 3 consumer import paths updated to explicit `./review/index.js`.
+| # | Severity | File | Helpers Extracted | Status |
+|---|----------|------|-------------------|--------|
+| 2 | ~~**MEDIUM**~~ | `src/dashboard/client/panels/graph.ts` | 5 helpers: buildGraphDom, initSigmaRenderer, setupForceAtlasLayout, bindGraphInteractions, subscribeGraphUpdates | **FIXED** |
+| 3 | ~~**MEDIUM**~~ | `src/dashboard/client/panels/heatmap.ts` | 4 helpers: buildHeatmapDom, renderHeatmapCells, bindSortControls, showCellTooltip | **FIXED** |
+| 4 | ~~**MEDIUM**~~ | `src/dashboard/client/panels/blast-radius.ts` | 3 helpers: buildBlastRadiusDom, fetchAndRenderDiff, renderImpactGraph | **FIXED** |
+| 5 | ~~**MEDIUM**~~ | `src/dashboard/client/panels/trends.ts` | 4 helpers: buildTrendsDom, transformTrendData, renderTrendChart, subscribeTrendUpdates | **FIXED** |
+| 6 | ~~**MEDIUM**~~ | `src/dashboard/client/panels/command.ts` | 4 helpers: buildTerminalDom, parseCommandInput, executeTerminalCommand, formatCommandResult | **FIXED** |
+
+All 1158 baseline tests pass after refactoring (verified via `npx vitest run`).
+
+### Dead Code
+**No issues found.** 505 exported symbols across 178 files -- proportional and well-consumed.
+
+### Duplication
+13 files named `types.ts` across different modules -- expected pattern (module-local type definitions).
+
+### Deep Nesting
+**No issues found.** Only 2 instances of moderate nesting in `src/onboard/detect.ts`, below the 5-level threshold.
 
 ---
 
 ## Phase 4: Performance Scan
 
-### ~~Finding 2: Unbounded Query~~ FIXED (`911f5e7`)
+### Database Performance
+**No issues found.**
+- Parameterized queries used consistently
+- No N+1 query patterns detected
+- Internal `.all()` calls in `src/artifacts/` and `src/graph/` are bounded by knowledge graph size
+- Dashboard API queries include `LIMIT` clauses (e.g., `readiness.ts:59` uses `LIMIT 100`)
 
-| | |
-|---|---|
-| **Severity** | ~~MEDIUM~~ FIXED |
-| **Category** | Unbounded Query |
-| **File** | `src/dashboard/api/readiness.ts:57` |
+### Frontend Performance
+N/A -- Dashboard is a developer tool. Static imports of sigma.js and graphology are appropriate.
 
-**What:** Query now includes `LIMIT 100`, capping response at the 100 most recent snapshots.
-
-**Resolution:** Added `LIMIT 100` to `SELECT * FROM readiness_history ORDER BY timestamp ASC`.
+### API Response Performance
+No unbounded API responses found.
 
 ---
 
 ## Phase 5: Reliability Check
 
-### ~~Finding 3: Type Safety - command.ts~~ FIXED (`9917ba4`)
+### Error Handling
+**No issues found.**
+- No empty catch blocks in `src/`
+- MCP tool handlers use consistent `errorResponse()` / `okResponse()` helpers
+- `tree.delete()` properly called in `finally` blocks (`src/parser/extract.ts:767`)
 
-| | |
-|---|---|
-| **Severity** | ~~LOW~~ FIXED |
-| **Category** | Type Safety |
-| **File** | `src/dashboard/client/panels/command.ts` |
+### Type Safety
+**Excellent.** Only **12 `any` usages** across all 178 source files. No file has 3+ instances. Zero `@ts-ignore`, `@ts-expect-error`, or `@ts-nocheck` directives.
 
-**Resolution:** All 4 `any` instances eliminated:
-- `catch (err: any)` → `catch (err: unknown)` with `instanceof Error` narrowing (2 sites)
-- `result: any` → `ReviewApiResponse` and `ImpactApiResponse` typed interfaces (imported from `api-client.ts`)
+### Test Coverage
+- **129 test files** for 178 source files (72% ratio)
+- Broad coverage: tools, bootstrap, orient, verify, eval, graph, parser, hooks, conventions, CLI, agents, dashboard, resolver, learning, enforcement, session, execution, classifier, skills, debug
+- vitest 4.1.0 configured
 
-### ~~Finding 4: Type Safety - blast-radius.ts~~ FIXED (`9917ba4`)
-
-| | |
-|---|---|
-| **Severity** | ~~LOW~~ FIXED |
-| **Category** | Type Safety |
-| **File** | `src/dashboard/client/panels/blast-radius.ts` |
-
-**Resolution:** All 4 `any`/`as any` instances eliminated:
-- `catch (err: any)` → `catch (err: unknown)` with `instanceof Error` narrowing
-- `(svg as any).__cleanupZoom` → `WeakMap<SVGElement, () => void>` pattern (3 sites)
+### Logging & Observability
+- 58 `console.log/debug/info` calls in `src/` -- appropriate for a CLI tool
+- No structured logging framework -- acceptable for a local-only plugin
 
 ---
 
-## Findings Not Reported (Verified False Positives)
+## Verified False Positives (Not Reported)
 
-- **`db.exec()` in migration.ts:** Static SQL strings only, no user input interpolation
-- **`spawn("sh", ["-c", command])` in server-lifecycle.ts:** Command sourced from user's own config file, not untrusted input
-- **`execFileSync` calls in review.ts:** Uses array-form arguments with branch name validation regex
-- **`readFileSync` in MCP tool handlers:** MCP uses stdio transport (single-threaded), sync reads don't block concurrent requests
-- **`appendFileSync` in orchestrator.ts:** Used for event logging in non-request context, explicitly documented as "not critical path"
+- **`db.exec()` in migration.ts:** Static SQL strings, no user input interpolation
+- **`spawn("sh", ["-c", command])` in server-lifecycle.ts:** Command from internal config, not untrusted input
+- **`readFileSync` in MCP tool handlers:** Stdio transport is single-threaded; sync reads don't block concurrent requests
 - **`innerHTML` in dashboard panels:** Internal graph data from SQLite, not untrusted user input
-- **console.log usage (58 instances):** Concentrated in CLI command files (init, status, review) -- appropriate for a CLI tool
-- **path-to-regexp vulnerability:** Transitive dep, CodeScope uses stdio transport not HTTP express
+- **console.log (58 instances):** CLI tool -- console output is the expected interface
+- **13 duplicate `types.ts` filenames:** Module-local types, not copy-paste duplication
 
 ---
 
 ## Quick Wins
 
-1. ~~**Add LIMIT to readiness history query**~~ -- DONE (`911f5e7`)
-2. ~~**Replace `catch (err: any)` with `catch (err: unknown)`**~~ -- DONE (`9917ba4`)
-3. ~~**Define result interfaces for dashboard callbacks**~~ -- DONE (`9917ba4`)
-4. ~~**Use WeakMap for SVG cleanup**~~ -- DONE (`9917ba4`)
-5. ~~**Extract diff resolution from review.ts**~~ -- DONE (`bb315a5`) — full god file refactor into 8 modules
+All quick wins have been completed:
+
+1. ~~Run `npm audit fix` to patch `path-to-regexp`~~ -- DONE (`de71760`)
+2. ~~Extract `renderGraphPanel` into 5 sub-functions~~ -- DONE (`d26ca90`)
+3. ~~Extract `renderHeatmapPanel` into 4 sub-functions~~ -- DONE (`d26ca90`)
+4. ~~Extract `renderBlastRadiusPanel` into 3 sub-functions~~ -- DONE (`c4def75`)
+5. ~~Extract `renderTrendsPanel` + `renderCommandPanel`~~ -- DONE (`c4def75`)
+
+---
+
+## What's Working Well
+
+This codebase is notably clean for its size and complexity:
+
+- **Zero security vulnerabilities** -- both first-party code and dependency tree are clean
+- **Exceptional type safety** -- 12 `any` across 178 source files, zero TS suppressions
+- **Strong test coverage** -- 129 test files with broad module coverage (72% ratio)
+- **Proper memory management** -- tree-sitter cleanup in `finally` blocks
+- **Clean architecture** -- 25 focused modules with clear separation of concerns
+- **All audit findings fully remediated** -- across two audit cycles (2026-03-29 and 2026-03-31)
+- **No dead code, no empty catch blocks, no deep nesting**
+- **Dependency management** -- appropriate version pinning (web-tree-sitter 0.25.10, not 0.26.x)
+- **Dashboard panels now well-structured** -- each panel uses focused helper functions instead of monolithic render functions
+
+---
+
+## Outdated Dependencies (Informational)
+
+| Package | Current | Latest | Notes |
+|---------|---------|--------|-------|
+| `@modelcontextprotocol/sdk` | 1.27.1 | 1.29.0 | Minor update, safe |
+| `tsdown` | 0.21.4 | 0.21.7 | Patch update |
+| `typescript` | 5.9.3 | 6.0.2 | Major -- evaluate before upgrading |
+| `vitest` | 4.1.0 | 4.1.2 | Patch update |
+| `web-tree-sitter` | 0.25.10 | 0.26.7 | **DO NOT upgrade** -- 0.26.x breaks WASM ABI |
+| `zod` | 3.25.76 | 4.3.6 | Major -- wait for MCP SDK v2 |
+
+---
+
+## Remediation History
+
+| Date | Audit | Findings | Remediated | Commits |
+|------|-------|----------|------------|---------|
+| 2026-03-29 | Initial | 4 (1 HIGH, 1 MEDIUM, 2 LOW) | 4/4 | `bb315a5`, `911f5e7`, `9917ba4` |
+| 2026-03-31 | Follow-up | 6 (1 HIGH, 5 MEDIUM) | 6/6 | `de71760`, `d26ca90`, `c4def75` |
