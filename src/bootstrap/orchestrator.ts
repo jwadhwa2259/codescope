@@ -12,6 +12,7 @@ import { readBootstrapMeta, writeBootstrapMeta } from "./meta.js";
 import { invalidateCache } from "../graph/cache.js";
 import { loadConfig } from "../config/loader.js";
 import { getCodescopePath, getGraphDbPath } from "../utils/paths.js";
+import { buildGraph, type BuildGraphResult } from "../graph/builder.js";
 import { storeReadinessSnapshot } from "../graph/readiness-history.js";
 import { openDatabase, closeDatabase } from "../graph/database.js";
 import { generateInjectionArtifacts } from "../artifacts/generator.js";
@@ -370,7 +371,25 @@ export async function runBootstrap(
     }
   }
 
-  // ---- Step 5: Per-service analysis squads ----
+  // ---- Step 5 (monorepo only): Root-level graph build ----
+  let rootGraphResult: BuildGraphResult | undefined;
+  if (scoutResult.projectType === "monorepo") {
+    progress("## Building root-level import graph...");
+    emitEvent(projectRoot, { type: "bootstrap:progress", stage: "Building root graph", percentage: 20 });
+    const graphStartMs = Date.now();
+    rootGraphResult = await buildGraph({
+      projectRoot,
+      dbPath: getGraphDbPath(projectRoot),
+      batchDir: path.join(codescopeDir, "batch"),
+      workspaceAliases,
+    });
+    timingBreakdown["graph:root"] = Date.now() - graphStartMs;
+    progress(
+      `- [x] Root graph built (${rootGraphResult.nodesCreated} nodes, ${rootGraphResult.edgesCreated} edges, ${((Date.now() - graphStartMs) / 1000).toFixed(1)}s)`,
+    );
+  }
+
+  // ---- Step 5b: Per-service analysis squads ----
   const serviceResults: Array<{
     name: string;
     status: "full" | "lightweight";
@@ -429,6 +448,19 @@ export async function runBootstrap(
       projectRoot: servicePath,
       outputDir: serviceOutputDir,
       workspaceAliases,
+      // Monorepo: use root-level prebuilt graph instead of building per-service
+      ...(scoutResult.projectType === "monorepo" && rootGraphResult
+        ? {
+            prebuiltDbPath: getGraphDbPath(projectRoot),
+            prebuiltResult: {
+              filesProcessed: rootGraphResult.filesProcessed,
+              nodesCreated: rootGraphResult.nodesCreated,
+              edgesCreated: rootGraphResult.edgesCreated,
+              errors: rootGraphResult.errors,
+              totalImports: rootGraphResult.totalImports,
+            },
+          }
+        : {}),
     });
     timingBreakdown[`risk-analyzer:${service.name}`] =
       Date.now() - riskStartMs;
@@ -460,33 +492,8 @@ export async function runBootstrap(
     });
   }
 
-  // ---- Step 5b: Merge per-service graphs into root DB (R1) ----
-  if (servicesToAnalyze.length > 1) {
-    progress("## Merging per-service graphs into root...");
-    const rootDbPath = getGraphDbPath(projectRoot);
-    const rootDb = openDatabase(rootDbPath);
-    try {
-      createSchema(rootDb);
-      for (const service of servicesToAnalyze) {
-        const rawServicePath = path.resolve(projectRoot, service.path);
-        let servicePath: string;
-        try {
-          servicePath = fs.realpathSync(rawServicePath);
-        } catch {
-          servicePath = rawServicePath;
-        }
-        const serviceDbPath = getGraphDbPath(servicePath);
-        // Skip if service DB IS the root DB (path "." resolves to root)
-        if (path.resolve(serviceDbPath) === path.resolve(rootDbPath)) continue;
-        // Skip if service DB doesn't exist
-        if (!fs.existsSync(serviceDbPath)) continue;
-        mergeServiceGraph(rootDb, serviceDbPath, service.path);
-        progress(`- [x] Merged graph: ${service.name}`);
-      }
-    } finally {
-      closeDatabase(rootDb);
-    }
-  }
+  // NOTE: Per-service graph merging (old Step 5b) removed — monorepos now build
+  // a single root-level graph. mergeServiceGraph remains exported for external use.
 
   // Add lightweight services to results
   for (const service of lightweightServices) {
@@ -600,17 +607,19 @@ export async function runBootstrap(
   highConfidenceConventions = Math.min(highConfidenceConventions, totalSourceFiles);
 
   // edgesCreated IS the resolved import count (edges only created when resolved)
-  const totalEdgesAll = serviceResults.reduce(
-    (sum, s) => sum + s.edgesCreated,
-    0,
-  );
+  // For monorepos, use root graph result directly; for single projects, sum per-service
+  const totalEdgesAll = rootGraphResult
+    ? rootGraphResult.edgesCreated
+    : serviceResults.reduce((sum, s) => sum + s.edgesCreated, 0);
   const resolvedImports = totalEdgesAll;
 
   // R5 FIX: totalImports from AST count, not from resolved edges
-  const totalImportStatements = serviceResults.reduce(
-    (sum, s) => sum + (s.totalImports ?? s.edgesCreated),
-    0,
-  );
+  const totalImportStatements = rootGraphResult
+    ? rootGraphResult.totalImports
+    : serviceResults.reduce(
+        (sum, s) => sum + (s.totalImports ?? s.edgesCreated),
+        0,
+      );
 
   // CRITICAL warning when 0 edges produced from a non-trivial number of files
   if (totalEdgesAll === 0 && totalSourceFiles > 5) {
@@ -720,14 +729,13 @@ export async function runBootstrap(
   }
 
   // ---- Step 12: Aggregate results ----
-  const totalNodes = serviceResults.reduce(
-    (sum, s) => sum + s.nodesCreated,
-    0,
-  );
-  const totalEdges = serviceResults.reduce(
-    (sum, s) => sum + s.edgesCreated,
-    0,
-  );
+  // For monorepos, use root graph result for node/edge counts; communities still from per-service analytics
+  const totalNodes = rootGraphResult
+    ? rootGraphResult.nodesCreated
+    : serviceResults.reduce((sum, s) => sum + s.nodesCreated, 0);
+  const totalEdges = rootGraphResult
+    ? rootGraphResult.edgesCreated
+    : serviceResults.reduce((sum, s) => sum + s.edgesCreated, 0);
   const totalCommunities = serviceResults.reduce(
     (sum, s) => sum + s.communitiesDetected,
     0,

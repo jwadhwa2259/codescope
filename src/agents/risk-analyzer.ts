@@ -25,6 +25,14 @@ export interface RiskAnalyzerOptions {
   dbPath?: string; // optional: override default graph.db path
   batchDir?: string; // optional: override default batch dir
   workspaceAliases?: Record<string, string>; // workspace package name -> resolved path
+  prebuiltDbPath?: string; // optional: path to a prebuilt graph DB (skips buildGraph when set)
+  prebuiltResult?: {
+    filesProcessed: number;
+    nodesCreated: number;
+    edgesCreated: number;
+    errors: string[];
+    totalImports: number;
+  }; // optional: build stats from the prebuilt graph (avoids re-counting)
 }
 
 export interface RiskAnalyzerResult {
@@ -51,25 +59,46 @@ export async function runRiskAnalyzer(
 ): Promise<RiskAnalyzerResult> {
   const startTime = Date.now();
 
-  // Resolve paths
-  const dbPath = options.dbPath ?? getGraphDbPath(options.projectRoot);
-  const batchDir =
-    options.batchDir ??
-    path.join(getCodescopePath(options.projectRoot), "batch");
-
   // Ensure output directory exists
   fs.mkdirSync(options.outputDir, { recursive: true });
 
-  // Step 1: Build the knowledge graph (per D-17)
-  const buildResult = await buildGraph({
-    projectRoot: options.projectRoot,
-    dbPath,
-    batchDir,
-    ...(options.workspaceAliases &&
-      Object.keys(options.workspaceAliases).length > 0 && {
-        workspaceAliases: options.workspaceAliases,
-      }),
-  });
+  // Step 1: Build the knowledge graph (per D-17), or use prebuilt graph
+  let dbPath: string;
+  let buildResult: {
+    filesProcessed: number;
+    nodesCreated: number;
+    edgesCreated: number;
+    errors: string[];
+    totalImports: number;
+  };
+
+  if (options.prebuiltDbPath && fs.existsSync(options.prebuiltDbPath)) {
+    // Use prebuilt graph DB (monorepo root-level build) — skip buildGraph
+    dbPath = options.prebuiltDbPath;
+    buildResult = options.prebuiltResult ?? {
+      filesProcessed: 0,
+      nodesCreated: 0,
+      edgesCreated: 0,
+      errors: [],
+      totalImports: 0,
+    };
+  } else {
+    // Build graph per-service (single-project flow)
+    dbPath = options.dbPath ?? getGraphDbPath(options.projectRoot);
+    const batchDir =
+      options.batchDir ??
+      path.join(getCodescopePath(options.projectRoot), "batch");
+
+    buildResult = await buildGraph({
+      projectRoot: options.projectRoot,
+      dbPath,
+      batchDir,
+      ...(options.workspaceAliases &&
+        Object.keys(options.workspaceAliases).length > 0 && {
+          workspaceAliases: options.workspaceAliases,
+        }),
+    });
+  }
 
   // Step 2: Run analytics (per D-15, D-19: load on demand, run, write back, discard)
   // Declare variables BEFORE try block so they remain accessible for markdown generation
