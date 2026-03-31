@@ -3,21 +3,63 @@
  *
  * Identifies per-file HIGH-CONF convention deviations. For each HIGH-CONF
  * convention, files in the graph that do NOT appear in the convention's
- * evidence list get a violation entry.
- *
- * Also checks:
- * - VALID-02: Type name references against known types in the graph
- * - VALID-03: Import paths against resolved targets in the graph
+ * evidence list get a violation entry -- but only if the file's language
+ * matches the convention's language and the file's role is applicable
+ * (test, config, and deprecated files are excluded).
  *
  * Returns a sparse ViolationIndex: files with no violations are omitted.
  * Per D-08, D-09, D-11.
+ *
+ * Note: VALID-02 (wrong type names) and VALID-03 (broken imports) are deferred.
+ * The graph builder drops unresolved imports silently (shared-builder.ts),
+ * so no failed-resolution data exists in the DB to check against.
+ * Type references are not stored in the graph schema.
+ * These checks require parser-level changes to capture failed resolutions
+ * and type reference data, which is out of scope for the violation index builder.
  */
 
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { Database as DatabaseType } from "better-sqlite3";
 import { parseDetectorConventions } from "../conventions/parser.js";
+import { classifyFileRole } from "../classifier/file-role.js";
 import type { ViolationIndex, ViolationEntry } from "./types.js";
+
+// ---------------------------------------------------------------------------
+// Language inference helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Infer the language a convention targets based on its evidence file extensions.
+ */
+function inferConventionLanguage(evidenceFiles: string[]): "typescript" | "python" | "unknown" {
+  const pyCount = evidenceFiles.filter(f => f.endsWith(".py")).length;
+  const tsCount = evidenceFiles.filter(f => /\.(ts|tsx|js|jsx)$/.test(f)).length;
+  if (pyCount > 0 && tsCount === 0) return "python";
+  if (tsCount > 0 && pyCount === 0) return "typescript";
+  return "unknown";
+}
+
+/**
+ * Check if a file's extension matches the convention's inferred language.
+ */
+function isFileLanguageMatch(filePath: string, convLang: "typescript" | "python" | "unknown"): boolean {
+  if (convLang === "unknown") return true;
+  if (convLang === "python") return filePath.endsWith(".py");
+  return /\.(ts|tsx|js|jsx)$/.test(filePath);
+}
+
+/**
+ * Check if a file is a noise file that should never be flagged for conventions.
+ * Declaration files, JSON, YAML, etc. are not applicable.
+ */
+function isNoiseFile(filePath: string): boolean {
+  return /\.(d\.ts|json|yml|yaml|md|txt|css|scss|html|svg|png|jpg|lock)$/.test(filePath);
+}
+
+// ---------------------------------------------------------------------------
+// Main builder
+// ---------------------------------------------------------------------------
 
 /**
  * Build violation index from conventions and the knowledge graph.
@@ -57,15 +99,24 @@ export function buildViolationIndex(
       .all() as Array<{ file_path: string }>
   ).map((r) => r.file_path);
 
-  const graphFileSet = new Set(graphFiles);
-
   // For each HIGH-CONF convention, find files that don't follow it
   for (const conv of highConfConventions) {
     const followingFiles = new Set(conv.files);
+    const convLanguage = inferConventionLanguage(conv.files);
 
     // Files in the graph that are NOT in the convention's evidence
     for (const filePath of graphFiles) {
       if (followingFiles.has(filePath)) continue;
+
+      // Noise filter: skip non-code files
+      if (isNoiseFile(filePath)) continue;
+
+      // Language filter: skip files that don't match convention's language
+      if (!isFileLanguageMatch(filePath, convLanguage)) continue;
+
+      // Role filter: skip test, config, and deprecated files
+      const { role } = classifyFileRole(filePath);
+      if (role === "test" || role === "config" || role === "deprecated") continue;
 
       // This file doesn't follow this HIGH-CONF convention
       const entry: ViolationEntry = {
@@ -79,50 +130,6 @@ export function buildViolationIndex(
         files[filePath] = [];
       }
       files[filePath].push(entry);
-    }
-  }
-
-  // VALID-02: Type name checking
-  // Get known type/interface names from the graph
-  const knownTypes = new Set(
-    (
-      db
-        .prepare(
-          "SELECT DISTINCT name FROM nodes WHERE kind IN ('type', 'interface')",
-        )
-        .all() as Array<{ name: string }>
-    ).map((r) => r.name),
-  );
-
-  // VALID-03: Import path checking
-  // Get edges with resolved import targets; check that target files exist in graph
-  const importEdges = db
-    .prepare(
-      `SELECT n1.file_path as source_file, n2.file_path as target_file
-       FROM edges e
-       JOIN nodes n1 ON e.source_id = n1.id
-       JOIN nodes n2 ON e.target_id = n2.id
-       WHERE e.kind = 'imports'
-         AND n1.kind = 'file'
-         AND n2.kind = 'file'`,
-    )
-    .all() as Array<{ source_file: string; target_file: string }>;
-
-  // Check for import edges where target is not in the graph's file set
-  // (This catches edges to files that were since deleted or renamed)
-  for (const edge of importEdges) {
-    if (!graphFileSet.has(edge.target_file)) {
-      const entry: ViolationEntry = {
-        ruleId: "import-path-validity",
-        detected: `Import target not found: ${edge.target_file}`,
-        expected: "Import should resolve to an existing file",
-        line: 0,
-      };
-
-      if (!files[edge.source_file]) {
-        files[edge.source_file] = [];
-      }
-      files[edge.source_file].push(entry);
     }
   }
 
