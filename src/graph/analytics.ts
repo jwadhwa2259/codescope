@@ -91,6 +91,22 @@ export function loadGraphFromSQLite(db: DatabaseType): DirectedGraph {
     }
   }
 
+  // Load community assignments (R6)
+  try {
+    const communities = db
+      .prepare("SELECT node_id, community_id FROM communities")
+      .all() as Array<{ node_id: number; community_id: number }>;
+
+    for (const comm of communities) {
+      const nodeId = String(comm.node_id);
+      if (graph.hasNode(nodeId)) {
+        graph.setNodeAttribute(nodeId, "community", comm.community_id);
+      }
+    }
+  } catch {
+    // communities table may not exist in older DBs -- skip gracefully
+  }
+
   return graph;
 }
 

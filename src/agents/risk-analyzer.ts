@@ -24,6 +24,7 @@ export interface RiskAnalyzerOptions {
   outputDir: string; // where to write danger-zones.md
   dbPath?: string; // optional: override default graph.db path
   batchDir?: string; // optional: override default batch dir
+  workspaceAliases?: Record<string, string>; // workspace package name -> resolved path
 }
 
 export interface RiskAnalyzerResult {
@@ -63,6 +64,10 @@ export async function runRiskAnalyzer(
     projectRoot: options.projectRoot,
     dbPath,
     batchDir,
+    ...(options.workspaceAliases &&
+      Object.keys(options.workspaceAliases).length > 0 && {
+        workspaceAliases: options.workspaceAliases,
+      }),
   });
 
   // Step 2: Run analytics (per D-15, D-19: load on demand, run, write back, discard)
