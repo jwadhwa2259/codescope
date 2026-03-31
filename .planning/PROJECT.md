@@ -146,4 +146,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-31 after Phase 19 complete — v2.1 milestone fully executed*
+*Last updated: 2026-03-31 after Phase 20 complete — eval DB fix, ViolationEntry.ruleId fix, VALID-02/VALID-03 moved to Out of Scope*
