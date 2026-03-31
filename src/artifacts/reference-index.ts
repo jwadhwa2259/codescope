@@ -144,7 +144,7 @@ export function buildReferenceIndex(
        FROM edges e
        JOIN nodes n1 ON e.source_id = n1.id
        JOIN nodes n2 ON e.target_id = n2.id
-       WHERE e.kind = 'imports'`,
+       WHERE e.kind = 'IMPORTS'`,
     )
     .all() as Array<{ source_path: string; target_path: string }>;
 

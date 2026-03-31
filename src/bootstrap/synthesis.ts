@@ -3,6 +3,7 @@ import * as path from "node:path";
 import { loadGraphFromSQLite } from "../graph/analytics.js";
 import { openDatabase, closeDatabase } from "../graph/database.js";
 import { getGraphDbPath } from "../utils/paths.js";
+import { parseDetectorConventions } from "../conventions/parser.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -195,15 +196,10 @@ function detectCrossServiceEdges(
 // Convention merging per D-10
 // ---------------------------------------------------------------------------
 
-interface ParsedConvention {
-  name: string;
-  adoption: number;
-  confidence: string;
-}
-
 /**
  * Reads per-service conventions.md files and merges them with
- * per-service adoption tags.
+ * per-service adoption tags. Uses the canonical parseDetectorConventions
+ * parser to handle h3+table format written by the convention detector.
  */
 function mergeConventions(
   outputDir: string,
@@ -221,14 +217,14 @@ function mergeConventions(
     if (!fs.existsSync(convPath)) continue;
 
     const content = fs.readFileSync(convPath, "utf-8");
-    const conventions = parseConventionsMd(content);
+    const parsed = parseDetectorConventions(content);
 
-    for (const conv of conventions) {
+    for (const conv of parsed) {
       const existing = allConventions.get(conv.name);
       if (existing) {
-        existing[service.name] = conv.adoption;
+        existing[service.name] = conv.adoption_pct;
       } else {
-        allConventions.set(conv.name, { [service.name]: conv.adoption });
+        allConventions.set(conv.name, { [service.name]: conv.adoption_pct });
       }
     }
   }
@@ -237,63 +233,6 @@ function mergeConventions(
     name,
     adoption,
   }));
-}
-
-/**
- * Simple parser for conventions.md format.
- * Extracts convention name and adoption percentage.
- */
-function parseConventionsMd(content: string): ParsedConvention[] {
-  const conventions: ParsedConvention[] = [];
-  const lines = content.split("\n");
-
-  let currentName: string | null = null;
-  let currentAdoption = 0;
-  let currentConfidence = "";
-
-  for (const line of lines) {
-    // Convention heading: ## name
-    const headingMatch = line.match(/^##\s+(.+)/);
-    if (headingMatch) {
-      // Save previous convention
-      if (currentName && currentName !== "Conventions") {
-        conventions.push({
-          name: currentName,
-          adoption: currentAdoption,
-          confidence: currentConfidence,
-        });
-      }
-      currentName = headingMatch[1].trim();
-      currentAdoption = 0;
-      currentConfidence = "";
-      continue;
-    }
-
-    // Adoption line: - Adoption: N%
-    const adoptionMatch = line.match(/Adoption:\s*(\d+)/);
-    if (adoptionMatch) {
-      currentAdoption = parseInt(adoptionMatch[1], 10);
-      continue;
-    }
-
-    // Confidence line: - Confidence: HIGH-CONF
-    const confMatch = line.match(/Confidence:\s*([\w-]+)/);
-    if (confMatch) {
-      currentConfidence = confMatch[1];
-      continue;
-    }
-  }
-
-  // Save last convention
-  if (currentName && currentName !== "Conventions") {
-    conventions.push({
-      name: currentName,
-      adoption: currentAdoption,
-      confidence: currentConfidence,
-    });
-  }
-
-  return conventions;
 }
 
 // ---------------------------------------------------------------------------
