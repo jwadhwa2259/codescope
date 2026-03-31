@@ -272,4 +272,127 @@ describe("buildViolationIndex", () => {
       }
     }
   });
+
+  // ---- Finding 2: Language and role filtering ----
+
+  it("Python file does NOT get flagged for a TypeScript-only convention", () => {
+    const { db: testDb, csDir } = setupTestDb(projectDir);
+    db = testDb;
+    insertTestNodes(db);
+
+    // Add a Python file node to the graph
+    db.prepare(
+      `INSERT INTO nodes (name, kind, file_path, start_line, end_line, language, loc, is_exported, is_test)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run("deploy.py", "file", "scripts/deploy.py", 1, 30, "python", 30, 0, 0);
+
+    createMixedConfidenceConventions(csDir);
+
+    const result = buildViolationIndex(db, csDir);
+
+    // Python file should NOT be flagged for TS conventions
+    expect(result.files["scripts/deploy.py"]).toBeUndefined();
+  });
+
+  it("test file does NOT get flagged for conventions", () => {
+    const { db: testDb, csDir } = setupTestDb(projectDir);
+    db = testDb;
+    insertTestNodes(db);
+
+    // Add a test file node
+    db.prepare(
+      `INSERT INTO nodes (name, kind, file_path, start_line, end_line, language, loc, is_exported, is_test)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run("helpers.test.ts", "file", "src/utils/helpers.test.ts", 1, 100, "typescript", 100, 0, 1);
+
+    createMixedConfidenceConventions(csDir);
+
+    const result = buildViolationIndex(db, csDir);
+
+    // Test file should NOT be flagged
+    expect(result.files["src/utils/helpers.test.ts"]).toBeUndefined();
+  });
+
+  it("config file does NOT get flagged for conventions", () => {
+    const { db: testDb, csDir } = setupTestDb(projectDir);
+    db = testDb;
+    insertTestNodes(db);
+
+    // Add a config file node
+    db.prepare(
+      `INSERT INTO nodes (name, kind, file_path, start_line, end_line, language, loc, is_exported, is_test)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run("vitest.config.ts", "file", "vitest.config.ts", 1, 20, "typescript", 20, 0, 0);
+
+    createMixedConfidenceConventions(csDir);
+
+    const result = buildViolationIndex(db, csDir);
+
+    // Config file should NOT be flagged
+    expect(result.files["vitest.config.ts"]).toBeUndefined();
+  });
+
+  it("only files matching convention language AND applicable role get violations", () => {
+    const { db: testDb, csDir } = setupTestDb(projectDir);
+    db = testDb;
+    insertTestNodes(db);
+
+    // Add files of various types
+    const insertNode = db.prepare(
+      `INSERT INTO nodes (name, kind, file_path, start_line, end_line, language, loc, is_exported, is_test)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    insertNode.run("deploy.py", "file", "scripts/deploy.py", 1, 30, "python", 30, 0, 0);
+    insertNode.run("helpers.test.ts", "file", "tests/helpers.test.ts", 1, 100, "typescript", 100, 0, 1);
+    insertNode.run("tsconfig.json", "file", "tsconfig.json", 1, 10, "json", 10, 0, 0);
+
+    createMixedConfidenceConventions(csDir);
+
+    const result = buildViolationIndex(db, csDir);
+
+    // None of the added files should be flagged
+    expect(result.files["scripts/deploy.py"]).toBeUndefined();
+    expect(result.files["tests/helpers.test.ts"]).toBeUndefined();
+    expect(result.files["tsconfig.json"]).toBeUndefined();
+
+    // validate.ts (existing TS utility file not in evidence) SHOULD still be flagged
+    expect(result.files["src/utils/validate.ts"]).toBeDefined();
+  });
+
+  // ---- Finding 3: VALID-02/VALID-03 dead code removed ----
+
+  it("does NOT produce import-path-validity violations (VALID-03 removed)", () => {
+    const { db: testDb, csDir } = setupTestDb(projectDir);
+    db = testDb;
+    insertTestNodes(db);
+    insertEdgesWithBrokenImport(db);
+    createMixedConfidenceConventions(csDir);
+
+    const result = buildViolationIndex(db, csDir);
+
+    // No violations should have ruleId "import-path-validity"
+    for (const violations of Object.values(result.files)) {
+      for (const v of violations) {
+        expect(v.ruleId).not.toBe("import-path-validity");
+      }
+    }
+  });
+
+  it("validate.ts still gets violations when applicable but not in evidence", () => {
+    const { db: testDb, csDir } = setupTestDb(projectDir);
+    db = testDb;
+    insertTestNodes(db);
+    createMixedConfidenceConventions(csDir);
+
+    const result = buildViolationIndex(db, csDir);
+
+    // validate.ts is a TS utility file NOT in evidence -- should be flagged
+    expect(result.files["src/utils/validate.ts"]).toBeDefined();
+    const violations = result.files["src/utils/validate.ts"];
+    expect(violations.length).toBeGreaterThan(0);
+
+    const ruleIds = violations.map((v) => v.ruleId);
+    expect(ruleIds).toContain("Typed catch blocks");
+    expect(ruleIds).toContain("Named exports");
+  });
 });
