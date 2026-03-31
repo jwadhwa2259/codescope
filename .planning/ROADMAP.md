@@ -46,7 +46,7 @@ CodeScope is built bottom-up: infrastructure first, then codebase intelligence, 
 
 - [x] **Phase 17: Foundation Fixes** - Fix import graph (ESM + CommonJS), convention index parsing, plugin distribution, readiness scoring, and bootstrap error surfacing (gap closure in progress) (completed 2026-03-30)
 - [x] **Phase 18: Semantic Conventions** - Framework-specific convention detection, file-role classification, and golden file quality filtering (completed 2026-03-31)
-- [ ] **Phase 19: Intelligence Features** - Reference file injection, post-edit convention validation, and the `/codescope:eval` skill
+- [x] **Phase 19: Intelligence Features** - Reference file injection, post-edit convention validation, and the `/codescope:eval` skill (completed 2026-03-31)
 
 ## Phase Details
 
@@ -100,7 +100,7 @@ Plans:
 Plans:
 - [x] 19-01-PLAN.md -- Reference index + violation index artifact builders, type definitions, generator and reader integration
 - [x] 19-02-PLAN.md -- Deterministic scorecard module and /codescope:eval skill
-- [ ] 19-03-PLAN.md -- Hook integration: PreToolUse reference suggestion (P2.5) and PostToolUse validation warnings (P1)
+- [x] 19-03-PLAN.md -- Hook integration: PreToolUse reference suggestion (P2.5) and PostToolUse validation warnings (P1)
 
 ## Progress
 
@@ -127,4 +127,4 @@ Phases execute in numeric order: 17 -> 18 -> 19
 | 16. Tech Debt Closure | v2.0 | 5/5 | Complete | 2026-03-29 |
 | 17. Foundation Fixes | v2.1 | 5/5 | Complete    | 2026-03-30 |
 | 18. Semantic Conventions | v2.1 | 4/1 | Complete    | 2026-03-31 |
-| 19. Intelligence Features | v2.1 | 2/3 | In Progress |  |
+| 19. Intelligence Features | v2.1 | 3/3 | Complete   | 2026-03-31 |

@@ -28,7 +28,7 @@
 ## Reference File Injection
 
 - [x] **REF-01**: MCP tool identifies the most similar existing file when Claude is about to create a new file, using structural similarity (shared imports, community, directory, conventions, LOC)
-- [ ] **REF-02**: PreToolUse hook injects a one-line reference suggestion ("Reference: see `src/utils/session.ts` for this codebase's utility pattern") within the existing token budget
+- [x] **REF-02**: PreToolUse hook injects a one-line reference suggestion ("Reference: see `src/utils/session.ts` for this codebase's utility pattern") within the existing token budget
 - [x] **REF-03**: Reference file suggestion excludes deprecated, generated, and test files
 
 ## Post-Edit Validation
@@ -79,7 +79,7 @@
 | PLUG-02 | Phase 17 | Complete |
 | PLUG-03 | Phase 17 | Complete |
 | REF-01 | Phase 19 | Complete |
-| REF-02 | Phase 19 | Pending |
+| REF-02 | Phase 19 | Complete |
 | REF-03 | Phase 19 | Complete |
 | VALID-01 | Phase 19 | Complete |
 | VALID-02 | Phase 19 | Complete |
