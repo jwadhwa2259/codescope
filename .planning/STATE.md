@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Eval Fixes & Real-World Quality
-status: verifying
-stopped_at: Phase 18 context gathered
-last_updated: "2026-03-30T22:27:09.944Z"
-last_activity: 2026-03-30
+status: executing
+stopped_at: Completed 18-01-PLAN.md
+last_updated: "2026-03-31T00:12:44.629Z"
+last_activity: 2026-03-31
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 9
+  completed_plans: 6
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** AI-generated code changes that respect existing conventions, stay within safe blast radius, and actually work in the codebase -- verified end-to-end before the user sees them.
-**Current focus:** Phase 17 — foundation-fixes
+**Current focus:** Phase 18 — semantic-conventions
 
 ## Current Position
 
-Phase: 18
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-30
+Phase: 18 (semantic-conventions) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-03-31
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -54,6 +54,9 @@ All decisions archived in PROJECT.md Key Decisions table and milestone archives.
 - [Phase 17]: Fallback resolver uses ResolverFactory.createResolver without path aliases when tsconfig missing
 - [Phase 17]: graph.size === 0 check placed after getGraph() and before main logic in all 4 downstream tools
 - [Phase 17]: detect-changes returns risk_level UNKNOWN (not LOW) when graph incomplete per D-02
+- [Phase 18]: Pure data module pattern: rule-metadata.ts has zero imports for build isolation
+- [Phase 18]: 3-tier signal chain: filename (0.95) > path (0.80-0.85) > fallback (0.50) for file classification
+- [Phase 18]: Permissive default: rules not in RULE_ROLE_APPLICABILITY apply to all file roles (D-23)
 
 ### Pending Todos
 
@@ -67,6 +70,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-30T22:27:09.942Z
-Stopped at: Phase 18 context gathered
-Resume file: .planning/phases/18-semantic-conventions/18-CONTEXT.md
+Last session: 2026-03-31T00:12:44.626Z
+Stopped at: Completed 18-01-PLAN.md
+Resume file: None
