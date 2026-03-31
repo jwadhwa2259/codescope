@@ -27,16 +27,16 @@
 
 ## Reference File Injection
 
-- [ ] **REF-01**: MCP tool identifies the most similar existing file when Claude is about to create a new file, using structural similarity (shared imports, community, directory, conventions, LOC)
+- [x] **REF-01**: MCP tool identifies the most similar existing file when Claude is about to create a new file, using structural similarity (shared imports, community, directory, conventions, LOC)
 - [ ] **REF-02**: PreToolUse hook injects a one-line reference suggestion ("Reference: see `src/utils/session.ts` for this codebase's utility pattern") within the existing token budget
-- [ ] **REF-03**: Reference file suggestion excludes deprecated, generated, and test files
+- [x] **REF-03**: Reference file suggestion excludes deprecated, generated, and test files
 
 ## Post-Edit Validation
 
-- [ ] **VALID-01**: PostToolUse hook validates written code against HIGH-CONF conventions and reports deviations as advisory warnings
-- [ ] **VALID-02**: Validation catches wrong type names (e.g., `HTTPEvent` vs `H3Event`) by comparing against types detected in the codebase
-- [ ] **VALID-03**: Validation catches import path errors by checking against the resolved import graph
-- [ ] **VALID-04**: False positive rate below 5% on HIGH-CONF conventions (only validated conventions trigger warnings)
+- [x] **VALID-01**: PostToolUse hook validates written code against HIGH-CONF conventions and reports deviations as advisory warnings
+- [x] **VALID-02**: Validation catches wrong type names (e.g., `HTTPEvent` vs `H3Event`) by comparing against types detected in the codebase
+- [x] **VALID-03**: Validation catches import path errors by checking against the resolved import graph
+- [x] **VALID-04**: False positive rate below 5% on HIGH-CONF conventions (only validated conventions trigger warnings)
 
 ## Eval Skill
 
@@ -78,13 +78,13 @@
 | PLUG-01 | Phase 17 | Complete |
 | PLUG-02 | Phase 17 | Complete |
 | PLUG-03 | Phase 17 | Complete |
-| REF-01 | Phase 19 | Pending |
+| REF-01 | Phase 19 | Complete |
 | REF-02 | Phase 19 | Pending |
-| REF-03 | Phase 19 | Pending |
-| VALID-01 | Phase 19 | Pending |
-| VALID-02 | Phase 19 | Pending |
-| VALID-03 | Phase 19 | Pending |
-| VALID-04 | Phase 19 | Pending |
+| REF-03 | Phase 19 | Complete |
+| VALID-01 | Phase 19 | Complete |
+| VALID-02 | Phase 19 | Complete |
+| VALID-03 | Phase 19 | Complete |
+| VALID-04 | Phase 19 | Complete |
 | EVAL-01 | Phase 19 | Pending |
 | EVAL-02 | Phase 19 | Pending |
 | EVAL-03 | Phase 19 | Pending |

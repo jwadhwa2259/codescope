@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Eval Fixes & Real-World Quality
-status: verifying
-stopped_at: Phase 19 context gathered
-last_updated: "2026-03-31T01:18:46.125Z"
-last_activity: 2026-03-31
+status: completed
+stopped_at: Completed 19-01-PLAN.md
+last_updated: "2026-03-31T02:35:44.003Z"
+last_activity: 2026-03-31 -- Completed 19-02 deterministic scorecard
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 9
-  completed_plans: 9
-  percent: 0
+  total_plans: 12
+  completed_plans: 11
+  percent: 67
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** AI-generated code changes that respect existing conventions, stay within safe blast radius, and actually work in the codebase -- verified end-to-end before the user sees them.
-**Current focus:** Phase 18 — semantic-conventions
+**Current focus:** Phase 19 — intelligence-features
 
 ## Current Position
 
-Phase: 19
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-31
+Phase: 19 (intelligence-features) — EXECUTING
+Plan: 2 of 3
+Status: Completed 19-02 deterministic scorecard
+Last activity: 2026-03-31 -- Completed 19-02 deterministic scorecard
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████░░░░] 67%
 
 ## Performance Metrics
 
@@ -63,6 +63,13 @@ All decisions archived in PROJECT.md Key Decisions table and milestone archives.
 - [Phase 18]: detectedFrameworks defaults to empty array for backward compatibility
 - [Phase 18]: Use relative path from targetDir for file-role classification to avoid test fixture path contamination
 - [Phase 18]: Readiness cap placed after all convention accumulation and before computeReadiness call
+- [Phase 19]: Convention density similarity uses 1.0 - abs(densityA - densityB) for similarity comparison
+- [Phase 19]: Violation index produces file-level entries (line=0) for convention deviations
+- [Phase 19]: General role files compare against ALL non-noise files, not just general group
+- [Phase 19]: C+ grade covers 70-79% (extended from D-21's 70-74% to fill 75-79% gap)
+- [Phase 19]: Scorecard computed server-side in MCP tool, not assembled inline by skill agent
+- [Phase 19]: Mode 1 revert uses git stash --include-untracked per D-18 (not git checkout)
+- [Phase 19]: Files not in graph scored as 100% for import correctness
 
 ### Pending Todos
 
@@ -76,6 +83,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-31T01:18:46.123Z
-Stopped at: Phase 19 context gathered
-Resume file: .planning/phases/19-intelligence-features/19-CONTEXT.md
+Last session: 2026-03-31T02:35:44.001Z
+Stopped at: Completed 19-01-PLAN.md
+Resume file: None

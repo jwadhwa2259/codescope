@@ -95,12 +95,12 @@ Plans:
   2. After Claude writes a file, the PostToolUse hook checks the written code against HIGH-CONF conventions and reports deviations as advisory warnings (false positive rate below 5%)
   3. Running `/codescope:eval` on uncommitted changes produces a scorecard with convention adherence %, blast radius, violation count, import correctness, and composite score
   4. Running `/codescope:eval` in benchmark mode executes predefined tasks and produces aggregate scores comparing CodeScope-assisted output to baseline
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 19-01: TBD
-- [ ] 19-02: TBD
-- [ ] 19-03: TBD
+- [x] 19-01-PLAN.md -- Reference index + violation index artifact builders, type definitions, generator and reader integration
+- [x] 19-02-PLAN.md -- Deterministic scorecard module and /codescope:eval skill
+- [ ] 19-03-PLAN.md -- Hook integration: PreToolUse reference suggestion (P2.5) and PostToolUse validation warnings (P1)
 
 ## Progress
 
@@ -127,4 +127,4 @@ Phases execute in numeric order: 17 -> 18 -> 19
 | 16. Tech Debt Closure | v2.0 | 5/5 | Complete | 2026-03-29 |
 | 17. Foundation Fixes | v2.1 | 5/5 | Complete    | 2026-03-30 |
 | 18. Semantic Conventions | v2.1 | 4/1 | Complete    | 2026-03-31 |
-| 19. Intelligence Features | v2.1 | 0/0 | Not started | - |
+| 19. Intelligence Features | v2.1 | 2/3 | In Progress|  |
