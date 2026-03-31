@@ -37,6 +37,7 @@ export interface BuildGraphOptions {
   dbPath: string;
   batchDir: string;
   ignorePatterns?: string[];
+  workspaceAliases?: Record<string, string>;
 }
 
 export interface BuildGraphResult {
@@ -141,6 +142,7 @@ export async function buildGraph(
     try {
       tsResolver = createTypeScriptResolver({
         projectRoot: options.projectRoot,
+        workspaceAliases: options.workspaceAliases,
       });
     } catch (err) {
       errors.push(`TypeScript resolver creation failed: ${String(err)}. Using fallback resolver without path aliases.`);

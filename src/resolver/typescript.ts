@@ -6,6 +6,7 @@ import * as path from "node:path";
 interface ResolverOptions {
   projectRoot: string;
   tsconfigPath?: string;
+  workspaceAliases?: Record<string, string>;
 }
 
 type Resolver = ReturnType<typeof ResolverFactory.createResolver>;
@@ -43,6 +44,13 @@ export function createTypeScriptResolver(options: ResolverOptions): Resolver {
       );
       alias[cleanPattern] =
         cleanTargets.length === 1 ? cleanTargets[0] : cleanTargets;
+    }
+  }
+
+  // Merge workspace aliases (take precedence over tsconfig aliases for overlapping keys)
+  if (options.workspaceAliases) {
+    for (const [key, value] of Object.entries(options.workspaceAliases)) {
+      alias[key] = value;
     }
   }
 

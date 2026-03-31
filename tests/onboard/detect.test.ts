@@ -178,4 +178,94 @@ services:
     expect(info.services.length).toBeGreaterThanOrEqual(2);
     expect(info.type).toBe("monorepo");
   });
+
+  // --- pnpm-workspace.yaml tests ---
+
+  it("detects monorepo from pnpm-workspace.yaml", async () => {
+    // pnpm-workspace.yaml with packages pattern
+    fs.writeFileSync(
+      path.join(tmpDir, "pnpm-workspace.yaml"),
+      "packages:\n  - 'packages/*'\n",
+    );
+    // Create workspace packages with package.json
+    fs.mkdirSync(path.join(tmpDir, "packages", "foo"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmpDir, "packages", "foo", "package.json"),
+      JSON.stringify({ name: "@test/foo" }),
+    );
+    fs.mkdirSync(path.join(tmpDir, "packages", "bar"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tmpDir, "packages", "bar", "package.json"),
+      JSON.stringify({ name: "@test/bar" }),
+    );
+
+    const info = await detectProject(tmpDir);
+    expect(info.type).toBe("monorepo");
+    expect(info.services.length).toBe(2);
+    const names = info.services.map((s) => s.name).sort();
+    expect(names).toEqual(["bar", "foo"]);
+  });
+
+  it("pnpm-workspace.yaml takes precedence over package.json workspaces", async () => {
+    // package.json with workspaces pointing to apps/*
+    fs.writeFileSync(
+      path.join(tmpDir, "package.json"),
+      JSON.stringify({ name: "mono", workspaces: ["apps/*"] }),
+    );
+    fs.mkdirSync(path.join(tmpDir, "apps", "web"), { recursive: true });
+    // pnpm-workspace.yaml with packages/*
+    fs.writeFileSync(
+      path.join(tmpDir, "pnpm-workspace.yaml"),
+      "packages:\n  - 'packages/*'\n",
+    );
+    fs.mkdirSync(path.join(tmpDir, "packages", "core"), { recursive: true });
+
+    const info = await detectProject(tmpDir);
+    expect(info.type).toBe("monorepo");
+    // Both sources should contribute services (deduplicated by path)
+    const paths = info.services.map((s) => s.path);
+    expect(paths).toContain("packages/core");
+    expect(paths).toContain("apps/web");
+  });
+
+  it("pnpm-workspace.yaml exclusion patterns filter out directories", async () => {
+    fs.writeFileSync(
+      path.join(tmpDir, "pnpm-workspace.yaml"),
+      "packages:\n  - 'packages/*'\n  - '!packages/ignored'\n",
+    );
+    fs.mkdirSync(path.join(tmpDir, "packages", "kept"), { recursive: true });
+    fs.mkdirSync(path.join(tmpDir, "packages", "ignored"), { recursive: true });
+
+    const info = await detectProject(tmpDir);
+    expect(info.type).toBe("monorepo");
+    const names = info.services.map((s) => s.name);
+    expect(names).toContain("kept");
+    expect(names).not.toContain("ignored");
+  });
+
+  it("pnpm-workspace.yaml with no packages key falls back to single", async () => {
+    fs.writeFileSync(
+      path.join(tmpDir, "pnpm-workspace.yaml"),
+      "# empty workspace config\n",
+    );
+
+    const info = await detectProject(tmpDir);
+    expect(info.type).toBe("single");
+    expect(info.services.length).toBe(0);
+  });
+
+  it("existing package.json workspace detection still works (no regression)", async () => {
+    fs.writeFileSync(
+      path.join(tmpDir, "package.json"),
+      JSON.stringify({ name: "npm-mono", workspaces: ["packages/*"] }),
+    );
+    fs.mkdirSync(path.join(tmpDir, "packages", "alpha"), { recursive: true });
+    fs.mkdirSync(path.join(tmpDir, "packages", "beta"), { recursive: true });
+
+    const info = await detectProject(tmpDir);
+    expect(info.type).toBe("monorepo");
+    expect(info.services.length).toBe(2);
+    const names = info.services.map((s) => s.name).sort();
+    expect(names).toEqual(["alpha", "beta"]);
+  });
 });

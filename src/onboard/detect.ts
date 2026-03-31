@@ -28,6 +28,46 @@ export async function detectProject(rootDir: string): Promise<ProjectInfo> {
     projectName: path.basename(rootDir),
   };
 
+  // 0. Check pnpm-workspace.yaml (takes precedence over package.json workspaces for pnpm monorepos)
+  const pnpmWorkspacePath = path.join(rootDir, "pnpm-workspace.yaml");
+  if (fs.existsSync(pnpmWorkspacePath)) {
+    try {
+      const yaml = await import("js-yaml");
+      const content = fs.readFileSync(pnpmWorkspacePath, "utf-8");
+      const workspace = yaml.load(content) as { packages?: string[] } | null;
+      if (workspace?.packages && Array.isArray(workspace.packages)) {
+        // Filter out exclusion patterns (! prefix)
+        const includePatterns = workspace.packages.filter((p: string) => !p.startsWith("!"));
+        const excludePatterns = workspace.packages
+          .filter((p: string) => p.startsWith("!"))
+          .map((p: string) => p.slice(1).replace("/*", "").replace("/**", ""));
+
+        for (const pattern of includePatterns) {
+          const baseDir = pattern.replace("/*", "").replace("/**", "");
+          const fullBase = path.join(rootDir, baseDir);
+          if (fs.existsSync(fullBase) && fs.statSync(fullBase).isDirectory()) {
+            const entries = fs.readdirSync(fullBase, { withFileTypes: true });
+            for (const entry of entries) {
+              if (!entry.isDirectory()) continue;
+              const servicePath = path.join(baseDir, entry.name);
+              // Check exclusion patterns
+              if (excludePatterns.some((ep: string) => servicePath.startsWith(ep) || servicePath === ep)) continue;
+              // Deduplicate by path
+              if (info.services.some((s) => s.path === servicePath)) continue;
+              info.services.push({
+                name: entry.name,
+                path: servicePath,
+              });
+            }
+          }
+        }
+        if (info.services.length > 0) {
+          info.type = "monorepo";
+        }
+      }
+    } catch { /* ignore parse errors */ }
+  }
+
   // 1. Check package.json
   const pkgPath = path.join(rootDir, "package.json");
   if (fs.existsSync(pkgPath)) {
@@ -51,6 +91,8 @@ export async function detectProject(rootDir: string): Promise<ProjectInfo> {
             for (const entry of entries) {
               if (entry.isDirectory()) {
                 const servicePath = path.join(baseDir, entry.name);
+                // Deduplicate by path (pnpm-workspace.yaml may have already added this)
+                if (info.services.some((s) => s.path === servicePath)) continue;
                 const servicePkgPath = path.join(rootDir, servicePath, "package.json");
                 let serviceBuild: string | undefined;
                 let serviceTest: string | undefined;
