@@ -31,7 +31,8 @@ key-decisions:
 
 patterns-established: []
 
-requirements-completed: [VALID-02, VALID-03]
+requirements-completed: []
+requirements-deferred: [VALID-02, VALID-03]
 
 # Metrics
 duration: 2min
