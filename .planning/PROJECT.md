@@ -2,8 +2,8 @@
 
 ## Current State
 
-**Version:** v2.0 shipped 2026-03-29
-**Codebase:** 33,657 LOC TypeScript (source + tests, 1,124 passing)
+**Version:** v2.1 shipped 2026-03-31
+**Codebase:** ~35K LOC TypeScript (source + tests, 1,357 passing)
 **Stack:** TypeScript, web-tree-sitter WASM, ast-grep CLI, better-sqlite3, graphology, enhanced-resolve, @modelcontextprotocol/sdk, Hono, sigma.js, vitest
 
 ## What This Is
@@ -146,4 +146,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-30 after v2.1 milestone start*
+*Last updated: 2026-03-31 after Phase 19 complete — v2.1 milestone fully executed*
