@@ -10,6 +10,8 @@ import type {
 } from "./types.js";
 import { rankGoldenFiles } from "./golden-files.js";
 import { RULE_METADATA } from "./rule-metadata.js";
+import { classifyFileRole } from "../classifier/file-role.js";
+import { isRuleApplicableToRole } from "../classifier/types.js";
 
 /**
  * Competing pattern pairs per D-13.
@@ -396,6 +398,17 @@ export function runConventionScan(
       allMatches = allMatches.concat(runAstGrepScan(frameworkRulesDir, targetDir));
     }
   }
+
+  // Post-filter matches by file-role applicability (per D-20, CONV-07)
+  // This prevents false positives: e.g., a test file should not be matched
+  // by route-handler-only rules like fastify-route-handler.
+  // Use relative path from targetDir so that test fixture paths don't
+  // get misclassified (ast-grep returns paths relative to CWD, not targetDir).
+  allMatches = allMatches.filter((match) => {
+    const relPath = path.relative(targetDir, path.resolve(match.file));
+    const { role } = classifyFileRole(relPath);
+    return isRuleApplicableToRole(match.ruleId, role);
+  });
 
   // Group matches by ruleId
   const matchesByRule = new Map<string, RuleMatch[]>();

@@ -3,6 +3,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { runConventionScan } from "../conventions/runner.js";
 import { rankGoldenFiles } from "../conventions/golden-files.js";
+import { detectFrameworks } from "../onboard/detect.js";
 import type {
   ConventionScanResult,
   ConventionResult,
@@ -56,12 +57,15 @@ export async function runConventionDetector(
   // Ensure output directory exists
   fs.mkdirSync(options.outputDir, { recursive: true });
 
+  // Detect frameworks from package.json (per D-01, D-04)
+  const detectedFrameworks = detectFrameworks(options.projectRoot);
+
   // Run convention scan
   let scanResult: ConventionScanResult | null = null;
   let scanError: string | null = null;
 
   try {
-    scanResult = runConventionScan(options.projectRoot, rulesDir);
+    scanResult = runConventionScan(options.projectRoot, rulesDir, detectedFrameworks);
   } catch (error) {
     // Handle ast-grep not available per D-03 (graceful degradation)
     scanError =

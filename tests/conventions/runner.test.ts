@@ -291,11 +291,13 @@ describe("runConventionScan", () => {
     );
     expect(defaultExports).toBeDefined();
 
-    // Should match bad-patterns/legacy.ts and mixed/hybrid.ts
-    const badPatternFiles = defaultExports!.matchingFiles.filter(
+    // After file-role filtering (CONV-07), legacy.ts is classified as
+    // "deprecated" and excluded from convention detection. Only mixed/hybrid.ts
+    // contributes default export matches.
+    const matchingFiles = defaultExports!.matchingFiles.filter(
       (f) => f.includes("bad-patterns") || f.includes("mixed"),
     );
-    expect(badPatternFiles.length).toBeGreaterThanOrEqual(2);
+    expect(matchingFiles.length).toBeGreaterThanOrEqual(1);
   });
 });
 

@@ -410,6 +410,11 @@ export async function runBootstrap(
     ).length;
   }
 
+  // Cap highConfidenceConventions to prevent readiness inflation (D-25)
+  // Adding framework rules can increase HIGH-CONF count significantly
+  // on small projects, inflating the convention dimension artificially.
+  highConfidenceConventions = Math.min(highConfidenceConventions, totalSourceFiles);
+
   // edgesCreated IS the resolved import count (edges only created when resolved)
   const totalEdgesAll = serviceResults.reduce(
     (sum, s) => sum + s.edgesCreated,
