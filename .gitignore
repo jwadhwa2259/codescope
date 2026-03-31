@@ -1,7 +1,7 @@
 node_modules/
 dist/
 *.tsbuildinfo
-grammars/*.wasm
+# grammars/*.wasm — committed for plugin distribution (required at runtime)
 
 # GSD planning artifacts (internal)
 .planning/

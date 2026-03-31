@@ -18,6 +18,7 @@ import { openDatabase, closeDatabase } from "../graph/database.js";
 import { generateInjectionArtifacts } from "../artifacts/generator.js";
 import { parseDetectorConventions } from "../conventions/parser.js";
 import { createSchema } from "../graph/schema.js";
+import { validateGrammars } from "../parser/languages.js";
 import type { Database as DatabaseType } from "better-sqlite3";
 
 // ---------------------------------------------------------------------------
@@ -252,6 +253,16 @@ export async function runBootstrap(
 
   const codescopeDir = getCodescopePath(projectRoot);
   fs.mkdirSync(codescopeDir, { recursive: true });
+
+  // ---- Step 0: Validate grammar files exist ----
+  const grammarCheck = validateGrammars();
+  if (!grammarCheck.ok) {
+    throw new Error(
+      `WASM grammar files missing — graph building will fail.\n` +
+        `Missing: ${grammarCheck.missing.join(", ")}\n` +
+        `Run 'npm run build:grammars' or reinstall the CodeScope plugin.`
+    );
+  }
 
   // ---- Step 1: Load config ----
   const config = loadConfig(projectRoot);

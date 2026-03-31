@@ -48,6 +48,24 @@ export function isSupportedLanguage(lang: string): lang is SupportedLanguage {
   return lang in GRAMMAR_FILES;
 }
 
+/**
+ * Validate that all required WASM grammar files exist.
+ * Call at bootstrap startup to fail loudly instead of silently producing 0 nodes.
+ */
+export function validateGrammars(): { ok: boolean; missing: string[] } {
+  const grammarDir = getGrammarDir();
+  const missing: string[] = [];
+
+  for (const [lang, file] of Object.entries(GRAMMAR_FILES)) {
+    const grammarPath = path.join(grammarDir, file);
+    if (!fs.existsSync(grammarPath)) {
+      missing.push(`${lang}: ${grammarPath}`);
+    }
+  }
+
+  return { ok: missing.length === 0, missing };
+}
+
 export function detectLanguage(filePath: string): SupportedLanguage | null {
   const ext = path.extname(filePath).toLowerCase();
   switch (ext) {
