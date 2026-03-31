@@ -236,6 +236,72 @@ describe("codescope_eval", () => {
     expect(parsed.data.summary).toHaveProperty("skipped_criteria");
   });
 
+  // ---- Deterministic mode DB path ----
+
+  it("deterministic mode opens graph.db via getGraphDbPath (not codescope.db)", async () => {
+    // Create graph.db at the correct getGraphDbPath location with real graph data
+    const graphDbPath = path.join(codescopePath, "graph.db");
+    const Database = (await import("better-sqlite3")).default;
+    const setupDb = new Database(graphDbPath);
+    setupDb.exec(`CREATE TABLE IF NOT EXISTS nodes (
+      id INTEGER PRIMARY KEY,
+      name TEXT,
+      kind TEXT,
+      file_path TEXT,
+      start_line INTEGER,
+      end_line INTEGER,
+      language TEXT,
+      loc INTEGER,
+      is_exported INTEGER,
+      is_test INTEGER
+    )`);
+    setupDb.exec(`CREATE TABLE IF NOT EXISTS edges (
+      id INTEGER PRIMARY KEY,
+      source_id INTEGER,
+      target_id INTEGER,
+      kind TEXT,
+      weight REAL
+    )`);
+    // Insert graph data so import correctness query returns non-trivial results
+    setupDb.exec(`INSERT INTO nodes (id, name, kind, file_path, start_line, end_line, language, loc, is_exported, is_test) VALUES (1, 'foo.ts', 'file', 'src/foo.ts', 1, 50, 'typescript', 50, 0, 0)`);
+    setupDb.exec(`INSERT INTO nodes (id, name, kind, file_path, start_line, end_line, language, loc, is_exported, is_test) VALUES (2, 'bar.ts', 'file', 'src/bar.ts', 1, 30, 'typescript', 30, 0, 0)`);
+    setupDb.exec(`INSERT INTO edges (source_id, target_id, kind, weight) VALUES (1, 2, 'imports', 1.0)`);
+    setupDb.close();
+
+    // Ensure codescope.db does NOT exist (the buggy path)
+    const wrongDbPath = path.join(codescopePath, "codescope.db");
+    expect(fs.existsSync(wrongDbPath)).toBe(false);
+
+    const result = await handleEval(tmpDir, {
+      files: ["src/foo.ts"],
+      mode: "deterministic",
+    });
+    const parsed = JSON.parse(result.content[0].text);
+
+    expect(parsed.status).toBe("ok");
+    expect(parsed.data).toHaveProperty("scorecard");
+    // Key assertion: import correctness should show total > 0, proving graph.db was opened
+    // With the bug (opening codescope.db which doesn't exist), db=null => total=0
+    expect(parsed.data.scorecard.importCorrectness.total).toBeGreaterThan(0);
+  });
+
+  it("deterministic mode degrades gracefully when graph.db does not exist", async () => {
+    // Don't create any DB file -- graph.db should not exist
+    const graphDbPath = path.join(codescopePath, "graph.db");
+    expect(fs.existsSync(graphDbPath)).toBe(false);
+
+    const result = await handleEval(tmpDir, {
+      files: ["src/foo.ts"],
+      mode: "deterministic",
+    });
+    const parsed = JSON.parse(result.content[0].text);
+
+    // Should still return ok with scorecard (all 100% fallback)
+    expect(parsed.status).toBe("ok");
+    expect(parsed.data.scorecard.composite.percent).toBe(100);
+    expect(parsed.data.scorecard.composite.grade).toBe("A");
+  });
+
   // ---- Tool registration ----
 
   it("registerEvalTool registers tool with correct name, description, and zod schema", () => {

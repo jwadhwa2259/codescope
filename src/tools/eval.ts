@@ -10,7 +10,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod/v4";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { getCodescopePath } from "../utils/paths.js";
+import { getCodescopePath, getGraphDbPath } from "../utils/paths.js";
 import {
   isBootstrapped,
   errorResponse,
@@ -123,7 +123,7 @@ export async function handleEval(
   // Deterministic mode: compute scorecard without AI model calls
   if (input.mode === "deterministic") {
     const csPath = getCodescopePath(projectRoot);
-    const dbPath = path.join(csPath, "codescope.db");
+    const dbPath = getGraphDbPath(projectRoot);
     let db = null;
     try {
       const Database = (await import("better-sqlite3")).default;
