@@ -20,7 +20,8 @@ import {
 } from "./helpers.js";
 import { loadConfig } from "../config/loader.js";
 import { loadIgnorePatterns } from "../eval/ignore-filter.js";
-import type { EvalCriterion } from "../eval/types.js";
+import type { EvalCriterion, ScorecardInput } from "../eval/types.js";
+import { computeScorecard, renderScorecard } from "../eval/deterministic-scorecard.js";
 
 // ---------------------------------------------------------------------------
 // Types & Constants
@@ -106,7 +107,7 @@ interface EvalData {
  */
 export async function handleEval(
   projectRoot: string,
-  input: { files: string[]; task_slug?: string; checks?: string[] },
+  input: { files: string[]; task_slug?: string; checks?: string[]; mode?: "llm" | "deterministic" },
 ): Promise<{ content: Array<{ type: "text"; text: string }> }> {
   const startMs = Date.now();
 
@@ -117,6 +118,35 @@ export async function handleEval(
       "No bootstrap data found. Run /codescope:bootstrap first.",
       "Run /codescope:bootstrap to analyze your codebase.",
     );
+  }
+
+  // Deterministic mode: compute scorecard without AI model calls
+  if (input.mode === "deterministic") {
+    const csPath = getCodescopePath(projectRoot);
+    const dbPath = path.join(csPath, "codescope.db");
+    let db = null;
+    try {
+      const Database = (await import("better-sqlite3")).default;
+      db = new Database(dbPath, { readonly: true });
+    } catch {
+      // DB not available -- scorecard will use null db
+    }
+    try {
+      const scorecardInput: ScorecardInput = {
+        changedFiles: input.files,
+        projectRoot,
+        codescopeDir: csPath,
+        db,
+      };
+      const scorecard = computeScorecard(scorecardInput);
+      const markdown = renderScorecard(scorecard);
+      return okResponse(
+        { scorecard, markdown },
+        buildMetadata(projectRoot, startMs, { capabilities: CAPABILITIES, upcoming: [] }),
+      );
+    } finally {
+      if (db) (db as import("better-sqlite3").Database).close();
+    }
   }
 
   // Load config
@@ -252,7 +282,7 @@ export function registerEvalTool(
 ): void {
   server.tool(
     "codescope_eval",
-    "Evaluate code changes against scope contract, conventions, and correctness criteria using LLM-as-judge. Returns structured findings with severity and evidence.",
+    "Evaluate code changes against scope contract, conventions, and correctness criteria. Use mode='deterministic' for instant scorecard without AI model calls, or mode='llm' (default) for LLM-as-judge evaluation.",
     {
       files: z
         .array(z.string())
@@ -269,9 +299,16 @@ export function registerEvalTool(
         .describe(
           "Task slug from orient pipeline. Required for scope_compliance and completeness checks.",
         ),
+      mode: z
+        .enum(["llm", "deterministic"])
+        .optional()
+        .default("llm")
+        .describe(
+          "Eval mode. 'deterministic' uses scorecard without AI model calls. 'llm' uses LLM-as-judge (default).",
+        ),
     },
-    async ({ files, checks, task_slug }) => {
-      return handleEval(projectRoot, { files, checks, task_slug });
+    async ({ files, checks, task_slug, mode }) => {
+      return handleEval(projectRoot, { files, checks, task_slug, mode });
     },
   );
 }
