@@ -377,3 +377,55 @@ describe("Workspace-aware TypeScript resolver", () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// Integration test against real Tiptap repo (skips if repo not present)
+// ---------------------------------------------------------------------------
+const TIPTAP_ROOT = path.resolve(os.homedir(), "codescope-eval/tiptap-with-codescope");
+const TIPTAP_EXISTS = fs.existsSync(path.join(TIPTAP_ROOT, "pnpm-workspace.yaml"));
+
+describe.skipIf(!TIPTAP_EXISTS)("Tiptap integration", () => {
+  let packages: WorkspacePackage[];
+  let aliases: Record<string, string>;
+
+  beforeAll(async () => {
+    // Parse pnpm-workspace.yaml to get workspace patterns
+    const yaml = await import("js-yaml");
+    const content = fs.readFileSync(
+      path.join(TIPTAP_ROOT, "pnpm-workspace.yaml"),
+      "utf-8",
+    );
+    const ws = yaml.load(content) as { packages?: string[] } | null;
+    const patterns = ws?.packages?.filter((p: string) => !p.startsWith("!")) ?? [];
+
+    packages = discoverWorkspacePackages(TIPTAP_ROOT, patterns);
+    aliases = buildWorkspaceAliases(TIPTAP_ROOT, packages);
+  });
+
+  it("discovers 30+ workspace packages", () => {
+    expect(packages.length).toBeGreaterThan(30);
+  });
+
+  it("resolves @tiptap/core alias to src/index.ts (not dist/)", () => {
+    expect(aliases["@tiptap/core"]).toBeDefined();
+    expect(aliases["@tiptap/core"]).toMatch(/src\/index\.ts$/);
+    expect(aliases["@tiptap/core"]).not.toContain("dist/");
+  });
+
+  it("has at least 5 @tiptap/* aliases", () => {
+    const tiptapAliases = Object.keys(aliases).filter((k) => k.startsWith("@tiptap/"));
+    expect(tiptapAliases.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("TypeScript resolver resolves @tiptap/core cross-package import", () => {
+    const resolver = createTypeScriptResolver({
+      projectRoot: TIPTAP_ROOT,
+      workspaceAliases: aliases,
+    });
+    // Use any source file as "from" context
+    const fromFile = path.join(TIPTAP_ROOT, "packages", "starter-kit", "src", "index.ts");
+    const result = resolveTypeScriptImport("@tiptap/core", fromFile, resolver);
+    expect(result).not.toBeNull();
+    expect(result!).toContain("packages/core/src/index.ts");
+  });
+});

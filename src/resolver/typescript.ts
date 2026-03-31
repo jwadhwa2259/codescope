@@ -34,23 +34,33 @@ export function createTypeScriptResolver(options: ResolverOptions): Resolver {
     }
   }
 
-  // Build alias map from tsconfig paths
+  // Build alias map: workspace exact aliases first (with "$" suffix for exact matching),
+  // then tsconfig prefix aliases. enhanced-resolve processes aliases in insertion order;
+  // placing exact workspace aliases before tsconfig prefix aliases ensures that e.g.
+  // "@tiptap/core$" is matched before "@tiptap" (from tsconfig "@tiptap/*").
   const alias: Record<string, string | string[]> = {};
+
+  // 1. Workspace aliases first — exact match with "$" suffix
+  if (options.workspaceAliases) {
+    for (const [key, value] of Object.entries(options.workspaceAliases)) {
+      alias[`${key}$`] = value;
+    }
+  }
+
+  // 2. tsconfig path aliases — prefix matching
   if (pathMappings && baseUrl) {
     for (const [pattern, targets] of Object.entries(pathMappings)) {
       const cleanPattern = pattern.replace("/*", "");
+      // Skip tsconfig alias if a workspace alias exists for the same key
+      // (workspace aliases take precedence for overlapping keys)
+      if (options.workspaceAliases && cleanPattern in options.workspaceAliases) {
+        continue;
+      }
       const cleanTargets = (targets as string[]).map((t) =>
         path.resolve(baseUrl!, t.replace("/*", ""))
       );
       alias[cleanPattern] =
         cleanTargets.length === 1 ? cleanTargets[0] : cleanTargets;
-    }
-  }
-
-  // Merge workspace aliases (take precedence over tsconfig aliases for overlapping keys)
-  if (options.workspaceAliases) {
-    for (const [key, value] of Object.entries(options.workspaceAliases)) {
-      alias[key] = value;
     }
   }
 
