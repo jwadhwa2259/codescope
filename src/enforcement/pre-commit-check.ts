@@ -52,11 +52,20 @@ function isSgAvailable(): boolean {
  * @returns Absolute path to the rule .yml file, or null if not found
  */
 function resolveRulePath(ruleId: string, projectRoot: string): string | null {
+  // Check TypeScript rules
   const tsPath = join(projectRoot, "src", "conventions", "rules", "typescript", ruleId + ".yml");
   if (existsSync(tsPath)) return tsPath;
 
+  // Check Python rules
   const pyPath = join(projectRoot, "src", "conventions", "rules", "python", ruleId + ".yml");
   if (existsSync(pyPath)) return pyPath;
+
+  // Check framework rules (fastify, express, h3)
+  const frameworkDirs = ["fastify", "express", "h3"];
+  for (const fw of frameworkDirs) {
+    const fwPath = join(projectRoot, "src", "conventions", "rules", "frameworks", fw, ruleId + ".yml");
+    if (existsSync(fwPath)) return fwPath;
+  }
 
   return null;
 }
