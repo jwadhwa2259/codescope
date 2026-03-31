@@ -230,11 +230,11 @@ describe("synthesis", () => {
     fs.mkdirSync(webConvDir, { recursive: true });
     fs.writeFileSync(
       path.join(apiConvDir, "conventions.md"),
-      "# Conventions\n\n## async/await\n- Adoption: 95%\n- Confidence: HIGH-CONF\n\n## error-handling\n- Adoption: 80%\n- Confidence: MEDIUM-CONF\n",
+      "# Conventions\n\n### async/await\n\n| Metric | Value |\n|--------|-------|\n| Adoption | 95% (19/20 files) |\n| Confidence | HIGH-CONF |\n| Category | async |\n\n### error-handling\n\n| Metric | Value |\n|--------|-------|\n| Adoption | 80% (16/20 files) |\n| Confidence | MEDIUM-CONF |\n| Category | errors |\n",
     );
     fs.writeFileSync(
       path.join(webConvDir, "conventions.md"),
-      "# Conventions\n\n## async/await\n- Adoption: 88%\n- Confidence: HIGH-CONF\n\n## jsx-patterns\n- Adoption: 92%\n- Confidence: HIGH-CONF\n",
+      "# Conventions\n\n### async/await\n\n| Metric | Value |\n|--------|-------|\n| Adoption | 88% (22/25 files) |\n| Confidence | HIGH-CONF |\n| Category | async |\n\n### jsx-patterns\n\n| Metric | Value |\n|--------|-------|\n| Adoption | 92% (23/25 files) |\n| Confidence | HIGH-CONF |\n| Category | ui |\n",
     );
 
     const options: SynthesisOptions = {
