@@ -34,16 +34,16 @@
 ## Post-Edit Validation
 
 - [x] **VALID-01**: PostToolUse hook validates written code against HIGH-CONF conventions and reports deviations as advisory warnings
-- [x] **VALID-02**: Validation catches wrong type names (e.g., `HTTPEvent` vs `H3Event`) by comparing against types detected in the codebase
-- [x] **VALID-03**: Validation catches import path errors by checking against the resolved import graph
+- [ ] **VALID-02**: Validation catches wrong type names (e.g., `HTTPEvent` vs `H3Event`) by comparing against types detected in the codebase
+- [ ] **VALID-03**: Validation catches import path errors by checking against the resolved import graph
 - [x] **VALID-04**: False positive rate below 5% on HIGH-CONF conventions (only validated conventions trigger warnings)
 
 ## Eval Skill
 
-- [x] **EVAL-01**: `/codescope:eval` skill Mode 2 — score existing uncommitted changes against codebase conventions and produce a scorecard
-- [x] **EVAL-02**: `/codescope:eval` skill Mode 1 — run a task, score the output, and optionally revert changes
+- [ ] **EVAL-01**: `/codescope:eval` skill Mode 2 — score existing uncommitted changes against codebase conventions and produce a scorecard
+- [ ] **EVAL-02**: `/codescope:eval` skill Mode 1 — run a task, score the output, and optionally revert changes
 - [x] **EVAL-03**: `/codescope:eval` skill Mode 3 — run a benchmark suite of predefined tasks and produce aggregate scores
-- [x] **EVAL-04**: Scorecard includes convention adherence %, blast radius size, violation count, import correctness, risk files modified, composite score
+- [ ] **EVAL-04**: Scorecard includes convention adherence %, blast radius size, violation count, import correctness, risk files modified, composite score
 
 ## Future Requirements
 
@@ -82,10 +82,10 @@
 | REF-02 | Phase 19 | Complete |
 | REF-03 | Phase 19 | Complete |
 | VALID-01 | Phase 19 | Complete |
-| VALID-02 | Phase 19 | Complete |
-| VALID-03 | Phase 19 | Complete |
+| VALID-02 | Phase 20 | Pending (→ Out of Scope) |
+| VALID-03 | Phase 20 | Pending (→ Out of Scope) |
 | VALID-04 | Phase 19 | Complete |
-| EVAL-01 | Phase 19 | Complete |
-| EVAL-02 | Phase 19 | Complete |
+| EVAL-01 | Phase 20 | Pending |
+| EVAL-02 | Phase 20 | Pending |
 | EVAL-03 | Phase 19 | Complete |
-| EVAL-04 | Phase 19 | Complete |
+| EVAL-04 | Phase 20 | Pending |

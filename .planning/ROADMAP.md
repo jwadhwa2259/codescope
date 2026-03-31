@@ -47,6 +47,7 @@ CodeScope is built bottom-up: infrastructure first, then codebase intelligence, 
 - [x] **Phase 17: Foundation Fixes** - Fix import graph (ESM + CommonJS), convention index parsing, plugin distribution, readiness scoring, and bootstrap error surfacing (gap closure in progress) (completed 2026-03-30)
 - [x] **Phase 18: Semantic Conventions** - Framework-specific convention detection, file-role classification, and golden file quality filtering (completed 2026-03-31)
 - [x] **Phase 19: Intelligence Features** - Reference file injection, post-edit convention validation, and the `/codescope:eval` skill (completed 2026-03-31)
+- [ ] **Phase 20: Eval DB Fix + Audit Cleanup** - Fix eval scorecard DB path bug, move VALID-02/VALID-03 to out of scope, fix ViolationEntry ruleId, correct SUMMARY frontmatter (gap closure)
 
 ## Phase Details
 
@@ -102,10 +103,23 @@ Plans:
 - [x] 19-02-PLAN.md -- Deterministic scorecard module and /codescope:eval skill
 - [x] 19-03-PLAN.md -- Hook integration: PreToolUse reference suggestion (P2.5) and PostToolUse validation warnings (P1)
 
+### Phase 20: Eval DB Fix + Audit Cleanup
+**Goal**: Fix eval scorecard DB path bug (unblocking real blast-radius and import-correctness metrics), formally defer VALID-02/VALID-03 to Out of Scope, fix ViolationEntry.ruleId field, and correct SUMMARY frontmatter inaccuracies
+**Depends on**: Phase 19 (intelligence features complete)
+**Requirements**: EVAL-01, EVAL-02, EVAL-04, VALID-02, VALID-03
+**Gap Closure:** Closes gaps from v2.1 milestone audit
+**Success Criteria** (what must be TRUE):
+  1. `eval.ts` opens the correct graph database via `getGraphDbPath()` — blast-radius and import-correctness metrics reflect real data (not 100% fallback)
+  2. VALID-02 and VALID-03 are listed under Out of Scope in REQUIREMENTS.md with rationale
+  3. `ViolationEntry.ruleId` carries actual ast-grep rule ID (not display name)
+  4. 19-01-SUMMARY.md no longer lists VALID-02/VALID-03 as completed
+  5. REQUIREMENTS.md traceability table reflects accurate status for all gap-affected requirements
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 17 -> 18 -> 19
+Phases execute in numeric order: 17 -> 18 -> 19 -> 20
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -128,3 +142,4 @@ Phases execute in numeric order: 17 -> 18 -> 19
 | 17. Foundation Fixes | v2.1 | 5/5 | Complete    | 2026-03-30 |
 | 18. Semantic Conventions | v2.1 | 4/1 | Complete    | 2026-03-31 |
 | 19. Intelligence Features | v2.1 | 3/3 | Complete    | 2026-03-31 |
+| 20. Eval DB Fix + Audit Cleanup | v2.1 | 0/0 | Planned | — |
