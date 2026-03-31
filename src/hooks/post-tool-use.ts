@@ -61,14 +61,28 @@ export function processPostToolUse(
   const convEntries = artifacts.conventions?.files[relPath];
   const centrality = dzEntry?.centrality ?? 0;
   const hasConventions = convEntries != null && convEntries.length > 0;
+  const violations = artifacts.violations?.files[relPath];
+  const hasViolations = violations != null && violations.length > 0;
 
-  if (centrality <= 0.3 && !hasConventions) {
+  if (centrality <= 0.3 && !hasConventions && !hasViolations) {
     return bareOutput;
   }
 
   // Build injection items for PostToolUse (D-07, D-10)
   // NOTE: No danger zone in PostToolUse (already shown in PreToolUse)
   const items: InjectionItem[] = [];
+
+  // Priority 1: Validation warnings (advisory, per D-10, D-15, D-24)
+  if (violations && violations.length > 0) {
+    const lines = [`[VALIDATION] ${violations.length} deviation(s) in ${relPath}:`];
+    for (const v of violations.slice(0, 3)) {
+      lines.push(`  - ${v.ruleId}: detected \`${v.detected}\`, expected \`${v.expected}\` (line ${v.line})`);
+    }
+    if (violations.length > 3) {
+      lines.push(`  ... and ${violations.length - 3} more`);
+    }
+    items.push({ priority: 1, content: lines.join("\n") });
+  }
 
   // Priority 2: Convention reminder (advisory, not validation)
   if (convEntries && convEntries.length > 0) {
