@@ -112,6 +112,115 @@ describe("Workspace package discovery", () => {
   });
 });
 
+describe("Entry point source fallback", () => {
+  let tempDir: string;
+
+  beforeAll(() => {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "codescope-ws-fallback-"));
+
+    // Package with exports -> non-existent dist/, existing src/index.ts
+    fs.mkdirSync(path.join(tempDir, "packages", "alpha", "src"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tempDir, "packages", "alpha", "package.json"),
+      JSON.stringify({
+        name: "@test/alpha",
+        exports: { ".": { import: "./dist/index.js", default: "./dist/index.js" } },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(tempDir, "packages", "alpha", "src", "index.ts"),
+      "export const alpha = true;",
+    );
+
+    // Package with main -> non-existent dist/, existing src/index.ts
+    fs.mkdirSync(path.join(tempDir, "packages", "beta", "src"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tempDir, "packages", "beta", "package.json"),
+      JSON.stringify({
+        name: "@test/beta",
+        main: "dist/index.cjs",
+      }),
+    );
+    fs.writeFileSync(
+      path.join(tempDir, "packages", "beta", "src", "index.ts"),
+      "export const beta = true;",
+    );
+
+    // Package with exports -> EXISTING dist/index.js (should NOT fall back)
+    fs.mkdirSync(path.join(tempDir, "packages", "gamma", "dist"), { recursive: true });
+    fs.mkdirSync(path.join(tempDir, "packages", "gamma", "src"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tempDir, "packages", "gamma", "package.json"),
+      JSON.stringify({
+        name: "@test/gamma",
+        exports: { ".": { import: "./dist/index.js" } },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(tempDir, "packages", "gamma", "dist", "index.js"),
+      "module.exports = {};",
+    );
+    fs.writeFileSync(
+      path.join(tempDir, "packages", "gamma", "src", "index.ts"),
+      "export const gamma = true;",
+    );
+
+    // Package with Tiptap-style deeply nested exports (types: { import: ... }, import: ...)
+    fs.mkdirSync(path.join(tempDir, "packages", "delta", "src"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tempDir, "packages", "delta", "package.json"),
+      JSON.stringify({
+        name: "@test/delta",
+        main: "dist/index.cjs",
+        module: "dist/index.js",
+        exports: {
+          ".": {
+            types: { import: "./dist/index.d.ts", require: "./dist/index.d.cts" },
+            import: "./dist/index.js",
+            require: "./dist/index.cjs",
+          },
+        },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(tempDir, "packages", "delta", "src", "index.ts"),
+      "export const delta = true;",
+    );
+  });
+
+  afterAll(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  it("falls back to src/index.ts when exports points to non-existent dist/", () => {
+    const packages = discoverWorkspacePackages(tempDir, ["packages/*"]);
+    const alpha = packages.find((p) => p.name === "@test/alpha");
+    expect(alpha).toBeDefined();
+    expect(alpha!.entryPoint).toBe("packages/alpha/src/index.ts");
+  });
+
+  it("falls back to src/index.ts when main points to non-existent dist/", () => {
+    const packages = discoverWorkspacePackages(tempDir, ["packages/*"]);
+    const beta = packages.find((p) => p.name === "@test/beta");
+    expect(beta).toBeDefined();
+    expect(beta!.entryPoint).toBe("packages/beta/src/index.ts");
+  });
+
+  it("uses exports entry when dist file actually exists (no false fallback)", () => {
+    const packages = discoverWorkspacePackages(tempDir, ["packages/*"]);
+    const gamma = packages.find((p) => p.name === "@test/gamma");
+    expect(gamma).toBeDefined();
+    expect(gamma!.entryPoint).toBe("packages/gamma/dist/index.js");
+  });
+
+  it("falls back to src/index.ts with Tiptap-style deeply nested exports", () => {
+    const packages = discoverWorkspacePackages(tempDir, ["packages/*"]);
+    const delta = packages.find((p) => p.name === "@test/delta");
+    expect(delta).toBeDefined();
+    expect(delta!.entryPoint).toBe("packages/delta/src/index.ts");
+  });
+});
+
 describe("Workspace-aware TypeScript resolver", () => {
   let tempDir: string;
 
