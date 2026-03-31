@@ -1,0 +1,9 @@
+id: express-error-handler
+language: TypeScript
+rule:
+  any:
+    - pattern: "function $NAME($ERR, $REQ, $RES, $NEXT) { $$$BODY }"
+    - pattern: "($ERR, $REQ, $RES, $NEXT) => { $$$BODY }"
+    - pattern: "($ERR, $REQ, $RES, $NEXT) => $EXPR"
+severity: info
+message: "Express error handler detected (4-parameter signature)"

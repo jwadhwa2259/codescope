@@ -17,7 +17,7 @@ export interface RuleMetadataEntry {
 
 /**
  * Maps ruleId to human-readable name and category.
- * Contains all 18 existing rules (15 TypeScript + 3 Python).
+ * Contains all 27 rules (15 TypeScript + 3 Python + 9 Framework).
  */
 export const RULE_METADATA: Record<string, RuleMetadataEntry> = {
   "prefer-named-exports": {
@@ -73,6 +73,45 @@ export const RULE_METADATA: Record<string, RuleMetadataEntry> = {
   "python-class-inheritance": {
     name: "Python Class Inheritance",
     category: "class-patterns",
+  },
+  // Framework: Fastify
+  "fastify-plugin-signature": {
+    name: "Fastify Plugin Signature",
+    category: "fastify-plugin",
+  },
+  "fastify-route-handler": {
+    name: "Fastify Route Handler",
+    category: "fastify-routing",
+  },
+  "fastify-hook": {
+    name: "Fastify Hook Registration",
+    category: "fastify-hooks",
+  },
+  "fastify-decorator": {
+    name: "Fastify Decorator",
+    category: "fastify-decorators",
+  },
+  // Framework: Express
+  "express-middleware": {
+    name: "Express Middleware",
+    category: "express-middleware",
+  },
+  "express-route-handler": {
+    name: "Express Route Handler",
+    category: "express-routing",
+  },
+  "express-error-handler": {
+    name: "Express Error Handler",
+    category: "express-error-handling",
+  },
+  // Framework: h3
+  "h3-event-handler": {
+    name: "h3 Event Handler",
+    category: "h3-handler",
+  },
+  "h3-utility-functions": {
+    name: "h3 Utility Functions",
+    category: "h3-utilities",
   },
 };
 

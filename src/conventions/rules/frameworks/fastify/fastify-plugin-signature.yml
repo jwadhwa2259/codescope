@@ -1,0 +1,11 @@
+id: fastify-plugin-signature
+language: TypeScript
+rule:
+  any:
+    - pattern: "fp(async function $NAME($FASTIFY, $OPTS) { $$$BODY })"
+    - pattern: "fp(async function ($FASTIFY, $OPTS) { $$$BODY })"
+    - pattern: "module.exports = async function($FASTIFY, $OPTS) { $$$BODY }"
+    - pattern: "module.exports = async function $NAME($FASTIFY, $OPTS) { $$$BODY }"
+    - pattern: "export default fp($$$ARGS)"
+severity: info
+message: "Fastify plugin signature detected"

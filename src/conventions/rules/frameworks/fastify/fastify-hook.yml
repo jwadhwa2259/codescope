@@ -1,0 +1,6 @@
+id: fastify-hook
+language: TypeScript
+rule:
+  pattern: "$APP.addHook($HOOK, $$$HANDLER)"
+severity: info
+message: "Fastify hook registration detected"

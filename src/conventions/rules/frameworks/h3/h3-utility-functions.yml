@@ -1,0 +1,14 @@
+id: h3-utility-functions
+language: TypeScript
+rule:
+  any:
+    - pattern: "readBody($EVENT)"
+    - pattern: "getQuery($EVENT)"
+    - pattern: "setResponseStatus($EVENT, $$$ARGS)"
+    - pattern: "getRouterParams($EVENT)"
+    - pattern: "getHeaders($EVENT)"
+    - pattern: "getCookie($EVENT, $$$ARGS)"
+    - pattern: "setCookie($EVENT, $$$ARGS)"
+    - pattern: "sendRedirect($EVENT, $$$ARGS)"
+severity: info
+message: "h3 utility function detected"

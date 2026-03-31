@@ -1,0 +1,9 @@
+id: fastify-decorator
+language: TypeScript
+rule:
+  any:
+    - pattern: "$APP.decorate($NAME, $$$VAL)"
+    - pattern: "$APP.decorateRequest($NAME, $$$VAL)"
+    - pattern: "$APP.decorateReply($NAME, $$$VAL)"
+severity: info
+message: "Fastify decorator detected"

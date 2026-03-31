@@ -14,9 +14,9 @@ const RULES_DIR = path.resolve(
 );
 
 describe("RULE_METADATA", () => {
-  it("contains all 18 existing entries with correct name and category", () => {
+  it("contains all 27 entries with correct name and category", () => {
     const entries = Object.entries(RULE_METADATA);
-    expect(entries.length).toBe(18);
+    expect(entries.length).toBe(27);
 
     // Spot-check TypeScript rules
     expect(RULE_METADATA["prefer-named-exports"]).toEqual({
@@ -97,12 +97,42 @@ describe("RULE_METADATA", () => {
       .filter((f) => f.endsWith(".yml"))
       .map((f) => path.basename(f, ".yml"));
 
+    // TypeScript rules: not python-* and not framework-specific
+    const frameworkPrefixes = ["fastify-", "express-", "h3-"];
     const tsRuleIds = Object.keys(RULE_METADATA).filter(
-      (id) => !id.startsWith("python-"),
+      (id) =>
+        !id.startsWith("python-") &&
+        !frameworkPrefixes.some((p) => id.startsWith(p)),
     );
 
     for (const ruleId of tsRuleIds) {
       expect(tsRuleFiles).toContain(ruleId);
+    }
+  });
+
+  it("every framework ruleId matches a .yml file in rules/frameworks/", () => {
+    const frameworksDir = path.join(RULES_DIR, "frameworks");
+    const frameworkRuleFiles: string[] = [];
+    for (const fw of fs.readdirSync(frameworksDir)) {
+      const fwDir = path.join(frameworksDir, fw);
+      if (fs.statSync(fwDir).isDirectory()) {
+        for (const f of fs.readdirSync(fwDir)) {
+          if (f.endsWith(".yml")) {
+            frameworkRuleFiles.push(path.basename(f, ".yml"));
+          }
+        }
+      }
+    }
+
+    const frameworkPrefixes = ["fastify-", "express-", "h3-"];
+    const frameworkRuleIds = Object.keys(RULE_METADATA).filter((id) =>
+      frameworkPrefixes.some((p) => id.startsWith(p)),
+    );
+
+    expect(frameworkRuleIds.length).toBe(9);
+
+    for (const ruleId of frameworkRuleIds) {
+      expect(frameworkRuleFiles).toContain(ruleId);
     }
   });
 

@@ -1,0 +1,6 @@
+id: h3-event-handler
+language: TypeScript
+rule:
+  pattern: "defineEventHandler($$$HANDLER)"
+severity: info
+message: "h3 event handler detected"

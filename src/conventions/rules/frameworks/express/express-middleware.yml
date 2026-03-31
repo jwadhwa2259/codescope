@@ -1,0 +1,6 @@
+id: express-middleware
+language: TypeScript
+rule:
+  pattern: "$APP.use($$$ARGS)"
+severity: info
+message: "Express middleware detected"

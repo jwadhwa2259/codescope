@@ -1,11 +1,14 @@
 import { describe, it, expect } from "vitest";
 import * as path from "node:path";
+import * as fs from "node:fs";
+import * as os from "node:os";
 import {
   runAstGrepScan,
   calculateAdoption,
   detectConflicts,
   buildEvidence,
   runConventionScan,
+  countApplicableFiles,
   COMPETING_PAIRS,
 } from "../../src/conventions/runner.js";
 import type {
@@ -317,5 +320,58 @@ describe("COMPETING_PAIRS", () => {
     expect(pair).toBeDefined();
     expect(pair!.a).toBe("detect-async-await");
     expect(pair!.b).toBe("detect-promise-then");
+  });
+});
+
+describe("countApplicableFiles extended exclusion", () => {
+  let tmpDir: string;
+
+  function setupTempProject(files: string[]): void {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "codescope-runner-test-"));
+    for (const f of files) {
+      const fullPath = path.join(tmpDir, f);
+      fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+      fs.writeFileSync(fullPath, "// placeholder");
+    }
+  }
+
+  it("excludes config files (vitest.config.ts, tsconfig.app.ts)", () => {
+    setupTempProject([
+      "src/app.ts",
+      "src/utils.ts",
+      "vitest.config.ts",
+      "tsconfig.app.ts",
+    ]);
+
+    const count = countApplicableFiles(tmpDir, "TypeScript");
+    // Should count src/app.ts and src/utils.ts only (2), not config files
+    expect(count).toBe(2);
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("excludes generated files (schema.generated.ts, api.gen.ts)", () => {
+    setupTempProject([
+      "src/app.ts",
+      "src/schema.generated.ts",
+      "src/api.gen.ts",
+    ]);
+
+    const count = countApplicableFiles(tmpDir, "TypeScript");
+    // Should count only src/app.ts (1)
+    expect(count).toBe(1);
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("excludes deprecated files (old-api.deprecated.ts, legacy-handler.ts)", () => {
+    setupTempProject([
+      "src/app.ts",
+      "src/old-api.deprecated.ts",
+      "src/legacy-handler.ts",
+    ]);
+
+    const count = countApplicableFiles(tmpDir, "TypeScript");
+    // Should count only src/app.ts (1)
+    expect(count).toBe(1);
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 });
