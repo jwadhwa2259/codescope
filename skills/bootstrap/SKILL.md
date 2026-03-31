@@ -38,7 +38,16 @@ Analyzes your codebase to build the knowledge graph, detect conventions, identif
    Ask the user to confirm ("Proceed with full re-bootstrap?" y/n). If the user cancels, abort without running the pipeline. If confirmed, proceed to step 4.
 
 4. **Run the bootstrap pipeline**
-   Use Bash to run: `node --import tsx/esm src/bootstrap/run-bootstrap.ts [--force]`
+   IMPORTANT: The user's current working directory is the project to analyze, NOT the plugin directory. Before running, capture the user's project root, then use absolute paths:
+   ```
+   PROJECT_ROOT=$(pwd)
+   PLUGIN_DIR=$(dirname "$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$HOME/.claude/plugins/marketplaces/codescope")")")
+   ```
+   Then run with explicit --project-root:
+   ```
+   cd <plugin-directory> && node --import tsx/esm src/bootstrap/run-bootstrap.ts --project-root <user-project-root> [--force]
+   ```
+   Always pass --project-root with the user's actual project directory. Never rely on process.cwd() — it will be the plugin directory after cd'ing to find tsx.
    This runs the full pipeline:
    - Service discovery (Scout)
    - Per-service analysis squads (Researcher, Convention Detector, Risk Analyzer, Learning Synthesizer)
