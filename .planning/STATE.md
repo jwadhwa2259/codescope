@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Eval Fixes & Real-World Quality
-status: executing
-stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-03-31T14:25:26.674Z"
+status: verifying
+stopped_at: Completed 20-01-PLAN.md
+last_updated: "2026-03-31T14:26:47.061Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
-  completed_plans: 13
+  completed_plans: 14
   percent: 67
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 Phase: 20 (eval-db-fix-audit-cleanup) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-31
 
 Progress: [██████░░░░] 67%
@@ -72,6 +72,7 @@ All decisions archived in PROJECT.md Key Decisions table and milestone archives.
 - [Phase 19]: Files not in graph scored as 100% for import correctness
 - [Phase 20]: VALID-02 deferred: type references not stored in graph schema, requires parser-level changes
 - [Phase 20]: VALID-03 deferred: graph builder drops unresolved imports silently, no failed-resolution data in DB
+- [Phase 20]: Slugified fallback for unmapped convention names: lowercase, spaces to dashes, strip non-alphanum
 
 ### Pending Todos
 
@@ -90,9 +91,10 @@ None.
 | 260331-8m5 | Fix audit findings: patch path-to-regexp ReDoS, refactor 5 dashboard panel god files | 2026-03-31 | a786ef2 | [260331-8m5-fix-audit-findings-patch-path-to-regexp-](./quick/260331-8m5-fix-audit-findings-patch-path-to-regexp-/) |
 | 260331-939 | Fix adversarial review findings: scorecard violation path, ViolationIndex parsing, false positive filtering, VALID-02/03 removal | 2026-03-31 | dc2c717 | [260331-939-fix-adversarial-review-findings-scorecar](./quick/260331-939-fix-adversarial-review-findings-scorecar/) |
 | Phase 20 P02 | 139s | 2 tasks | 2 files |
+| Phase 20 P01 | 3min | 2 tasks | 4 files |
 
 ## Session Continuity
 
-Last session: 2026-03-31T14:25:26.672Z
-Stopped at: Completed 20-02-PLAN.md
+Last session: 2026-03-31T14:26:47.059Z
+Stopped at: Completed 20-01-PLAN.md
 Resume file: None

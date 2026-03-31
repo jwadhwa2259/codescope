@@ -40,10 +40,10 @@
 
 ## Eval Skill
 
-- [ ] **EVAL-01**: `/codescope:eval` skill Mode 2 — score existing uncommitted changes against codebase conventions and produce a scorecard
-- [ ] **EVAL-02**: `/codescope:eval` skill Mode 1 — run a task, score the output, and optionally revert changes
+- [x] **EVAL-01**: `/codescope:eval` skill Mode 2 — score existing uncommitted changes against codebase conventions and produce a scorecard
+- [x] **EVAL-02**: `/codescope:eval` skill Mode 1 — run a task, score the output, and optionally revert changes
 - [x] **EVAL-03**: `/codescope:eval` skill Mode 3 — run a benchmark suite of predefined tasks and produce aggregate scores
-- [ ] **EVAL-04**: Scorecard includes convention adherence %, blast radius size, violation count, import correctness, risk files modified, composite score
+- [x] **EVAL-04**: Scorecard includes convention adherence %, blast radius size, violation count, import correctness, risk files modified, composite score
 
 ## Future Requirements
 

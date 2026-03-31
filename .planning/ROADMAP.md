@@ -47,7 +47,7 @@ CodeScope is built bottom-up: infrastructure first, then codebase intelligence, 
 - [x] **Phase 17: Foundation Fixes** - Fix import graph (ESM + CommonJS), convention index parsing, plugin distribution, readiness scoring, and bootstrap error surfacing (gap closure in progress) (completed 2026-03-30)
 - [x] **Phase 18: Semantic Conventions** - Framework-specific convention detection, file-role classification, and golden file quality filtering (completed 2026-03-31)
 - [x] **Phase 19: Intelligence Features** - Reference file injection, post-edit convention validation, and the `/codescope:eval` skill (completed 2026-03-31)
-- [ ] **Phase 20: Eval DB Fix + Audit Cleanup** - Fix eval scorecard DB path bug, move VALID-02/VALID-03 to out of scope, fix ViolationEntry ruleId, correct SUMMARY frontmatter (gap closure)
+- [x] **Phase 20: Eval DB Fix + Audit Cleanup** - Fix eval scorecard DB path bug, move VALID-02/VALID-03 to out of scope, fix ViolationEntry ruleId, correct SUMMARY frontmatter (gap closure) (completed 2026-03-31)
 
 ## Phase Details
 
@@ -117,7 +117,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 20-01-PLAN.md -- Fix eval.ts DB path bug and ViolationEntry.ruleId field
+- [x] 20-01-PLAN.md -- Fix eval.ts DB path bug and ViolationEntry.ruleId field
 - [x] 20-02-PLAN.md -- Move VALID-02/VALID-03 to Out of Scope, fix SUMMARY frontmatter
 
 ## Progress
@@ -146,4 +146,4 @@ Phases execute in numeric order: 17 -> 18 -> 19 -> 20
 | 17. Foundation Fixes | v2.1 | 5/5 | Complete    | 2026-03-30 |
 | 18. Semantic Conventions | v2.1 | 4/1 | Complete    | 2026-03-31 |
 | 19. Intelligence Features | v2.1 | 3/3 | Complete    | 2026-03-31 |
-| 20. Eval DB Fix + Audit Cleanup | v2.1 | 1/2 | In Progress|  |
+| 20. Eval DB Fix + Audit Cleanup | v2.1 | 2/2 | Complete   | 2026-03-31 |
