@@ -167,11 +167,14 @@ describe("buildViolationIndex", () => {
 
     const result = buildViolationIndex(db, csDir);
 
-    // All violations should reference HIGH-CONF rule names
+    // All violations should reference HIGH-CONF rule IDs (slugified, not display names)
     for (const violations of Object.values(result.files)) {
       for (const v of violations) {
-        // Should not see "Optional chaining" (MEDIUM-CONF)
-        expect(v.ruleId).not.toBe("Optional chaining");
+        // Should not see "optional-chaining" (MEDIUM-CONF)
+        expect(v.ruleId).not.toBe("optional-chaining");
+        // Rule IDs should be slugified (no spaces, lowercase)
+        expect(v.ruleId).not.toMatch(/\s/);
+        expect(v.ruleId).toBe(v.ruleId.toLowerCase());
       }
     }
   });
@@ -188,9 +191,9 @@ describe("buildViolationIndex", () => {
     // so they should NOT have violations for those conventions
     // Only src/utils/validate.ts is missing from both HIGH-CONF conventions
     if (result.files["src/utils/helpers.ts"]) {
-      // If present, should not have convention-deviation entries for "Typed catch blocks" or "Named exports"
+      // If present, should not have convention-deviation entries for slugified rule IDs
       const convViolations = result.files["src/utils/helpers.ts"].filter(
-        (v) => v.ruleId === "Typed catch blocks" || v.ruleId === "Named exports",
+        (v) => v.ruleId === "typed-catch-blocks" || v.ruleId === "named-exports",
       );
       expect(convViolations).toHaveLength(0);
     }
@@ -210,10 +213,10 @@ describe("buildViolationIndex", () => {
     const violations = result.files["src/utils/validate.ts"];
     expect(violations.length).toBeGreaterThan(0);
 
-    // Should have violations for the HIGH-CONF conventions it's missing from
+    // Should have violations for the HIGH-CONF conventions it's missing from (slugified)
     const ruleIds = violations.map((v) => v.ruleId);
-    expect(ruleIds).toContain("Typed catch blocks");
-    expect(ruleIds).toContain("Named exports");
+    expect(ruleIds).toContain("typed-catch-blocks");
+    expect(ruleIds).toContain("named-exports");
   });
 
   it("returns empty violations when conventions.md is missing", () => {
@@ -392,7 +395,7 @@ describe("buildViolationIndex", () => {
     expect(violations.length).toBeGreaterThan(0);
 
     const ruleIds = violations.map((v) => v.ruleId);
-    expect(ruleIds).toContain("Typed catch blocks");
-    expect(ruleIds).toContain("Named exports");
+    expect(ruleIds).toContain("typed-catch-blocks");
+    expect(ruleIds).toContain("named-exports");
   });
 });

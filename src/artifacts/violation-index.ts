@@ -23,6 +23,7 @@ import * as path from "node:path";
 import type { Database as DatabaseType } from "better-sqlite3";
 import { parseDetectorConventions } from "../conventions/parser.js";
 import { classifyFileRole } from "../classifier/file-role.js";
+import { RULE_NAME_TO_ID } from "../conventions/rule-metadata.js";
 import type { ViolationIndex, ViolationEntry } from "./types.js";
 
 // ---------------------------------------------------------------------------
@@ -55,6 +56,22 @@ function isFileLanguageMatch(filePath: string, convLang: "typescript" | "python"
  */
 function isNoiseFile(filePath: string): boolean {
   return /\.(d\.ts|json|yml|yaml|md|txt|css|scss|html|svg|png|jpg|lock)$/.test(filePath);
+}
+
+// ---------------------------------------------------------------------------
+// Rule ID resolution
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve a convention display name to its ast-grep rule ID.
+ * Falls back to slugified name if no RULE_METADATA mapping exists
+ * (e.g., for conventions detected by the LLM detector, not ast-grep rules).
+ */
+function resolveRuleId(displayName: string): string {
+  const mapped = RULE_NAME_TO_ID.get(displayName);
+  if (mapped) return mapped;
+  // Fallback: slugify the display name (lowercase, spaces to dashes, strip non-alphanum)
+  return displayName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 }
 
 // ---------------------------------------------------------------------------
@@ -120,7 +137,7 @@ export function buildViolationIndex(
 
       // This file doesn't follow this HIGH-CONF convention
       const entry: ViolationEntry = {
-        ruleId: conv.name,
+        ruleId: resolveRuleId(conv.name),
         detected: "Convention not followed",
         expected: `${conv.name} (${conv.category}, ${conv.adoption_pct}% adoption)`,
         line: 0, // file-level violation
