@@ -16,7 +16,7 @@
 - [x] **CONV-03**: Golden file ranking excludes deprecated, test, generated, and config files from top exemplars
 - [x] **CONV-04**: Golden file ranking filters convention applicability by language (TS files not penalized for missing Python conventions)
 - [x] **CONV-05**: Framework detection from package.json dependencies determines which framework-specific convention rules to load
-- [ ] **CONV-06**: Framework-specific ast-grep rules detect patterns beyond generic syntax (e.g., Fastify plugin signatures, h3 event handler patterns, Express middleware patterns) — minimum 3 frameworks supported
+- [x] **CONV-06**: Framework-specific ast-grep rules detect patterns beyond generic syntax (e.g., Fastify plugin signatures, h3 event handler patterns, Express middleware patterns) — minimum 3 frameworks supported
 - [x] **CONV-07**: File-role classification (utility, route handler, test, config, deprecated) prevents false positives in convention matching
 
 ## Plugin Distribution
@@ -73,7 +73,7 @@
 | CONV-03 | Phase 18 | Complete |
 | CONV-04 | Phase 18 | Complete |
 | CONV-05 | Phase 18 | Complete |
-| CONV-06 | Phase 18 | Pending |
+| CONV-06 | Phase 18 | Complete |
 | CONV-07 | Phase 18 | Complete |
 | PLUG-01 | Phase 17 | Complete |
 | PLUG-02 | Phase 17 | Complete |

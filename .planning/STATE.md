@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Eval Fixes & Real-World Quality
 status: executing
-stopped_at: Completed 18-03-PLAN.md
-last_updated: "2026-03-31T00:19:27.290Z"
+stopped_at: Completed 18-02-PLAN.md
+last_updated: "2026-03-31T00:21:26.797Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Phase: 18 (semantic-conventions) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-03-31
 
@@ -59,6 +59,8 @@ All decisions archived in PROJECT.md Key Decisions table and milestone archives.
 - [Phase 18]: Permissive default: rules not in RULE_ROLE_APPLICABILITY apply to all file roles (D-23)
 - [Phase 18]: isNoiseFile exported for testability and potential reuse in other modules
 - [Phase 18]: Language detection: file extension for files (.py=Python), ruleId prefix for conventions (python-*=Python)
+- [Phase 18]: Framework rules use same YAML format and severity:info as base rules for consistent scanning
+- [Phase 18]: detectedFrameworks defaults to empty array for backward compatibility
 
 ### Pending Todos
 
@@ -72,6 +74,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-31T00:19:27.288Z
-Stopped at: Completed 18-03-PLAN.md
+Last session: 2026-03-31T00:21:26.795Z
+Stopped at: Completed 18-02-PLAN.md
 Resume file: None
