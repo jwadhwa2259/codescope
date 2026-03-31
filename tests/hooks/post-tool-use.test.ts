@@ -237,4 +237,165 @@ describe("PostToolUse hook", () => {
     const ctx = result.hookSpecificOutput.additionalContext ?? "";
     expect(ctx).not.toContain("[DANGER ZONE]");
   });
+
+  // ---- Validation warning tests (Plan 19-03) ----
+
+  it("injects validation warnings at P1 when violations exist", () => {
+    fs.writeFileSync(path.join(codescopeDir, "graph.db"), "");
+    fs.writeFileSync(
+      path.join(injectionDir, "convention-violations.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/foo.ts": [
+            {
+              ruleId: "no-any",
+              detected: "any",
+              expected: "specific type",
+              line: 42,
+            },
+          ],
+        },
+      })
+    );
+
+    const input = makeInput({ cwd: projectDir });
+    const result = processPostToolUse(input, projectDir);
+    expect(result.hookSpecificOutput.additionalContext).toContain(
+      "[VALIDATION] 1 deviation(s) in src/foo.ts:"
+    );
+    expect(result.hookSpecificOutput.additionalContext).toContain(
+      "no-any: detected `any`, expected `specific type` (line 42)"
+    );
+  });
+
+  it("caps violations at 3 with overflow message", () => {
+    fs.writeFileSync(path.join(codescopeDir, "graph.db"), "");
+    fs.writeFileSync(
+      path.join(injectionDir, "convention-violations.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/foo.ts": [
+            { ruleId: "rule-1", detected: "a", expected: "b", line: 10 },
+            { ruleId: "rule-2", detected: "c", expected: "d", line: 20 },
+            { ruleId: "rule-3", detected: "e", expected: "f", line: 30 },
+            { ruleId: "rule-4", detected: "g", expected: "h", line: 40 },
+            { ruleId: "rule-5", detected: "i", expected: "j", line: 50 },
+          ],
+        },
+      })
+    );
+
+    const input = makeInput({ cwd: projectDir });
+    const result = processPostToolUse(input, projectDir);
+    const ctx = result.hookSpecificOutput.additionalContext!;
+    expect(ctx).toContain("[VALIDATION] 5 deviation(s) in src/foo.ts:");
+    expect(ctx).toContain("rule-1:");
+    expect(ctx).toContain("rule-2:");
+    expect(ctx).toContain("rule-3:");
+    expect(ctx).not.toContain("rule-4:");
+    expect(ctx).toContain("... and 2 more");
+  });
+
+  it("validation warnings appear before convention reminders", () => {
+    fs.writeFileSync(path.join(codescopeDir, "graph.db"), "");
+    fs.writeFileSync(
+      path.join(injectionDir, "convention-violations.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/foo.ts": [
+            { ruleId: "no-any", detected: "any", expected: "specific type", line: 42 },
+          ],
+        },
+      })
+    );
+    fs.writeFileSync(
+      path.join(injectionDir, "conventions.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/foo.ts": [
+            {
+              name: "Use async/await",
+              adoption_pct: 95,
+              confidence: "HIGH-CONF",
+              category: "async",
+            },
+          ],
+        },
+      })
+    );
+
+    const input = makeInput({ cwd: projectDir });
+    const result = processPostToolUse(input, projectDir);
+    const ctx = result.hookSpecificOutput.additionalContext!;
+    const valIdx = ctx.indexOf("[VALIDATION]");
+    const convIdx = ctx.indexOf("[CONVENTION REMINDER]");
+    expect(valIdx).toBeGreaterThanOrEqual(0);
+    expect(convIdx).toBeGreaterThan(valIdx);
+  });
+
+  it("triggers on violations even without conventions or high centrality", () => {
+    fs.writeFileSync(path.join(codescopeDir, "graph.db"), "");
+    // No danger zones, no conventions -- only violations
+    fs.writeFileSync(
+      path.join(injectionDir, "convention-violations.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/foo.ts": [
+            { ruleId: "no-any", detected: "any", expected: "specific type", line: 42 },
+          ],
+        },
+      })
+    );
+
+    const input = makeInput({ cwd: projectDir });
+    const result = processPostToolUse(input, projectDir);
+    expect(result.hookSpecificOutput.additionalContext).toBeDefined();
+    expect(result.hookSpecificOutput.additionalContext).toContain(
+      "[VALIDATION]"
+    );
+  });
+
+  it("no validation output when violations are empty array", () => {
+    fs.writeFileSync(path.join(codescopeDir, "graph.db"), "");
+    fs.writeFileSync(
+      path.join(injectionDir, "convention-violations.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/foo.ts": [],
+        },
+      })
+    );
+
+    const input = makeInput({ cwd: projectDir });
+    const result = processPostToolUse(input, projectDir);
+    const ctx = result.hookSpecificOutput.additionalContext ?? "";
+    expect(ctx).not.toContain("[VALIDATION]");
+  });
+
+  it("advisory only -- no decision block in output", () => {
+    fs.writeFileSync(path.join(codescopeDir, "graph.db"), "");
+    fs.writeFileSync(
+      path.join(injectionDir, "convention-violations.json"),
+      JSON.stringify({
+        generated: new Date().toISOString(),
+        files: {
+          "src/foo.ts": [
+            { ruleId: "no-any", detected: "any", expected: "specific type", line: 42 },
+          ],
+        },
+      })
+    );
+
+    const input = makeInput({ cwd: projectDir });
+    const result = processPostToolUse(input, projectDir);
+    // Advisory: should NOT contain "decision" key with "block" value
+    const resultStr = JSON.stringify(result);
+    expect(resultStr).not.toMatch(/decision.*block/);
+  });
 });
