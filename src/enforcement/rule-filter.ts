@@ -7,53 +7,18 @@
 // This module is intentionally isolated from src/conventions/runner.ts and
 // src/learning/parser.ts to keep the enforcement module lightweight with no
 // transitive dependencies on execFileSync or heavy modules.
+//
+// rule-metadata.ts is a pure data module with zero transitive dependencies,
+// so importing from it is safe and does not break build isolation.
 // ---------------------------------------------------------------------------
 
-/**
- * Duplicated from RULE_METADATA in src/conventions/runner.ts for build
- * isolation. The enforcement module must NOT import from runner.ts which
- * imports execFileSync/execSync and has side-effect-capable code.
- */
-const RULE_METADATA: Record<string, string> = {
-  "prefer-named-exports": "Prefer Named Exports",
-  "detect-default-export": "Default Export",
-  "detect-async-await": "Async/Await Functions",
-  "detect-promise-then": "Promise .then() Chains",
-  "custom-error-class": "Custom Error Classes",
-  "throw-string-literal": "Throw String Literals",
-  "named-imports": "Named Imports",
-  "barrel-imports": "Barrel/Namespace Imports",
-  "functional-component": "Functional React Components",
-  "class-component": "Class React Components",
-  "arrow-function-export": "Arrow Function Exports",
-  "function-declaration-export": "Function Declaration Exports",
-  "interface-over-type": "Interface Declarations",
-  "type-over-interface": "Type Alias Declarations",
-  "explicit-return-type": "Explicit Return Types",
-  "python-type-hints": "Python Type Hints",
-  "python-docstrings": "Python Docstrings",
-  "python-class-inheritance": "Python Class Inheritance",
-};
+import {
+  RULE_NAME_TO_ID,
+  RULE_ID_TO_NAME,
+} from "../conventions/rule-metadata.js";
 
-// ---------------------------------------------------------------------------
-// Exported lookup maps
-// ---------------------------------------------------------------------------
-
-/**
- * Map from convention display name to ast-grep rule ID.
- * Example: "Prefer Named Exports" -> "prefer-named-exports"
- */
-export const RULE_NAME_TO_ID: Map<string, string> = new Map(
-  Object.entries(RULE_METADATA).map(([id, name]) => [name, id]),
-);
-
-/**
- * Map from ast-grep rule ID to convention display name.
- * Example: "prefer-named-exports" -> "Prefer Named Exports"
- */
-export const RULE_ID_TO_NAME: Map<string, string> = new Map(
-  Object.entries(RULE_METADATA),
-);
+// Re-export for consumers that import from this module (e.g., pre-commit-check.ts)
+export { RULE_NAME_TO_ID, RULE_ID_TO_NAME } from "../conventions/rule-metadata.js";
 
 // ---------------------------------------------------------------------------
 // Public API

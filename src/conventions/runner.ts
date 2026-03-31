@@ -9,66 +9,7 @@ import type {
   ConventionScanResult,
 } from "./types.js";
 import { rankGoldenFiles } from "./golden-files.js";
-
-/**
- * Maps ruleId to human-readable name and category.
- */
-const RULE_METADATA: Record<string, { name: string; category: string }> = {
-  "prefer-named-exports": {
-    name: "Prefer Named Exports",
-    category: "exports",
-  },
-  "detect-default-export": { name: "Default Export", category: "exports" },
-  "detect-async-await": { name: "Async/Await Functions", category: "async" },
-  "detect-promise-then": {
-    name: "Promise .then() Chains",
-    category: "async",
-  },
-  "custom-error-class": {
-    name: "Custom Error Classes",
-    category: "error-handling",
-  },
-  "throw-string-literal": {
-    name: "Throw String Literals",
-    category: "error-handling",
-  },
-  "named-imports": { name: "Named Imports", category: "imports" },
-  "barrel-imports": { name: "Barrel/Namespace Imports", category: "imports" },
-  "functional-component": {
-    name: "Functional React Components",
-    category: "components",
-  },
-  "class-component": {
-    name: "Class React Components",
-    category: "components",
-  },
-  "arrow-function-export": {
-    name: "Arrow Function Exports",
-    category: "exports",
-  },
-  "function-declaration-export": {
-    name: "Function Declaration Exports",
-    category: "exports",
-  },
-  "interface-over-type": {
-    name: "Interface Declarations",
-    category: "types",
-  },
-  "type-over-interface": {
-    name: "Type Alias Declarations",
-    category: "types",
-  },
-  "explicit-return-type": {
-    name: "Explicit Return Types",
-    category: "types",
-  },
-  "python-type-hints": { name: "Python Type Hints", category: "types" },
-  "python-docstrings": { name: "Python Docstrings", category: "documentation" },
-  "python-class-inheritance": {
-    name: "Python Class Inheritance",
-    category: "class-patterns",
-  },
-};
+import { RULE_METADATA } from "./rule-metadata.js";
 
 /**
  * Competing pattern pairs per D-13.
