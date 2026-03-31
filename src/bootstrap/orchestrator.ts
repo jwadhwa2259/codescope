@@ -225,6 +225,7 @@ export async function runBootstrap(
     durationMs: number;
     nodesCreated: number;
     edgesCreated: number;
+    totalImports: number;
     communitiesDetected: number;
     conventionsDetected: number;
   }> = [];
@@ -300,6 +301,7 @@ export async function runBootstrap(
       durationMs: Date.now() - serviceStartMs,
       nodesCreated: riskResult.nodesCreated,
       edgesCreated: riskResult.edgesCreated,
+      totalImports: riskResult.totalImports,
       communitiesDetected: riskResult.communitiesDetected,
       conventionsDetected: convResult.conventionsDetected,
     });
@@ -313,6 +315,7 @@ export async function runBootstrap(
       durationMs: 0,
       nodesCreated: 0,
       edgesCreated: 0,
+      totalImports: 0,
       communitiesDetected: 0,
       conventionsDetected: 0,
     });
@@ -422,6 +425,12 @@ export async function runBootstrap(
   );
   const resolvedImports = totalEdgesAll;
 
+  // R5 FIX: totalImports from AST count, not from resolved edges
+  const totalImportStatements = serviceResults.reduce(
+    (sum, s) => sum + (s.totalImports ?? s.edgesCreated),
+    0,
+  );
+
   // CRITICAL warning when 0 edges produced from a non-trivial number of files
   if (totalEdgesAll === 0 && totalSourceFiles > 5) {
     warnings.push(
@@ -440,7 +449,7 @@ export async function runBootstrap(
     highConfidenceConventions,
     totalConventions,
     resolvedImports,
-    totalImports: totalEdgesAll,
+    totalImports: totalImportStatements,
   });
 
   // D-03: Diagnostic steps when import_graph_health is 0%
