@@ -34,8 +34,8 @@
 ## Post-Edit Validation
 
 - [x] **VALID-01**: PostToolUse hook validates written code against HIGH-CONF conventions and reports deviations as advisory warnings
-- [ ] **VALID-02**: Validation catches wrong type names (e.g., `HTTPEvent` vs `H3Event`) by comparing against types detected in the codebase
-- [ ] **VALID-03**: Validation catches import path errors by checking against the resolved import graph
+- [x] **VALID-02**: ~~Validation catches wrong type names (e.g., `HTTPEvent` vs `H3Event`) by comparing against types detected in the codebase~~ -- **Moved to Out of Scope** (Phase 20)
+- [x] **VALID-03**: ~~Validation catches import path errors by checking against the resolved import graph~~ -- **Moved to Out of Scope** (Phase 20)
 - [x] **VALID-04**: False positive rate below 5% on HIGH-CONF conventions (only validated conventions trigger warnings)
 
 ## Eval Skill
@@ -57,6 +57,8 @@
 - `require.resolve()` extraction — different semantics from `require()`
 - Post-edit `decision: "block"` enforcement — starting with advisory only, upgrade to blocking after FP rate validated
 - Non-TS/JS/Python language support — v3.0
+- VALID-02: Type name validation (e.g., `HTTPEvent` vs `H3Event`) -- type references are not stored in the graph schema; implementing this requires parser-level changes to capture type reference data, which is out of scope for v2.1
+- VALID-03: Import path validation against resolved import graph -- the graph builder drops unresolved imports silently (shared-builder.ts), so no failed-resolution data exists in the DB to check against; implementing this requires tracking failed resolutions at the parser level
 
 ## Traceability
 
@@ -82,10 +84,10 @@
 | REF-02 | Phase 19 | Complete |
 | REF-03 | Phase 19 | Complete |
 | VALID-01 | Phase 19 | Complete |
-| VALID-02 | Phase 20 | Pending (→ Out of Scope) |
-| VALID-03 | Phase 20 | Pending (→ Out of Scope) |
+| VALID-02 | Phase 20 | Out of Scope |
+| VALID-03 | Phase 20 | Out of Scope |
 | VALID-04 | Phase 19 | Complete |
-| EVAL-01 | Phase 20 | Pending |
-| EVAL-02 | Phase 20 | Pending |
+| EVAL-01 | Phase 20 | Complete |
+| EVAL-02 | Phase 20 | Complete |
 | EVAL-03 | Phase 19 | Complete |
-| EVAL-04 | Phase 20 | Pending |
+| EVAL-04 | Phase 20 | Complete |
