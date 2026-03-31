@@ -16,7 +16,7 @@ const loadedLanguages = new Map<SupportedLanguage, Language>();
 export function getGrammarDir(): string {
   return (
     process.env.CODESCOPE_GRAMMAR_DIR ??
-    path.join(import.meta.dirname ?? __dirname, "..", "grammars")
+    path.join(import.meta.dirname ?? __dirname, "..", "..", "grammars")
   );
 }
 
